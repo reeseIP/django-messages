@@ -1,0 +1,71 @@
+{% extends 'messagelocus/base.html' %}
+
+{% block content %}
+	<h1>{{ JobId }}</h1>
+	<span>
+		<form action='accept/' method='post'>
+			{% csrf_token %}
+			<input type='submit' value='Accept'>
+		</form>
+		<form action='reject/' method='post'>
+			{% csrf_token %}
+			<input type='submit' value='Reject'>
+		</form>
+		<form action='toteinduct/' method='post'>
+			{% csrf_token %}
+			<input type='submit' value='Tote Induct'>
+		</form>
+		<form action='pickcomplete/' method='post'>
+			{% csrf_token %}
+			<input type='submit' value='Pick Complete'>
+		</form>
+		<form action='cancelcomplete/' method='post'>
+			{% csrf_token %}
+			<input type='submit' value='Cancel Complete'>
+		</form>
+		<form action='cancelreject/' method='post'>
+			{% csrf_token %}
+			<input type='submit' value='Cancel Reject'>
+		</form>
+		<form action='updatecomplete/' method='post'>
+			{% csrf_token %}
+			<input type='submit' value='Update Complete'>
+		</form>
+		<form action='updatereject/' method='post'>
+			{% csrf_token %}
+			<input type='submit' value='Update Reject'>
+		</form>
+	</span>
+	<ul>
+	{% for key, value in job_data.items %}
+	    <li>{{ key }}: {{ value }}</li>
+	{% endfor %}
+	</ul>
+
+	<ul>
+	<table>
+		<thead>
+			<tr>
+				<th>Action</th>
+				{% for label in task_header %}
+					<th>{{ label }}</th>
+				{% endfor %}
+			</tr>
+		</thead>
+		<tbody>
+		{{ formset.management_form }}
+		{% for form in formset %}
+			<tr>
+				<form method="post" action='task/'>
+					{% csrf_token %}
+					<td><input type='submit' value='Send'></td>
+		    		{% for field in form %}
+		        		<td>{{ field }}</td>
+		    		{% endfor %}
+		    </form>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+	</ul>
+{% endblock %}

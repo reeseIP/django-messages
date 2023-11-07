@@ -1,0 +1,15 @@
+{% extends 'messagelocus/base.html' %}
+{% block content %}
+{% if orderjob_list or putawayjob_list %}
+    <h1>Order Jobs</h1>
+    {% for job in orderjob_list %}
+        <li><a href="/messagelocus/{{ job.JobId }}/">{{ job.JobId }}</a></li>
+    {% endfor %}
+    <h1>Putaway Jobs</h1>
+    {% for job in putawayjob_list %}
+        <li><a href="/messagelocus/{{ job.JobId }}/">{{ job.JobId }}</a></li>
+    {% endfor %}
+{% else %}
+    <p>No jobs are available.</p>
+{% endif %}
+{% endblock %}
