@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-h&fgb&lbi7o&9s7=k(88m%-t$0bp-kfx@cgi3h-1#cz%4uu#j3
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['areese.pythonanywhere.com']
 
 
 # Application definition
@@ -127,3 +127,10 @@ STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = '/messagelocus/login'
+
+### URLs and credentials for sending requests
+TEST_POST_URL = 'http://127.0.0.1:8000/messagelocus/inbound/'
+TEST_POST_AUTH = ('areese','areese1234')
+
+PROD_POST_URL = 'http://uscusrvewm301.corp.pattersoncompanies.com:8000/automation/locus?sap-client=100'
+PROD_POST_AUTH = ('areese','reese@08')

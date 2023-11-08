@@ -1,7 +1,6 @@
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, render, redirect
-from django.http import HttpResponse 
-from django.template import loader 
+from django.http import HttpResponse
 from django.forms import formset_factory
 from django.views.decorators.csrf import csrf_exempt
 from .models import OrderJobData, OrderTaskData, PutawayJobData, PutawayTaskData
@@ -9,10 +8,12 @@ from .forms import TaskDataForm
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.conf import settings
 
 import json
 import requests
 import io
+import base64
 
 # Create your views here.
 
@@ -42,30 +43,26 @@ def send_request(request,job_data,job_type,event_type,event_info=None,tasks=None
 											"JobStation":None,
 											"JobRobot":None,
 											"JobTasks": [tasks]
-												}}	
+											}}	
 
-	json_data = json.dumps(job_message)
-	#response = requests.post('http://uscusrvewm301.corp.pattersoncompanies.com:8000/automation/locus?sap-client=100',
-	#						json=json,
-	#						auth=('areese','reese@08'))
-
-	#if response.status_code == 500:
-	#	pass # error
-	#elif response.status_code == 200:
-	#	pass # valid
-
-	URL = 'http://127.0.0.1:8000/messagelocus/inbound/'
 	client = requests.session()
+	# URL = settings.PROD_POST_URL
+	# client.auth = settings.PROD_POST_AUTH
+	#response = requests.post(URL,
+	#						json=json.dumps(job_message))
 
-	client.get(URL)
-
+	# local testing
+	URL = settings.TEST_POST_URL
+	client.auth = settings.TEST_POST_AUTH
 	response = client.post(URL,
-							json=json_data)
+							json=json.dumps(job_message))
 
+	if response.status_code == '200':
+		messages.success(request, response.text)
+	elif response.status_code != '200':
+		messages.error(request, response.text)
 
-	messages.success(request, response.text)
-
-	#return response#.status_code
+	return response.status_code
 
 def get_job(JobId):
 	try:
@@ -105,20 +102,83 @@ def index(request):
 	''' landing page - list of jobs'''
 	orderjob_list = OrderJobData.objects.order_by('-JobId')[:]
 	putawayjob_list = PutawayJobData.objects.order_by('-JobId')[:]
-	#template = loader.get_template('messagelocus/index.html')
 	context = {
 		'orderjob_list': orderjob_list,
 		'putawayjob_list': putawayjob_list,
 	}
 	return render(request, 'messagelocus/index.html', context)
 
-@login_required
 @csrf_exempt
 def inbound(request):
 	''' inbound messages '''
-	json_data = json.loads(json.load(io.BytesIO(request.body)))
+	if request.method == 'POST':
+		auth_header = request.META['HTTP_AUTHORIZATION']
+		encoded_credentials = auth_header.split(' ')[1]  # Removes "Basic " to isolate credentials
+		decoded_credentials = base64.b64decode(encoded_credentials).decode("utf-8").split(':')
+		username = decoded_credentials[0]
+		password = decoded_credentials[1]
+		user = authenticate(request, username=username, password=password)
+		if user is not None:
+			json_data = json.loads(json.load(io.BytesIO(request.body)))
+			for k1, v1 in json_data.items():
+				# outermost structure (Message Type)
+				if k1 == 'OrderJob':
+					job_model = OrderJobData
+					task_model = OrderTaskData
+				elif k1 == 'PutawayJob':
+					job_model = PutawayJobData
+					task_model = PutawayTaskData
+				else:
+					return HttpResponse('Error - Incorrect Message Type')
+				query = job_model.objects.filter(JobId=v1['JobId'])
+				if query:
+					# job already exists
+					job_data, job_type = get_job(JobId=query[0].JobId)
+					return HttpResponse(send_request(request,job_data,job_type,"REJECT","Rejected - Job Already Exists"))
+				else:
+					# new job
+					fields = job_model._meta.get_fields()
+					new_job = job_model()
+					for field in fields:
+						try:
+							value = v1[field.name]
+						except KeyError: # field was not supplied
+							value = None
+						setattr(new_job,field.name,value)
+					
+					new_job.save()
 
-	return HttpResponse('Ive Been hit')
+					# new tasks
+					job_tasks = v1['JobTasks']
+					# task_type will be either OrderJobTask or PutawayJobTask for key
+					# and a list of tasks for value
+					for task_type, tasks in job_tasks.items():
+						fields = task_model._meta.get_fields()
+						for task in tasks:
+							new_task = task_model()
+							for field in fields:
+								if field.name == 'JobId':
+									value = new_job
+									setattr(new_task,field.name,value)
+								else:
+									try:
+										value = task[field.name]
+										if value == 'false':
+											value = False 
+										elif value == 'true':
+											value = True
+									except KeyError: # field was not supplied
+										value = None
+									setattr(new_task,field.name,value)
+
+							new_task.save()
+		else:
+			return HttpResponse('Invalid Credentials')
+
+
+		return HttpResponse('Ive Been hit')
+	else:
+		return HttpResponse('Inbound Request - GET')
 
 @login_required
 def jobview(request, JobId):
