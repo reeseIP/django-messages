@@ -129,8 +129,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = '/messagelocus/login'
 
 ### URLs and credentials for sending requests
-TEST_POST_URL = 'http://127.0.0.1:8000/messagelocus/inbound/'
-TEST_POST_AUTH = ('areese','areese1234')
-
-PROD_POST_URL = 'http://uscusrvewm301.corp.pattersoncompanies.com:8000/automation/locus?sap-client=100'
-PROD_POST_AUTH = ('areese','reese@08')
+#TEST_POST_URL = 
+#TEST_POST_AUTH = 
+#
+#PROD_POST_URL = 
+#PROD_POST_AUTH = 
