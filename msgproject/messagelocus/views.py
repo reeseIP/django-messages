@@ -119,7 +119,7 @@ def inbound(request):
 		password = decoded_credentials[1]
 		user = authenticate(request, username=username, password=password)
 		if user is not None:
-			json_data = json.loads(json.load(io.BytesIO(request.body)))
+			json_data = json.load(io.BytesIO(request.body))
 			for k1, v1 in json_data.items():
 				# outermost structure (Message Type)
 				if k1 == 'OrderJob':
