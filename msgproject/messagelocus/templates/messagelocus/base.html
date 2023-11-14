@@ -23,22 +23,26 @@
 </head>
 
 <body id="id-body" class="{{theme}}">
+
   {% if user.is_authenticated %}
     <a href='/messagelocus/logout/'>Logout</a>
   {% endif %}
   <div>
-    {% block content %}{% endblock %}
     {% if messages %}
       <div class="messages">
       {% for message in messages %}
-        <div class="alert {% if message.tags %}alert-{{ message.tags }}"{% endif %}>
-          {{ message }}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+            </button>
         </div>
       {% endfor %}
       </div>
     {% endif %}
+    {% block content %}{% endblock %}
   </div>
   {% block footer_js %}
+    <script type="text/javascript" src="{% static 'js/jquery-3.6.3.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/main.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/bootstrap.min.js' %}"></script>
   {% endblock %}

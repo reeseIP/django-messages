@@ -6,6 +6,7 @@ urlpatterns = [
 	path("login/", views.login_user, name='login_user'),
 	path("logout/", views.logout_user, name='logout_user'),
 	path("inbound/", views.inbound, name='inbound'),
+	path("putawayjobrequest/", views.putawayjobrequest, name='putawayjobrequest'),
 	path("<JobId>/", views.jobview, name='jobview'),
 	path("<JobId>/accept/", views.sendaccept, name='sendaccept'),
 	path("<JobId>/reject/", views.sendreject, name='sendreject'),

@@ -1,10 +1,10 @@
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, render, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.forms import formset_factory
 from django.views.decorators.csrf import csrf_exempt
-from .models import OrderJobData, OrderTaskData, PutawayJobData, PutawayTaskData
-from .forms import TaskDataForm
+from .models import OrderJobData, OrderTaskData, PutawayJobData, PutawayTaskData, ExternalAuth, OrderTaskResultData, PutawayTaskResultData
+from .forms import OrderTaskDataForm, PutawayTaskDataForm
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -14,55 +14,61 @@ import json
 import requests
 import io
 import base64
+import datetime
 
 # Create your views here.
 
 ### helper methods
-def send_request(request,job_data,job_type,event_type,event_info=None,tasks=None):
+def send_request(request,job_data,job_type,event_type=None,event_info=None,tasks=None):
+	date = datetime.datetime.now().strftime(format='%Y-%m-%dT%H:%M:%S')
 	if job_type == 'OrderJob':
 		job_message = {"OrderJobResult": {"EventType":event_type,
-											"EventInfo":None,
+											"EventInfo":event_info,
 											"JobId":job_data["JobId"],
 											"JobStatus":"Completed",
-											"JobDate":"Date",
+											"JobDate":date,
 											"JobStation":None,
 											"RequestId":job_data["RequestId"],
 											"ToteId":job_data["ToteId"],
-											"JobRobot":None,
+											"JobRobot":job_data['JobRobot'],
 											"JobMethod":None,
 											"JobTasks": [tasks]
 											}}
 	elif job_type == 'PutawayJob':
 		job_message = {'PutawayJobResult': {"EventType":event_type,
-											"EventInfo":None,
+											"EventInfo":event_info,
 											"LicensePlate":job_data['LicensePlate'],
 											"RequestId":job_data['RequestId'],
 											"JobId":job_data['JobId'],
-											"JobDate":'Date',
+											"JobDate":date,
 											"JobStatus":'Completed',
 											"JobStation":None,
-											"JobRobot":None,
+											"JobRobot":job_data['JobRobot'],
 											"JobTasks": [tasks]
 											}}	
 
+	elif job_type == 'PutawayRequest':
+		job_message = {'PutawayJobRequest': {"LicensePlate":job_data['LicensePlate'],
+											"RequestDate":date,
+											"RequestRobot":job_data['RequestRobot'],
+											"RequestUser": request.user.username
+											}}
+
 	client = requests.session()
-	# URL = settings.PROD_POST_URL
-	# client.auth = settings.PROD_POST_AUTH
-	#response = requests.post(URL,
-	#						json=json.dumps(job_message))
+
 
 	# local testing
-	URL = settings.TEST_POST_URL
-	client.auth = settings.TEST_POST_AUTH
-	response = client.post(URL,
-							json=json.dumps(job_message))
+	#URL = http://127.0.0.1:8000
+	#client.auth = (username,password)
+	#response = client.post(URL,
+	#						json=json.dumps(job_message))
 
-	if response.status_code == '200':
-		messages.success(request, response.text)
-	elif response.status_code != '200':
+	if response.status_code == 200:
+		messages.success(request, 'Putaway Job Requested')
+	elif response.status_code != 200:
 		messages.error(request, response.text)
 
-	return response.status_code
+	#return redirect('/messagelocus/')
 
 def get_job(JobId):
 	try:
@@ -73,7 +79,9 @@ def get_job(JobId):
 		job_type = 'PutawayJob'
 	
 	job_data = job.get_data()
-	return job_data, job_type
+	return {'job_query': job,
+			'job_data':job_data, 
+			'job_type':job_type}
 
 
 
@@ -125,15 +133,19 @@ def inbound(request):
 				if k1 == 'OrderJob':
 					job_model = OrderJobData
 					task_model = OrderTaskData
+					task_result_model = OrderTaskResultData
 				elif k1 == 'PutawayJob':
 					job_model = PutawayJobData
 					task_model = PutawayTaskData
+					task_result_model = PutawayTaskResultData
 				else:
 					return HttpResponse('Error - Incorrect Message Type')
 				query = job_model.objects.filter(JobId=v1['JobId'])
 				if query:
 					# job already exists
-					job_data, job_type = get_job(JobId=query[0].JobId)
+					job = get_job(JobId=query[0].JobId)
+					job_data = job['job_data']
+					job_type = job['job_type']
 					return HttpResponse(send_request(request,job_data,job_type,"REJECT","Rejected - Job Already Exists"))
 				else:
 					# new job
@@ -154,8 +166,10 @@ def inbound(request):
 					# and a list of tasks for value
 					for task_type, tasks in job_tasks.items():
 						fields = task_model._meta.get_fields()
+						result_fields = task_result_model._meta.get_fields()
 						for task in tasks:
 							new_task = task_model()
+							new_result_task = task_result_model()
 							for field in fields:
 								if field.name == 'JobId':
 									value = new_job
@@ -170,8 +184,23 @@ def inbound(request):
 									except KeyError: # field was not supplied
 										value = None
 									setattr(new_task,field.name,value)
+							for field in result_fields:
+								if field.name == 'JobId':
+									value = new_job
+									setattr(new_result_task,field.name,value)
+								else:
+									try:
+										value = task[field.name]
+										if value == 'false':
+											value = False 
+										elif value == 'true':
+											value = True
+									except KeyError: # field was not supplied
+										value = None
+									setattr(new_result_task,field.name,value)
 
 							new_task.save()
+							new_result_task.save()
 		else:
 			return HttpResponse('Invalid Credentials')
 
@@ -183,57 +212,88 @@ def inbound(request):
 @login_required
 def jobview(request, JobId):
 	''' overview for job details'''
-	TaskDataFormSet = formset_factory(TaskDataForm, extra=0)
 	
-	job_data, job_type = get_job(JobId=JobId)
+	job = get_job(JobId=JobId)
+	job_data = job['job_data']
+	job_type = job['job_type']
 
-	tasks = OrderTaskData.objects.filter(JobId_id=job_data['id']).order_by('JobTaskId')[:]
-	if not tasks.exists():
-		tasks = PutawayTaskData.objects.filter(JobId_id=job_data['id']).order_by('JobTaskId')[:]
+	if job_type == 'OrderJob':
+		TaskDataFormSet = formset_factory(OrderTaskDataForm, extra=0)
+		tasks = OrderTaskResultData.objects.filter(JobId_id=job_data['id']).order_by('JobTaskId')[:]
+	elif job_type == 'PutawayJob':
+		TaskDataFormSet = formset_factory(PutawayTaskDataForm, extra=0)
+		tasks = PutawayTaskResultData.objects.filter(JobId_id=job_data['id']).order_by('JobTaskId')[:]
 
-	del job_data['id'] # dont want to pass this to the html template
+	#del job_data['id'] # dont want to pass this to the html template
 	task_data = []
 	task_header = []
+	
 	for task in tasks:
 		task_data.append(task.get_data())
 	for item in task_data:
 		for key, value in item.items():
+			setattr(task,key,value)
 			task_header.append(key)
-		break
+		
 
 	formset = TaskDataFormSet(initial=task_data)
-	for form in formset:
-		for field in form:
-			task_header.append(field.label)
 
 	task_header = list(dict.fromkeys(task_header))
 
 	return render(request, "messagelocus/jobview.html", {'JobId': JobId,
 														 'job_data': job_data,
-														 'task_data': task_data,
 														 'task_header': task_header,
 														 'formset': formset,
 														 })
 
+def putawayjobrequest(request):
+	''' request a putawayjob from SAP system '''
+	if request.method == 'GET':
+		return render(request, "messagelocus/putawayjobrequest.html")
+	elif request.method == 'POST':
+		job_data = {'LicensePlate':request.POST['licenseplate'],
+					'RequestRobot':request.POST['requestrobot'],}
+		
+		send_request(request,job_data,job_type='PutawayRequest')
+		messages.success(request,'Putaway Job Requested')
+		return redirect('/messagelocus/putawayjobrequest')
+
+
 @login_required
 def sendaccept(request, JobId):
 	''' send an ACCEPT message for job '''
-	job_data, job_type = get_job(JobId=JobId)
+	job = get_job(JobId=JobId)
+	job_data = job['job_data']
+	job_type = job['job_type']
 	send_request(request,job_data,job_type,"ACCEPT")
 	return redirect('/messagelocus/{}'.format(JobId))
 
 @login_required
 def sendreject(request, JobId):
 	''' send a REJECT message for job '''
-	job_data, job_type = get_job(JobId=JobId)
+	job = get_job(JobId=JobId)
+	job_data = job['job_data']
+	job_type = job['job_type']
 	send_request(request,job_data,job_type,"REJECT","Rejected - Manually Posted")
 	return redirect('/messagelocus/{}'.format(JobId))
 
 @login_required
 def sendtoteinduct(request, JobId):
 	''' send a TOTEINDUCT message for job '''
-	job_data, job_type = get_job(JobId=JobId)
-	send_request(request,job_data,job_type,"TOTEINDUCT")
+	job = get_job(JobId=JobId)
+	job_data = job['job_data']
+	job_type = job['job_type']
+	job_query = job['job_query']
+	if request.POST['robot']:
+		job_query.JobRobot = request.POST['robot']
+		job_query.save()
+		job_data['JobRobot'] = request.POST['robot']
+		if job_type == 'OrderJob':
+			send_request(request,job_data,job_type,"TOTEINDUCT")
+		elif job_type == 'PutawayJob':
+			send_request(request,job_data,job_type,"PUTINDUCT")
+	else:
+		messages.error(request, 'Please enter a Robot')
 	return redirect('/messagelocus/{}'.format(JobId))
 
 @login_required
@@ -244,28 +304,36 @@ def sendpickcomplete(request, JobId):
 @login_required
 def sendcancelcomplete(request, JobId):
 	''' send a CANCELCOMPLETE message for job '''
-	job_data, job_type = get_job(JobId=JobId)
+	job = get_job(JobId=JobId)
+	job_data = job['job_data']
+	job_type = job['job_type']
 	send_request(request,job_data,job_type,"CANCELCOMPLETE")
 	return redirect('/messagelocus/{}'.format(JobId))
 
 @login_required
 def sendcancelreject(request, JobId):
 	''' send a CANCELREJECT message for job '''
-	job_data, job_type = get_job(JobId=JobId)
+	job = get_job(JobId=JobId)
+	job_data = job['job_data']
+	job_type = job['job_type']
 	send_request(request,job_data,job_type,"CANCELREJECT","Rejected - Manually Posted")
 	return redirect('/messagelocus/{}'.format(JobId))
 
 @login_required
 def sendupdatecomplete(request, JobId):
 	''' send an UPDATECOMPLETE message for job '''
-	job_data, job_type = get_job(JobId=JobId)
+	job = get_job(JobId=JobId)
+	job_data = job['job_data']
+	job_type = job['job_type']
 	send_request(request,job_data,job_type,"UPDATECOMPLETE")
 	return redirect('/messagelocus/{}'.format(JobId))
 
 @login_required
 def sendupdatereject(request, JobId):
 	''' send an UPDATEREJECT message for job '''
-	job_data, job_type = get_job(JobId=JobId)
+	job = get_job(JobId=JobId)
+	job_data = job['job_data']
+	job_type = job['job_type']
 	send_request(request,job_data,job_type,"UPDATEREJECT","Rejected - Manually Posted")
 	return redirect('/messagelocus/{}'.format(JobId))
 
@@ -277,10 +345,13 @@ def sendtask(request, JobId):
 	for item in form_data[1:]:
 		task_data[item[0][7:]] = item[1]
 
-	job_data, job_type = get_job(JobId=JobId)
+	job = get_job(JobId=JobId)
+	job_data = job['job_data']
+	job_type = job['job_type']
 
 	if job_type == 'OrderJob':
 		send_request(request,job_data,job_type,"PICK",None,task_data)
-	elif job_type == 'PutawayJob':	
+	elif job_type == 'PutawayJob':
 		send_request(request,job_data,job_type,"PUT",None,task_data)						
 	return redirect('/messagelocus/{}'.format(JobId))
+	#return HttpResponseRedirect(request.path_info)

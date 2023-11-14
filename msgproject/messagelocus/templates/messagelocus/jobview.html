@@ -14,6 +14,7 @@
 		<form action='toteinduct/' method='post'>
 			{% csrf_token %}
 			<input type='submit' value='Tote Induct'>
+			<label>Robot: </label><input type='entry' name='robot' value='{{ job_data.JobRobot }}'>
 		</form>
 		<form action='pickcomplete/' method='post'>
 			{% csrf_token %}
@@ -68,4 +69,6 @@
 		</tbody>
 	</table>
 	</ul>
+
+<a href='/messagelocus/'>Back</a>
 {% endblock %}

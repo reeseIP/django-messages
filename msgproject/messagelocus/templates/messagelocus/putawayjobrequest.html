@@ -1,0 +1,17 @@
+{% extends 'messagelocus/base.html' %}
+
+{% block content %}
+
+<form method='post' action='/messagelocus/putawayjobrequest/'>
+	{% csrf_token %}
+	<h1>License Plate</h1>
+	<input type='entry' name='licenseplate'>
+	<h1>Request Robot</h1>
+	<input type='entry' name='requestrobot'>
+	<br>
+	<br>
+	<input type='submit' value='submit'>
+</form>
+
+<a href='/messagelocus/'>Back</a>
+{% endblock %}
