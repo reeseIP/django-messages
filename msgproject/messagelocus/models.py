@@ -1,11 +1,20 @@
+# models.py
 from django.db import models
-
+from django.conf import settings
 from django.contrib.auth.validators import UnicodeUsernameValidator
 
-# Create your models here.
+### helper methods
+def hlp_get_data(obj_inst):
+	data = {}
+	fields = obj_inst._meta.get_fields()
+	for field in fields:
+		if 'Field' in type(field).__name__:
+			data[field.name] = getattr(obj_inst,field.name)
+	return(data)
+
 
 class OrderJobData(models.Model):
-	EventType = models.CharField(max_length=50)
+	#EventType = models.CharField(max_length=50)
 	JobId = models.CharField(max_length=50)
 	JobDate = models.CharField(max_length=25)
 	JobPriority = models.CharField(max_length=10,blank=True,null=True)
@@ -15,6 +24,7 @@ class OrderJobData(models.Model):
 	SingleUnit = models.BooleanField(default=False,null=True)
 	NextWorkArea = models.CharField(max_length=50, blank=True, null=True)
 	JobRobot = models.CharField(max_length=50, blank=True, null=True)
+	active = models.BooleanField(default=True)
 
 	def __str__(self):
 		return self.JobId
@@ -23,18 +33,7 @@ class OrderJobData(models.Model):
 		return self.JobId
 
 	def get_data(self):
-		return({'id': self.id,
-				'EventType': self.EventType,
-				'JobId': self.JobId,
-				'JobDate': self.JobDate,
-				'JobPriority': self.JobPriority,
-				'JobPriorityGroup': self.JobPriorityGroup,
-				'RequestId': self.RequestId,
-				'ToteId': self.ToteId,
-				'SingleUnit': self.SingleUnit,
-				'NextWorkArea': self.NextWorkArea,
-				'JobRobot': self.JobRobot,
-			   })
+		return hlp_get_data(self)
 
 
 class OrderTaskData(models.Model):
@@ -89,51 +88,7 @@ class OrderTaskData(models.Model):
 		return self.JobTaskId
 
 	def get_data(self):
-		return({
-			"JobId": self.JobId,
-			"JobTaskId": self.JobTaskId,
-			"EventAction": self.EventAction,
-			"OrderId": self.OrderId,
-			"OrderLineId": self.OrderLineId,
-			"OrderTaskId": self.OrderTaskId,
-			"OrderType": self.OrderType,
-			"CustOwner": self.CustOwner,
-			"SiteId": self.SiteId,
-			"TaskType": self.TaskType,
-			"TaskSequence": self.TaskSequence,
-			"TaskSubSequence": self.TaskSubSequence,
-			"TaskTravelPriority": self.TaskTravelPriority,
-			"TaskLocation": self.TaskLocation,
-			"TaskZone": self.TaskZone,
-			"TaskWorkArea": self.TaskWorkArea,
-			"TaskQty": self.TaskQty,
-			"ItemNo": self.ItemNo,
-			"ItemUPC": self.ItemUPC,
-			"ItemDesc": self.ItemDesc,
-			"ItemStyle": self.ItemStyle,
-			"ItemColor": self.ItemColor,
-			"ItemSize": self.ItemSize,
-			"ItemLength": self.ItemLength,
-			"ItemWidth": self.ItemWidth,
-			"ItemHeight": self.ItemHeight,
-			"ItemWeight": self.ItemWeight,
-			"ItemImageUrl": self.ItemImageUrl,
-			"Custom1": self.Custom1,
-			"Custom2": self.Custom2,
-			"Custom3": self.Custom3,
-			"Custom4": self.Custom4,
-			"Custom5": self.Custom5,
-			"Custom6": self.Custom6,
-			"Custom7": self.Custom7,
-			"Custom8": self.Custom8,
-			"Custom9": self.Custom9,
-			"Custom10": self.Custom10,
-			"LotNo": self.LotNo,
-			"SerialNo": self.SerialNo,
-			"CaptureLotNo": self.CaptureLotNo,
-			"CaptureSerialNo": self.CaptureSerialNo,
-			"CaptureSerialNoQty": self.CaptureSerialNoQty,
-			})
+		return hlp_get_data(self)
 
 
 class OrderTaskResultData(models.Model):
@@ -145,14 +100,15 @@ class OrderTaskResultData(models.Model):
 	CustOwner = models.CharField(max_length=50,null=True)
 	SiteId = models.CharField(max_length=50,null=True)
 	TaskStatus = models.CharField(max_length=50,blank=True,null=True)
-	TaskType = models.CharField(max_length=50)
-	TaskLocation = models.CharField(max_length=50)
+	TaskType = models.CharField(max_length=50,blank=True,null=True)
+	TaskLocation = models.CharField(max_length=50,blank=True,null=True)
 	TaskQty = models.IntegerField()
-	ExecQty = models.IntegerField()
-	ExecUser = models.CharField(max_length=50)
-	ExecDate = models.CharField(max_length=25)
-	ExecRobot = models.CharField(max_length=50)
+	ExecQty = models.IntegerField(blank=True,null=True)
+	ExecUser = models.CharField(max_length=50,blank=True,null=True)
+	ExecDate = models.CharField(max_length=25,blank=True,null=True)
+	ExecRobot = models.CharField(max_length=50,blank=True,null=True)
 	ItemNo = models.CharField(max_length=50)
+	ItemUPC = models.CharField(max_length=50,blank=True,null=True)
 	ExceptionCode = models.CharField(max_length=50,blank=True,null=True)
 	ExceptionReason = models.CharField(max_length=50,blank=True,null=True)
 	Custom1 = models.CharField(max_length=250,blank=True,null=True)
@@ -167,20 +123,26 @@ class OrderTaskResultData(models.Model):
 	Custom10 = models.CharField(max_length=250,blank=True,null=True)
 	LotNo = models.CharField(max_length=250,blank=True,null=True)
 	SerialNo = models.CharField(max_length=250,blank=True,null=True)
-	CaptureLotNo = models.BooleanField(default=False)
-	CaptureSerialNo = models.BooleanField(default=False)
-	CaptureSerialNoQty = models.IntegerField(default=0)
-	
+
+	def __str__(self):
+		return self.JobTaskId
+
+	def __repr__(self):
+		return self.JobTaskId
+
+	def get_data(self):
+		return hlp_get_data(self)
 
 class PutawayJobData(models.Model):
-	EventType = models.CharField(max_length=50)
-	EventInfo = models.CharField(max_length=50,blank=True,null=True)
+	#EventType = models.CharField(max_length=50)
+	#EventInfo = models.CharField(max_length=50,blank=True,null=True)
 	LicensePlate = models.CharField(max_length=50)
 	RequestId = models.CharField(max_length=50)
 	JobId = models.CharField(max_length=50)
 	JobDate = models.CharField(max_length=25)
 	JobPriority = models.CharField(max_length=10,blank=True,null=True)
 	JobRobot = models.CharField(max_length=50, blank=True, null=True)
+	active = models.BooleanField(default=True)
 
 	def __str__(self):
 		return self.JobId
@@ -189,16 +151,7 @@ class PutawayJobData(models.Model):
 		return self.JobId
 
 	def get_data(self):
-		return({'id': self.id,
-				'EventType': self.EventType,
-				'EventInfo': self.EventType,
-				'LicensePlate': self.LicensePlate,
-				'RequestId': self.RequestId,
-				'JobId': self.JobId,
-				'JobDate': self.JobDate,
-				'JobPriority': self.JobPriority,
-				'JobRobot': self.JobRobot,
-			   })
+		return hlp_get_data(self)
 
 
 class PutawayTaskData(models.Model):
@@ -249,47 +202,7 @@ class PutawayTaskData(models.Model):
 		return self.JobTaskId
 
 	def get_data(self):
-		return({
-			"JobId": self.JobId,
-			"JobTaskId": self.JobTaskId,
-			"EventAction": self.EventAction,
-			"InnerLicensePlate": self.InnerLicensePlate,
-			"OrderId": self.OrderId,
-			"OrderLineId": self.OrderLineId,
-			"OrderTaskId": self.OrderTaskId,
-			"OrderType": self.OrderType,
-			"CustOwner": self.CustOwner,
-			"SiteId": self.SiteId,
-			"TaskType": self.TaskType,
-			"TaskTravelPriority": self.TaskTravelPriority,
-			"TaskLocation": self.TaskLocation,
-			"TaskZone": self.TaskZone,
-			"TaskWorkArea": self.TaskWorkArea,
-			"TaskQty": self.TaskQty,
-			"ItemNo": self.ItemNo,
-			"ItemUPC": self.ItemUPC,
-			"ItemDesc": self.ItemDesc,
-			"ItemStyle": self.ItemStyle,
-			"ItemColor": self.ItemColor,
-			"ItemSize": self.ItemSize,
-			"ItemLength": self.ItemLength,
-			"ItemWidth": self.ItemWidth,
-			"ItemHeight": self.ItemHeight,
-			"ItemWeight": self.ItemWeight,
-			"ItemImageUrl": self.ItemImageUrl,
-			"LotNo": self.LotNo,
-			"SerialNo": self.SerialNo,
-			"Custom1": self.Custom1,
-			"Custom2": self.Custom2,
-			"Custom3": self.Custom3,
-			"Custom4": self.Custom4,
-			"Custom5": self.Custom5,
-			"Custom6": self.Custom6,
-			"Custom7": self.Custom7,
-			"Custom8": self.Custom8,
-			"Custom9": self.Custom9,
-			"Custom10": self.Custom10,
-			})
+		return hlp_get_data(self)
 
 
 class PutawayTaskResultData(models.Model):
@@ -333,47 +246,43 @@ class PutawayTaskResultData(models.Model):
 		return self.JobTaskId
 
 	def get_data(self):
-		return({"JobId": self.JobId,
-		"JobTaskId": self.JobTaskId,
-		"InnerLicensePlate": self.InnerLicensePlate,
-		"OrderId": self.OrderId,
-		"OrderLineId": self.OrderLineId,
-		"OrderTaskId": self.OrderTaskId,
-		"OrderType": self.OrderType,
-		"CustOwner": self.CustOwner,
-		"SiteId": self.SiteId,
-		"TaskStatus": self.TaskStatus,
-		"TaskType": self.TaskType,
-		"TaskLocation": self.TaskLocation,
-		"TaskQty": self.TaskQty,
-		"ExecQty": self.ExecQty,
-		"ExecUser": self.ExecUser,
-		"ExecDate": self.ExecDate,
-		"ExecRobot": self.ExecRobot,
-		"ItemNo": self.ItemNo,
-		"LotNo": self.LotNo,
-		"SerialNo": self.SerialNo,
-		"ExceptionCode": self.ExceptionCode,
-		"ExceptionReason": self.ExceptionReason,
-		"Custom1": self.Custom1,
-		"Custom2": self.Custom2,
-		"Custom3": self.Custom3,
-		"Custom4": self.Custom4,
-		"Custom5": self.Custom5,
-		"Custom6": self.Custom6,
-		"Custom7": self.Custom7,
-		"Custom8": self.Custom8,
-		"Custom9": self.Custom9,
-		"Custom10": self.Custom10,
-})
+		return hlp_get_data(self)
 
 
-class JobStatus(models.Model):
-	JobId = models.CharField(max_length=50)
-	status = models.CharField(max_length=250)
+class OrderJobEvents(models.Model):
+	JobId = models.ForeignKey(OrderJobData, on_delete=models.CASCADE)
+	EventType = models.CharField(max_length=50)
+	JobDate = models.CharField(max_length=25)
+	EventInfo = models.CharField(max_length=250)
+
+	def __str__(self):
+		return('{}: {}'.format(self.JobId, self.EventType))
+
+	def __repr__(self):
+		return('{}: {}'.format(self.JobId, self.EventType))
+
+	def get_data(self):
+		return hlp_get_data(self)
+	
+
+class PutawayJobEvents(models.Model):
+	JobId = models.ForeignKey(PutawayJobData, on_delete=models.CASCADE)
+	EventType = models.CharField(max_length=50)
+	JobDate = models.CharField(max_length=25)
+	EventInfo = models.CharField(max_length=250)
 
 
-class ExternalAuth(models.Model):
+	def __str__(self):
+		return('{}: {}'.format(self.JobId, self.EventType))
+
+	def __repr__(self):
+		return('{}: {}'.format(self.JobId, self.EventType))
+
+	def get_data(self):
+		return hlp_get_data(self)
+
+
+class ExternalUsers(models.Model):
 	username_validator = UnicodeUsernameValidator()
 	password = models.CharField( ("password"), max_length=128)
 	username = models.CharField(
@@ -388,3 +297,22 @@ class ExternalAuth(models.Model):
 			"unique": ("A user with that username already exists."),
 		},
 	)
+	csrf_token = models.CharField(max_length=32,null=False)
+	sessionid = models.CharField(max_length=32,null=False)
+	system = models.CharField(max_length=3,null=False)
+	created_by= models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        null=True
+    )
+
+
+class ExternalSystems(models.Model):
+	system = models.CharField(max_length=3,null=False)
+	url    = models.CharField(max_length=255,null=False)
+
+	def __str__(self):
+		return('{}: {}'.format(self.system, self.url))
+
+	def __repr__(self):
+		return('{}: {}'.format(self.system, self.url))

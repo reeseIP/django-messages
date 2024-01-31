@@ -1,22 +1,4 @@
 {% extends 'messagelocus/base.html' %}
 {% block content %}
-<a href="/messagelocus/putawayjobrequest/">Request Putaway Job</a>
-{% if orderjob_list %}
-    <h1>Order Jobs</h1>
-    {% for job in orderjob_list %}
-        <li><a href="/messagelocus/{{ job.JobId }}/">{{ job.JobId }}</a></li>
-    {% endfor %}
-{% endif %}
-
-{% if putawayjob_list %}
-    <h1>Putaway Jobs</h1>
-    {% for job in putawayjob_list %}
-        <li><a href="/messagelocus/{{ job.JobId }}/">{{ job.JobId }}</a></li>
-    {% endfor %}
-{% endif %}
-
-{% if not orderjob_list and not putawayjob_list %}
-    <p>No jobs are available.</p>
-{% endif %}
-
+    <h1>Hi! You've arrived at the home page for messagelocus app.</h1>
 {% endblock %}

@@ -1,0 +1,50 @@
+{% extends 'messagelocus/base.html' %}
+{% block content %}
+{% if orderjob_list %}
+    <h1>Order Jobs</h1>
+    <table id='table-order-job'>
+        <thead>
+            <tr>
+                <th>JobId</th>
+                <th>Latest Event</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for job in orderjob_list %}
+            <tr>
+                <td><a href="/messagelocus/{{ job.JobId }}/">{{ job.JobId }}</a></td>
+                <td>{{ job.latest_event }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <br>
+{% endif %}
+
+{% if putawayjob_list %}
+    <div class='putaway-header'>
+        <h1>Putaway Jobs</h1>
+    </div>
+    <table id='table-putaway-job'>
+        <thead>
+            <tr>
+                <th>JobId</th>
+                <th>Latest Event</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for job in putawayjob_list %}
+            <tr>
+                <td><a href="/messagelocus/{{ job.JobId }}/">{{ job.JobId }}</a></td>
+                <td>{{ job.latest_event }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endif %}
+
+{% if not orderjob_list and not putawayjob_list %}
+    <p>No jobs are available.</p>
+{% endif %}
+
+{% endblock %}

@@ -2,48 +2,39 @@
 
 {% block content %}
 	<h1>{{ JobId }}</h1>
-	<span>
-		<form action='accept/' method='post'>
-			{% csrf_token %}
-			<input type='submit' value='Accept'>
-		</form>
-		<form action='reject/' method='post'>
-			{% csrf_token %}
-			<input type='submit' value='Reject'>
-		</form>
-		<form action='toteinduct/' method='post'>
-			{% csrf_token %}
-			<input type='submit' value='Tote Induct'>
-			<label>Robot: </label><input type='entry' name='robot' value='{{ job_data.JobRobot }}'>
-		</form>
-		<form action='pickcomplete/' method='post'>
-			{% csrf_token %}
-			<input type='submit' value='Pick Complete'>
-		</form>
-		<form action='cancelcomplete/' method='post'>
-			{% csrf_token %}
-			<input type='submit' value='Cancel Complete'>
-		</form>
-		<form action='cancelreject/' method='post'>
-			{% csrf_token %}
-			<input type='submit' value='Cancel Reject'>
-		</form>
-		<form action='updatecomplete/' method='post'>
-			{% csrf_token %}
-			<input type='submit' value='Update Complete'>
-		</form>
-		<form action='updatereject/' method='post'>
-			{% csrf_token %}
-			<input type='submit' value='Update Reject'>
-		</form>
-	</span>
-	<ul>
+	<br>
+	<h4>Job Information</h4>
 	{% for key, value in job_data.items %}
-	    <li>{{ key }}: {{ value }}</li>
+	    <li><label class='key'>{{ key }}: </label><label class='value'>{{ value }}</label></li>
 	{% endfor %}
-	</ul>
+	<br>
+	<h4>Job Events</h4>
+	<!-- comment line -->
+	<form method='post' id='form-send-event'>
+		{% csrf_token %}
+		<div class="dropdown">
+			<span class="dropbtnsta">
+			  	<button type='button' id='select-event'>--- Select Event --- &#11206;</button>
+			</span>
+			<div class="dropdown-status" id='div-dropdown-status'>
+			  	<button type='button' class='option' name='accept'>Accept</button>
+			  	<button type='button' class='option' name='reject'>Reject</button>
+			  	<button type='button' class='option' name='induct'>Induct</button>
+			  	<button type='button' class='option' name='complete'>Complete</button>
+			  	<button type='button' class='option' name='cancelcomplete'>Cancel Complete</button>
+			  	<button type='button' class='option' name='cancelreject'>Cancel Reject</button>
+			  	<button type='button' class='option' name='updatecomplete'>Update Complete</button>
+			  	<button type='button' class='option' name='updatereject'>Update Reject</button>
+			</div>
+		</div>
+		<button class='send-request' type='submit' name='btn-send-event' id='btn-send-event'>Send</button>
+		<div id="div-induct-robot">
+			<label id='lbl-induct-robot'>Robot: </label><input id='inp-induct-robot'type='entry' name='robot' value='{{ job_data.JobRobot }}'>
+		</div>
+	</form>
 
-	<ul>
+	<br>
+	<h4>Job Tasks</h4>
 	<table>
 		<thead>
 			<tr>
@@ -59,7 +50,7 @@
 			<tr>
 				<form method="post" action='task/'>
 					{% csrf_token %}
-					<td><input type='submit' value='Send'></td>
+					<td><input class='send-request' type='submit' value='Send'></td>
 		    		{% for field in form %}
 		        		<td>{{ field }}</td>
 		    		{% endfor %}
@@ -68,7 +59,28 @@
 		{% endfor %}
 		</tbody>
 	</table>
+	<br>
+	<h4>Event Log</h4>
+	<table id='table-job-events'>
+		<thead>
+			<tr>
+				<th>Event Type</th>
+				<th>Date</th>
+				<th>Event Info</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for event in events %}
+			<tr>
+				<td>{{ event.EventType }}</td>
+				<td>{{ event.JobDate }}</td>
+				<td>{{ event.EventInfo }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
 	</ul>
 
-<a href='/messagelocus/'>Back</a>
+    <a href="/messagelocus/{{ JobId }}/closejob/">Close Job</a>
+
 {% endblock %}

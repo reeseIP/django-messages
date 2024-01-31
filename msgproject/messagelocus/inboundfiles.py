@@ -22,4 +22,4 @@ for file in files:
 			os.remove(file_path)
 			print('File {} Processed'.format(file))
 		else:
-			print('File {} - Server Error - {}'.format(file, request.text))
+			print('File {} - Server Error - {}'.format(file, response.text))
