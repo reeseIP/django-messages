@@ -111,42 +111,112 @@ $('#modalSystem button.submit').on('click', function() {
 // modalTask close button click
 $('.taskData button.close').on('click', function() { 
 	var modalObject = $(this).closest('.modal');
+	modalObject.find('.task-sn-capture').empty();
 	modalObject.modal("toggle");
 });
 
 // modalTask toggle
 $('.btn-task-data').on('click', function() { 
 	var task = $(this).html();
-	var jobid = $('#jobview-jobinfo-id').find('label.value').html()
-	var target = $('#'+task+' .task-sn-capture')
-	target.css('display','block')
-
-	$.getJSON("/messagelocus/get_capture_field_data", {'JobId': jobid, 'JobTaskId': task}, function(response) {
-		var serQty = response.SerialQty
-		var serQtyEnt = response.SerialNumbers.length
-		var markup = "<div class='task-sn-capture-header'>\
-				 		<label class='task-sn-capture-label'>Serial Numbers (\
-				    	<label class='task-sn-capture-label'>"+serQtyEnt+"</label>\
-				    	/\
-				    	<label class='task-sn-capture-label'>"+serQty+"</label>\
-				    	):</label>\
-				    	</div>\
-				    	<div class='task-sn-capture-data'>"
-		
-		if (serQtyEnt == 0) {
-			while (serQty > 0) {
-    			markup = markup + "<form action='/messagelocus/validate_serial_number' method='post'>\
-    								<input class='task-sn-capture-input' id='"+task+"SN"+serQty+"'>\
-    								<button class='btn-sm btn-success submit' type='submit'>Validate</button>\
-    								</form>"
-    			serQty = serQty - 1
-    		}
+	var jobid = $('#jobview-jobinfo-id').find('label.value').html();
+	var target = $('#'+task+' .task-sn-capture');
+	target.css('display','block');
+	$.ajax({ 
+		url:"/messagelocus/get_capture_field_data/",
+		type: 'post',
+		data: {'csrfmiddlewaretoken':getCookie('csrftoken'), 'JobId': jobid, 'JobTaskId': task},
+		success: function(response) {
+			var serQty = response.SerialQty
+			var serQtyEnt = response.SerialNumbers.length
+			var serQtyReq = serQty - serQtyEnt
+			var serialnumbers = response.SerialNumbers
+			var markup = "<div class='task-sn-capture-header'>\
+					 		<label class='task-sn-capture-label'>Serial Numbers (\
+					    	<label class='task-sn-capture-label'>"+serQtyEnt+"</label>\
+					    	/\
+					    	<label class='task-sn-capture-label'>"+serQty+"</label>\
+					    	):</label>\
+					    	</div>\
+					    	<div class='task-sn-capture-data'>"
+			
+			while (serQtyReq > 0) {
+	    		markup = markup + "<div class='task-sn-input-row'>\
+	    							<input name='SN"+serQty+"' class='task-sn' id='"+task+"SN"+serQty+"'>\
+	    							<button class='btn-sm btn-success submit snValid' type='submit'>Validate</button>\
+	    							<button class='btn-sm btn-edit snEdit' type='button' style='display:none;'>Edit</button>\
+	    							</div>"
+	    		serQtyReq = serQtyReq - 1
+	    		serQty = serQty - 1
+	    	}
+	    	if (!(serQtyEnt == 0)) {
+	    		console.log(response.SerialNumbers)
+	    		$.each(serialnumbers, function(data) { 
+		    		markup = markup + "<div class='task-sn-input-row'>\
+		    							<input name='SN"+serQty+"' class='task-sn' value='"+serialnumbers[data]+"' disabled=disabled'>\
+		    							<button class='btn-sm btn-success submit snValid' type='submit' style='display: none;'>Validate</button>\
+		    							<button class='btn-sm btn-edit snEdit' type='button'>Edit</button>\
+		    							</div>"
+		    		serQtyReq = serQtyReq - 1
+		    		serQty = serQty - 1
+	    		});
+			}
+		target.append(markup)		
+		$('#'+task).modal('toggle');
 		}
-		else {
-
-		}
-		target.append(markup)
-		//$('#'+task+' .task-sn-capture').append(markup)
 	});
-	$('#'+task).modal('toggle');
+});
+
+$('form').on('click', 'button.snValid', function(e){
+    e.preventDefault();
+    var jobid = $('#jobview-jobinfo-id').find('label.value').html();
+    var jobtaskid = $(this).closest('div.taskData').attr('id');
+    var serialnumber = $(this).prev().val();
+    var target = $(this).prev();
+    var button = $(this).next();
+
+    $.ajax({
+        url: '/messagelocus/validate_serial_number/',
+        type: 'post',
+        data: {'csrfmiddlewaretoken': getCookie('csrftoken'),'JobId': jobid, 'JobTaskId': jobtaskid, 'SerialNumber':serialnumber},
+        success: function(response){
+        	if (response.status_code == 200) { 
+				target.attr('disabled','disabled')
+				button.toggle()
+				//target.parent().append("<button class='btn-sm btn-edit snEdit' type='button'>Edit</button>")
+				//update the captured serial number counter
+        	}
+        	else { 
+        		alert('Invalid Serial Number')
+        	}
+           
+        }
+    });
+    $(this).toggle()
+    //$(this).attr('display','none')
+});
+
+$('form.taskData').on('click', 'button.snEdit', function(e){
+    e.preventDefault();
+    $(this).parent().find('input').attr('disabled', false)
+    $(this).prev().toggle()
+    $(this).toggle()
+});
+
+$('form.taskData').on('click', 'button.taskSend', function(e){
+    e.preventDefault();
+    var jobid = $('#jobview-jobinfo-JobId').find('label.value').html();
+    var jobtaskid = $(this).closest('div.taskData').attr('id');
+    $.each($('#'+jobtaskid).find('.task-sn-capture-data').children(), function(child) { 
+    	$(this).find('input').attr('disabled', false)
+    	debugger;
+    });
+    $.ajax({
+        url: '/messagelocus/'+jobid+'/task/',
+        type: 'post',
+        data: $(this).closest('form').serialize(),
+        success: function(response){
+			$('#'+jobtaskid).find('.task-sn-capture').empty();
+        	$('#'+jobtaskid).modal('toggle');
+        }
+    });
 });

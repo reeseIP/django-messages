@@ -99,7 +99,7 @@
       <div class="modal-dialog">
         <!-- Modal content-->
         <div class="modal-content">
-       		<form method="post" action='task/'>
+       		<form class='taskData' method="post" action='task/'>
           <!--<form class="form" role="form" action='/messagelocus/set_target_user/' method="post">-->
 	            {% csrf_token %}
 	            <div class="modal-header">
@@ -121,7 +121,7 @@
 			    	</div>
 	            </div>
 	            <div class="modal-footer">
-	            	<button class="btn btn-success submit" type="submit">Send Task</button>
+	            	<button class="btn btn-success submit taskSend" type="submit">Send Task</button>
 	            	<button type="button" class="btn btn-default close" data-dismiss="modal">Close</button>
 	            </div>
         	</form>

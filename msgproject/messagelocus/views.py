@@ -21,7 +21,7 @@ import datetime
 # Create your views here.
 
 ### helper methods
-def send_request(request,job_data,job_type,event_type=None,event_info=None,tasks=None):
+def send_request(request,job_data,job_type,event_type=None,event_info=None,tasks=None,serial_number=None):
 	date = datetime.datetime.now().strftime(format='%Y-%m-%dT%H:%M:%S')
 	if job_type == 'OrderJob':
 		event_model = OrderJobEvents
@@ -60,16 +60,18 @@ def send_request(request,job_data,job_type,event_type=None,event_info=None,tasks
 											"RequestRobot":job_data['RequestRobot'],
 											"RequestUser": request.user.username
 											}}
-	#elif job_type == 'SerialValidation':
-	#	event_model = OrderJobEvents
-	#	job_message = {"EventType":event_type,
-	#					"JobId":job_data["JobId"],
-	#					"OrderId":,
-	#					"OrderLineId":,
-	#					"JobTaskId":,
-	#					"ItemNo":,
-	#					"Quantity":,
-	#					"Serial": }
+	elif job_type == 'SerialValidation':
+		event_model = OrderJobEvents
+		job_message = {"EventType": event_type,
+						"JobId": job_data["JobId"],
+						"OrderId": tasks['OrderId'],
+						"OrderLineId": tasks['OrderLineId'],
+						"JobTaskId": tasks['JobTaskId'],
+						"ItemNo": tasks['ItemNo'],
+						"Quantity": '1',
+						"Serial": serial_number}
+
+	return job_message
 
 	if event_model:
 		# event entry
@@ -82,8 +84,6 @@ def send_request(request,job_data,job_type,event_type=None,event_info=None,tasks
 		else:
 			event.EventInfo = '{} Job: {} Sent.'.format(event_type,job_data['JobId'])
 		event.save()
-
-	return
 
 	req_username = request.COOKIES['username']
 	req_system = request.COOKIES['system']
@@ -103,7 +103,7 @@ def send_request(request,job_data,job_type,event_type=None,event_info=None,tasks
 	#response = client.post(URL,
 	#						json=json.dumps(job_message))
 
-	if response:
+	if response and event_type != 'SERIAL':
 		if response.status_code == 200:
 			messages.success(request, '{} {} sent!'.format(job_type,event_type))
 		elif response.status_code != 200:
@@ -502,8 +502,19 @@ def sendtask(request, JobId):
 	''' send a PICK/PUT message for job '''
 	form_data = list(request.POST.items())
 	task_data = {}
+	serial_numbers = []
+
+	print(form_data)
+
 	for item in form_data[1:]:
-		task_data[item[0][7:]] = item[1]
+		if item[0][0:2] == 'SN':
+			# capture serial numbers
+			serial_numbers.append(item[1])
+		else:
+			# data in for is formatted form-X-fieldname, parse off form-X-
+			index = len(item[0])
+			index_of_dash = item[0].rfind('-', 0, index)
+			task_data[item[0][index_of_dash+1:]] = item[1]
 
 	job = get_job(JobId=JobId)
 	job_data = job['job_data']
@@ -511,10 +522,10 @@ def sendtask(request, JobId):
 
 	if job_type == 'OrderJob':
 		new_task = OrderTaskResults()
-		#send_request(request,job_data,job_type,"PICK",None,[task_data])
+		send_request(request,job_data,job_type,"PICK",None,[task_data])
 	elif job_type == 'PutawayJob':
 		new_task = PutawayTaskResults()
-		#send_request(request,job_data,job_type,"PUT",None,[task_data])	
+		send_request(request,job_data,job_type,"PUT",None,[task_data])	
 
 	# update the job data in the DB to capture the additional data sent
 	for key, value in task_data.items():
@@ -522,6 +533,13 @@ def sendtask(request, JobId):
 
 	new_task.JobId_id = job_data['id']
 	new_task.save()
+
+	for item in serial_numbers:
+		new_serial = OrderSerialNumbers()
+		new_serial.JobId_id = job_data['id']
+		new_serial.JobTaskId_id = new_task.id
+		new_serial.SerialNo = item
+		new_serial.save()
 
 	return redirect('/messagelocus/{}'.format(JobId))
 
@@ -550,8 +568,8 @@ def set_target_user(request):
 
 @login_required
 def get_capture_field_data(request):
-	JobId = request.GET['JobId']
-	JobTaskId = request.GET['JobTaskId']
+	JobId = request.POST['JobId']
+	JobTaskId = request.POST['JobTaskId']
 	serial_numbers = []
 
 	task_obj = OrderTasks.objects.filter(JobTaskId=JobTaskId)[0]
@@ -565,3 +583,14 @@ def get_capture_field_data(request):
 
 	return JsonResponse({'SerialQty': var_ser_qty,
 						 'SerialNumbers': serial_numbers})
+
+
+@login_required
+def validate_serial_number(request):
+	if request.method == 'POST':
+		job_data = OrderJobs.objects.filter(id=request.POST['JobId'])[0].get_data()
+		task_data = OrderTaskResults.get_last_task(JobId=request.POST['JobId'],JobTaskId=request.POST['JobTaskId']).get_data()
+		job_message = send_request(request,job_data=job_data,job_type='SerialValidation',event_type='SERIAL',event_info=None,tasks=task_data,serial_number=request.POST['SerialNumber'])
+		response = {}
+		response['status_code'] = 200
+		return JsonResponse(response)

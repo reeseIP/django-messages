@@ -11,6 +11,7 @@ urlpatterns = [
 	path("putawayjobrequest/", views.putawayjobrequest, name='putawayjobrequest'),
 	path("set_target_user/", views.set_target_user, name='set_target_user'),
 	path("get_capture_field_data/", views.get_capture_field_data, name='get_capture_field_data'),
+	path("validate_serial_number/", views.validate_serial_number, name='validate_serial_number'),
 	path("<JobId>/", views.jobview, name='jobview'),
 	path("<JobId>/accept/", views.sendaccept, name='sendaccept'),
 	path("<JobId>/reject/", views.sendreject, name='sendreject'),
