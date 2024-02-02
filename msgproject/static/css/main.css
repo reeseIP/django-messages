@@ -141,3 +141,58 @@ th, td {
   padding-left: 5px;
   padding-right: 5px;
 }
+
+#table-job-events {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+#table-job-tasks {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+#jobview-div-job-info label.key {
+  min-width: 145px;
+}
+
+/*
+#jobview-div-header{
+  display:flex;
+  width:100%;
+  justify-content: left;
+}*/
+
+.modal {
+  overflow: hidden !important;
+}
+
+.modal-content, .modal-dialog {
+  max-width: fit-content !important;
+}
+
+.taskData input {
+  max-height: 22px;
+}
+
+label.task-data {
+  min-width: 128px;
+}
+
+.task-sn-capture-data{
+  display: grid;
+}
+
+.taskData div.modal-body {
+  display: flex;
+  justify-content: left;
+}
+
+div.task-data, div.task-sn-capture {
+  display: inline-block;
+  padding-right: 50px;
+}
+
+span {
+  display: flex;
+}

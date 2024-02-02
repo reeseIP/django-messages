@@ -64,7 +64,7 @@ $('#div-dropdown-status button.option').on('click', function(){
 	else {
 		$('#div-induct-robot').hide();
 	}
-	$('#select-event').html(name);
+	$('#select-event').html(name+' \u2BC6');
 	$('#form-send-event').attr('action',action+'/');
 	$('#div-dropdown-status').toggle();
 });
@@ -83,7 +83,7 @@ $('#div-dropdown-system button.option').on('click', function(){
 	sessionStorage.system = name;
 });
 
-// modal system close button click
+// modalSystem close button click
 $('#modalSystem button.close').on('click', function() { 
 	var modalObject = $(this).closest('.modal');
 	sessionStorage.system = getCookie('system');
@@ -91,7 +91,7 @@ $('#modalSystem button.close').on('click', function() {
 	clearModal(modalObject);
 });
 
-// modal system close button click
+// modalSystem close button click
 $('#modalSystem button.submit').on('click', function() {
 	var modalObject = $(this).closest('.modal');
 	$.post('/messagelocus/set_target_user/', {csrfmiddlewaretoken:getCookie('csrftoken'), sessionid:getCookie('sessionid'), system:sessionStorage.system, username:$("#tarSysUser").val(), password:$("#tarSysPass").val()}, function(result) {
@@ -106,4 +106,47 @@ $('#modalSystem button.submit').on('click', function() {
 		}
 		clearModal(modalObject);
  	 });
+});
+
+// modalTask close button click
+$('.taskData button.close').on('click', function() { 
+	var modalObject = $(this).closest('.modal');
+	modalObject.modal("toggle");
+});
+
+// modalTask toggle
+$('.btn-task-data').on('click', function() { 
+	var task = $(this).html();
+	var jobid = $('#jobview-jobinfo-id').find('label.value').html()
+	var target = $('#'+task+' .task-sn-capture')
+	target.css('display','block')
+
+	$.getJSON("/messagelocus/get_capture_field_data", {'JobId': jobid, 'JobTaskId': task}, function(response) {
+		var serQty = response.SerialQty
+		var serQtyEnt = response.SerialNumbers.length
+		var markup = "<div class='task-sn-capture-header'>\
+				 		<label class='task-sn-capture-label'>Serial Numbers (\
+				    	<label class='task-sn-capture-label'>"+serQtyEnt+"</label>\
+				    	/\
+				    	<label class='task-sn-capture-label'>"+serQty+"</label>\
+				    	):</label>\
+				    	</div>\
+				    	<div class='task-sn-capture-data'>"
+		
+		if (serQtyEnt == 0) {
+			while (serQty > 0) {
+    			markup = markup + "<form action='/messagelocus/validate_serial_number' method='post'>\
+    								<input class='task-sn-capture-input' id='"+task+"SN"+serQty+"'>\
+    								<button class='btn-sm btn-success submit' type='submit'>Validate</button>\
+    								</form>"
+    			serQty = serQty - 1
+    		}
+		}
+		else {
+
+		}
+		target.append(markup)
+		//$('#'+task+' .task-sn-capture').append(markup)
+	});
+	$('#'+task).modal('toggle');
 });

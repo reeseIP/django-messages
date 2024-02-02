@@ -2,11 +2,11 @@
 from django.db import IntegrityError
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, render, redirect
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.forms import formset_factory
 from django.views.decorators.csrf import csrf_exempt
-from .models import OrderJobData, OrderTaskData, PutawayJobData, PutawayTaskData, ExternalUsers, ExternalSystems, OrderTaskResultData, PutawayTaskResultData, OrderJobEvents, PutawayJobEvents
-from .forms import OrderTaskDataForm, PutawayTaskDataForm
+from .models import OrderJobs, OrderTasks, PutawayJobs, PutawayTasks, ExternalUsers, ExternalSystems, OrderTaskResults, PutawayTaskResults, OrderSerialNumbers, OrderJobEvents, PutawayJobEvents
+from .forms import OrderTasksForm, PutawayTasksForm
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -60,17 +60,30 @@ def send_request(request,job_data,job_type,event_type=None,event_info=None,tasks
 											"RequestRobot":job_data['RequestRobot'],
 											"RequestUser": request.user.username
 											}}
+	#elif job_type == 'SerialValidation':
+	#	event_model = OrderJobEvents
+	#	job_message = {"EventType":event_type,
+	#					"JobId":job_data["JobId"],
+	#					"OrderId":,
+	#					"OrderLineId":,
+	#					"JobTaskId":,
+	#					"ItemNo":,
+	#					"Quantity":,
+	#					"Serial": }
+
 	if event_model:
 		# event entry
 		event = event_model()
 		event.JobId_id = job_data['id']
 		event.EventType = event_type
 		event.JobDate = date
-		if event_type == 'PICK' or event_type == 'PUT':
+		if event_type == 'PICK' or event_type == 'PUT' or event_type == 'SERIAL':
 			event.EventInfo = '{} Job: {} Task: {} Sent.'.format(event_type,job_data['JobId'],tasks[0]['JobTaskId'])
 		else:
 			event.EventInfo = '{} Job: {} Sent.'.format(event_type,job_data['JobId'])
 		event.save()
+
+	return
 
 	req_username = request.COOKIES['username']
 	req_system = request.COOKIES['system']
@@ -100,11 +113,11 @@ def send_request(request,job_data,job_type,event_type=None,event_info=None,tasks
 
 def get_job(JobId):
 	try:
-		job = OrderJobData.objects.filter(JobId=JobId)[0]
+		job = OrderJobs.objects.filter(JobId=JobId)[0]
 		job_type = 'OrderJob'
 	except IndexError:
 		try:
-			job = PutawayJobData.objects.filter(JobId=JobId)[0]
+			job = PutawayJobs.objects.filter(JobId=JobId)[0]
 			job_type = 'PutawayJob'
 		except IndexError:
 			job = None
@@ -151,8 +164,8 @@ def logout_user(request):
 @login_required
 def active(request):
 	''' landing page - list of jobs'''
-	orders = OrderJobData.objects.filter(active=True).order_by('-JobId')[:]
-	putaways = PutawayJobData.objects.filter(active=True).order_by('-JobId')[:]
+	orders = OrderJobs.objects.filter(active=True).order_by('-JobId')[:]
+	putaways = PutawayJobs.objects.filter(active=True).order_by('-JobId')[:]
 
 	orderjob_list = []
 	putawayjob_list = []
@@ -174,8 +187,8 @@ def active(request):
 @login_required
 def closed(request):
 	''' landing page - list of jobs'''
-	orders = OrderJobData.objects.filter(active=False).order_by('-JobId')[:]
-	putaways = PutawayJobData.objects.filter(active=False).order_by('-JobId')[:]
+	orders = OrderJobs.objects.filter(active=False).order_by('-JobId')[:]
+	putaways = PutawayJobs.objects.filter(active=False).order_by('-JobId')[:]
 
 	orderjob_list = []
 	putawayjob_list = []
@@ -214,7 +227,7 @@ def inbound(request):
 	''' inbound messages '''
 	if request.method == 'POST':
 		auth_header = request.META['HTTP_AUTHORIZATION']
-		encoded_credentials = auth_header.split(' ')[1]  # Removes "Basic " to isolate credentials
+		encoded_credentials = auth_header.split(' ')[1] # Removes "Basic " to isolate credentials
 		decoded_credentials = base64.b64decode(encoded_credentials).decode("utf-8").split(':')
 		username = decoded_credentials[0]
 		password = decoded_credentials[1]
@@ -224,14 +237,14 @@ def inbound(request):
 			for k1, v1 in json_data.items():
 				# outermost structure (Message Type)
 				if k1 == 'OrderJob':
-					job_model = OrderJobData
-					task_model = OrderTaskData
-					task_result_model = OrderTaskResultData
+					job_model = OrderJobs
+					task_model = OrderTasks
+					task_result_model = OrderTaskResults
 					event_model = OrderJobEvents
 				elif k1 == 'PutawayJob':
-					job_model = PutawayJobData
-					task_model = PutawayTaskData
-					task_result_model = PutawayTaskResultData
+					job_model = PutawayJobs
+					task_model = PutawayTasks
+					task_result_model = PutawayTaskResults
 					event_model = PutawayJobEvents
 				else:
 					return HttpResponse('Error - Incorrect Message Type')
@@ -334,42 +347,39 @@ def jobview(request, JobId):
 	job_type = job['job_type']
 
 	if job_type == 'OrderJob':
-		TaskDataFormSet = formset_factory(OrderTaskDataForm, extra=0)
-		tasks = OrderTaskResultData.objects.filter(JobId_id=job_data['id']).order_by('JobTaskId')[:]
-		events = OrderJobEvents.objects.filter(JobId_id=job_data['id']).order_by('-JobDate')[:]
+		task_model = OrderTaskResults
+		event_model = OrderJobEvents
+		TaskDataFormSet = formset_factory(OrderTasksForm, extra=0)
 	elif job_type == 'PutawayJob':
-		TaskDataFormSet = formset_factory(PutawayTaskDataForm, extra=0)
-		tasks = PutawayTaskResultData.objects.filter(JobId_id=job_data['id']).order_by('JobTaskId')[:]
-		events = PutawayJobEvents.objects.filter(JobId_id=job_data['id']).order_by('-JobDate')[:]
+		task_model = PutawayTaskResults
+		event_model =PutawayJobEvents
+		TaskDataFormSet = formset_factory(PutawayTasksForm, extra=0)
 
+	tasks = task_model.objects.filter(JobId_id=job_data['id']).order_by('JobTaskId')[:]
+	events = event_model.objects.filter(JobId_id=job_data['id']).order_by('-JobDate')[:]
+	
 	job_events = []
 	for event in events:
 		job_events.append({'EventType':event.EventType,
 							'JobDate':event.JobDate,
-							'EventInfo':event.EventInfo})
-
-	del job_data['id'] # dont want to pass this to the html template
-	del job_data['active']
-	
+							'EventInfo':event.EventInfo})	
 	task_data = []
-	task_header = []
-	
-	for task in tasks:
-		task_data.append(task.get_data())
 
-	for item in task_data:
-		del item['id']
-		for key, value in item.items():
-			setattr(task,key,value)
-			task_header.append(key)
-		
+	d = {x.JobTaskId: x for x in tasks}
+	mylist = list(d.values())
+
+	for task in mylist:
+		last_task = task_model.get_last_task(job_data['id'],task.JobTaskId)
+		task_data.append(last_task.get_data())
+
 	formset = TaskDataFormSet(initial=task_data)
 
-	task_header = list(dict.fromkeys(task_header))
+	# keep hidden on page
+	#del job_data['id'] 
+	#del job_data['active']
 
 	return render(request, "messagelocus/jobview.html", {'JobId': JobId,
 														 'job_data': job_data,
-														 'task_header': task_header,
 														 'formset': formset,
 														 'events': job_events,
 														 })
@@ -434,17 +444,19 @@ def sendcomplete(request, JobId):
 
 	task_data = []
 	if job_type == 'OrderJob':
-		tasks = OrderTaskResultData.objects.filter(JobId_id=job_data['id'])
+		tasks = OrderTaskResults.objects.filter(JobId_id=job_data['id'])
 		for task in tasks:
 			task_info = task.get_data()
 			del task_info['id']
+			del task_info['timestamp']
 			task_data.append(task_info)
 		send_request(request,job_data,job_type,"PICKCOMPLETE",None,tasks=task_data)
 	elif job_type == 'PutawayJob':
-		tasks = PutawayTaskResultData.objects.filter(JobId_id=job_data['id'])
+		tasks = PutawayTaskResults.objects.filter(JobId_id=job_data['id'])
 		for task in tasks:
 			task_info = task.get_data()
 			del task_info['id']
+			del task_info['timestamp']
 			task_data.append(task_info)
 		send_request(request,job_data,job_type,"PUTCOMPLETE",None,tasks=task_data)						
 	return redirect('/messagelocus/{}'.format(JobId))
@@ -498,9 +510,19 @@ def sendtask(request, JobId):
 	job_type = job['job_type']
 
 	if job_type == 'OrderJob':
-		send_request(request,job_data,job_type,"PICK",None,[task_data])
+		new_task = OrderTaskResults()
+		#send_request(request,job_data,job_type,"PICK",None,[task_data])
 	elif job_type == 'PutawayJob':
-		send_request(request,job_data,job_type,"PUT",None,[task_data])						
+		new_task = PutawayTaskResults()
+		#send_request(request,job_data,job_type,"PUT",None,[task_data])	
+
+	# update the job data in the DB to capture the additional data sent
+	for key, value in task_data.items():
+		setattr(new_task,key,value)
+
+	new_task.JobId_id = job_data['id']
+	new_task.save()
+
 	return redirect('/messagelocus/{}'.format(JobId))
 
 @login_required
@@ -509,17 +531,37 @@ def set_target_user(request):
 		req_user = request.POST["username"] 
 		req_syst = request.POST["system"]
 
-		user = ExternalUsers.objects.filter(username=req_user,system=req_syst)[0]
-		user = ExternalUsers()
-		user.username = request.POST["username"] 
-		user.password = request.POST["password"]
-		user.csrf_token = request.POST["csrfmiddlewaretoken"]
-		user.sessionid = request.POST["sessionid"]
-		user.system = request.POST["system"]
-		user.created_by = request.user
 		try:
-			user.save()
-			return HttpResponse('Temporary User Created')
-		except IntegrityError:
-			#messages.error(request, 'Invalid User')
-			return HttpResponse('Invalid User')
+			user = ExternalUsers.objects.filter(username=req_user,system=req_syst)[0]
+			return HttpResponse('User Already Valid')
+		except IndexError:
+			user = ExternalUsers()
+			user.username = request.POST["username"] 
+			user.password = request.POST["password"]
+			user.csrf_token = request.POST["csrfmiddlewaretoken"]
+			user.sessionid = request.POST["sessionid"]
+			user.system = request.POST["system"]
+			user.created_by = request.user
+			try:
+				user.save()
+				return HttpResponse('Temporary User Created')
+			except IntegrityError:
+				return HttpResponse('Invalid User')
+
+@login_required
+def get_capture_field_data(request):
+	JobId = request.GET['JobId']
+	JobTaskId = request.GET['JobTaskId']
+	serial_numbers = []
+
+	task_obj = OrderTasks.objects.filter(JobTaskId=JobTaskId)[0]
+	var_ser_qty = task_obj.CaptureSerialNoQty
+
+	task_obj = OrderTaskResults.get_last_task(JobId=JobId,JobTaskId=JobTaskId)
+	serial_obj = OrderSerialNumbers.objects.filter(JobTaskId_id=task_obj.id)
+	if serial_obj:
+		for obj in serial_obj:
+			serial_numbers.append(obj.SerialNo)
+
+	return JsonResponse({'SerialQty': var_ser_qty,
+						 'SerialNumbers': serial_numbers})

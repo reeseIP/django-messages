@@ -1,9 +1,9 @@
 from django import forms
-from .models import OrderTaskResultData, PutawayTaskResultData
+from .models import OrderTaskResults, PutawayTaskResults
 
-class OrderTaskDataForm(forms.ModelForm):
+class OrderTasksForm(forms.ModelForm):
 	class Meta:
-		model = OrderTaskResultData
+		model = OrderTaskResults
 		fields = "__all__"
 		exclude = ['JobId']
 		
@@ -16,9 +16,9 @@ class OrderTaskDataForm(forms.ModelForm):
 		self.fields["JobTaskId"].widget.attrs["readonly"] = True
 		self.fields["TaskType"].widget.attrs["readonly"] = True
 
-class PutawayTaskDataForm(forms.ModelForm):
+class PutawayTasksForm(forms.ModelForm):
 	class Meta:
-		model = PutawayTaskResultData
+		model = PutawayTaskResults
 		fields = "__all__"
 		exclude = ['JobId']
 		

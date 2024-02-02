@@ -13,8 +13,7 @@ def hlp_get_data(obj_inst):
 	return(data)
 
 
-class OrderJobData(models.Model):
-	#EventType = models.CharField(max_length=50)
+class OrderJobs(models.Model):
 	JobId = models.CharField(max_length=50)
 	JobDate = models.CharField(max_length=25)
 	JobPriority = models.CharField(max_length=10,blank=True,null=True)
@@ -36,8 +35,8 @@ class OrderJobData(models.Model):
 		return hlp_get_data(self)
 
 
-class OrderTaskData(models.Model):
-	JobId = models.ForeignKey(OrderJobData, on_delete=models.CASCADE)
+class OrderTasks(models.Model):
+	JobId = models.ForeignKey(OrderJobs, on_delete=models.CASCADE)
 	JobTaskId = models.CharField(max_length=50)
 	EventAction = models.CharField(max_length=50,blank=True,null=True)
 	OrderId = models.CharField(max_length=50,blank=True,null=True)
@@ -91,8 +90,8 @@ class OrderTaskData(models.Model):
 		return hlp_get_data(self)
 
 
-class OrderTaskResultData(models.Model):
-	JobId = models.ForeignKey(OrderJobData, on_delete=models.CASCADE)
+class OrderTaskResults(models.Model):
+	JobId = models.ForeignKey(OrderJobs, on_delete=models.CASCADE)
 	JobTaskId = models.CharField(max_length=50)
 	OrderId = models.CharField(max_length=50,blank=True,null=True)
 	OrderLineId = models.CharField(max_length=50,blank=True,null=True)
@@ -123,19 +122,25 @@ class OrderTaskResultData(models.Model):
 	Custom10 = models.CharField(max_length=250,blank=True,null=True)
 	LotNo = models.CharField(max_length=250,blank=True,null=True)
 	SerialNo = models.CharField(max_length=250,blank=True,null=True)
+	timestamp = models.DateTimeField(auto_now=True)
+
+	@classmethod
+	def get_last_task(cls,JobId,JobTaskId):
+		''' get the data for the last task sent '''
+		tasks = cls.objects.filter(JobId_id=JobId,JobTaskId=JobTaskId).order_by('-timestamp')
+		return tasks[0]
 
 	def __str__(self):
-		return self.JobTaskId
+		return ('{}: {}'.format(self.id, self.JobTaskId))
 
 	def __repr__(self):
-		return self.JobTaskId
+		return ('{}: {}'.format(self.id, self.JobTaskId))
 
 	def get_data(self):
 		return hlp_get_data(self)
 
-class PutawayJobData(models.Model):
-	#EventType = models.CharField(max_length=50)
-	#EventInfo = models.CharField(max_length=50,blank=True,null=True)
+
+class PutawayJobs(models.Model):
 	LicensePlate = models.CharField(max_length=50)
 	RequestId = models.CharField(max_length=50)
 	JobId = models.CharField(max_length=50)
@@ -154,8 +159,8 @@ class PutawayJobData(models.Model):
 		return hlp_get_data(self)
 
 
-class PutawayTaskData(models.Model):
-	JobId = models.ForeignKey(PutawayJobData, on_delete=models.CASCADE)
+class PutawayTasks(models.Model):
+	JobId = models.ForeignKey(PutawayJobs, on_delete=models.CASCADE)
 	JobTaskId = models.CharField(max_length=50)
 	EventAction = models.CharField(max_length=50,blank=True,null=True)
 	InnerLicensePlate = models.CharField(max_length=50,blank=True,null=True)
@@ -205,8 +210,8 @@ class PutawayTaskData(models.Model):
 		return hlp_get_data(self)
 
 
-class PutawayTaskResultData(models.Model):
-	JobId = models.ForeignKey(PutawayJobData, on_delete=models.CASCADE)
+class PutawayTaskResults(models.Model):
+	JobId = models.ForeignKey(PutawayJobs, on_delete=models.CASCADE)
 	JobTaskId = models.CharField(max_length=50)
 	InnerLicensePlate = models.CharField(max_length=50,blank=True,null=True)
 	OrderId = models.CharField(max_length=50,blank=True,null=True)
@@ -238,22 +243,35 @@ class PutawayTaskResultData(models.Model):
 	Custom8 = models.CharField(max_length=250,blank=True,null=True)
 	Custom9 = models.CharField(max_length=250,blank=True,null=True)
 	Custom10 = models.CharField(max_length=250,blank=True,null=True)
+	timestamp = models.DateTimeField(auto_now=True)
+
+	@classmethod
+	def get_last_task(cls,JobId,JobTaskId):
+		''' get the data for the last task sent '''
+		tasks = cls.objects.filter(JobId_id=JobId,JobTaskId=JobTaskId).order_by('-timestamp')
+		return tasks[0]
 
 	def __str__(self):
-		return self.JobTaskId
+		return ('{}: {}'.format(self.id, self.JobTaskId))
 
 	def __repr__(self):
-		return self.JobTaskId
+		return ('{}: {}'.format(self.id, self.JobTaskId))
 
 	def get_data(self):
 		return hlp_get_data(self)
 
 
 class OrderJobEvents(models.Model):
-	JobId = models.ForeignKey(OrderJobData, on_delete=models.CASCADE)
+	JobId = models.ForeignKey(OrderJobs, on_delete=models.CASCADE)
 	EventType = models.CharField(max_length=50)
 	JobDate = models.CharField(max_length=25)
 	EventInfo = models.CharField(max_length=250)
+	timestamp = models.DateTimeField(auto_now=True)
+
+	@classmethod
+	def get_last_event(cls,JobId):
+		last_event = cls.objects.filter(JobId=JobId).order_by('-timestamp')
+		return last_event[0]
 
 	def __str__(self):
 		return('{}: {}'.format(self.JobId, self.EventType))
@@ -266,11 +284,11 @@ class OrderJobEvents(models.Model):
 	
 
 class PutawayJobEvents(models.Model):
-	JobId = models.ForeignKey(PutawayJobData, on_delete=models.CASCADE)
+	JobId = models.ForeignKey(PutawayJobs, on_delete=models.CASCADE)
 	EventType = models.CharField(max_length=50)
 	JobDate = models.CharField(max_length=25)
 	EventInfo = models.CharField(max_length=250)
-
+	timestamp = models.DateTimeField(auto_now=True)
 
 	def __str__(self):
 		return('{}: {}'.format(self.JobId, self.EventType))
@@ -280,6 +298,15 @@ class PutawayJobEvents(models.Model):
 
 	def get_data(self):
 		return hlp_get_data(self)
+
+	def get_last_event(JobId):
+		return
+
+
+class OrderSerialNumbers(models.Model):
+	JobId = models.ForeignKey(OrderJobs, on_delete=models.CASCADE)
+	JobTaskId = models.ForeignKey(OrderTaskResults, on_delete=models.CASCADE)
+	SerialNo = models.CharField(max_length=100,null=False)
 
 
 class ExternalUsers(models.Model):
