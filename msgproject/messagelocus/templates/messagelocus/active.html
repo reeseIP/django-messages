@@ -24,10 +24,7 @@
 {% if putawayjob_list %}
     <div class='putaway-header'>
         <h1>Putaway Jobs</h1>
-            <form action="/messagelocus/putawayjobrequest/" method='get' id='putaway-request'>
-            {% csrf_token %}
-            <input type='submit' value='Request'>
-        </form>
+        <button type='button' id='active-button-putaway-request'>Request</button>
     </div>
     <table id='table-putaway-job'>
         <thead>
@@ -50,5 +47,35 @@
 {% if not orderjob_list and not putawayjob_list %}
     <p>No jobs are available.</p>
 {% endif %}
+
+    <div class="modal fade" id="active-modal-putaway-request" role="dialog">
+      <div class="modal-dialog">
+        <!-- Modal content-->
+        <div class="modal-content">
+            <form class='putaway-request' id='active-form-putaway-request'>
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h4 class="modal-title">Putaway Job Request</h4>
+                </div>
+                <div class="modal-body">
+                    <div class='putaway-request'>
+                        <div class='putaway-request-licenseplate'>
+                            <label class='putaway-request'>License Plate:</label>
+                            <input type='entry' name='licenseplate'>
+                        </div>
+                        <div class='putaway-request-requestrobot'>
+                            <label class='putaway-request'>Request Robot:</label>
+                            <input type='entry' name='requestrobot'>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success submit" type="submit">Request Job</button>
+                    <button type="button" class="btn btn-default close" data-dismiss="modal">Close</button>
+                </div>
+            </form>
+        </div>
+      </div>
+    </div>
 
 {% endblock %}

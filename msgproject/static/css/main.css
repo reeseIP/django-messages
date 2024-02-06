@@ -1,7 +1,7 @@
 /* static/css/main.css */
 
 /* ----------- element styles ----------- */
-table {
+/*table {
   display: block;
   width: 100%;
   border: 1px solid #000;
@@ -12,11 +12,11 @@ table {
 
 th, td {
   padding-left: 5px;
-}
+}*/
 
 
 /* ----------- class styles ----------- */
-.key {
+/*.key {
   padding-right: 5px;
   font-weight: bold;
 }
@@ -25,25 +25,27 @@ th, td {
   max-height: 400px;
   overflow-y: auto;
  } 
-
+*/
 .site-content {
-  padding-top: 5rem;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
 }
 
+/*
 .putaway-header { 
   display: inline-flex;
   align-items: center;
- }
+ }*/
 
-/* The container <div> - needed to position the dropdown content */
+/* The container <div> - needed to position the dropdown content
 .dropdown {
   position: static;
   display: inline-block;
   vertical-align: middle;
   align-items: center;
-}
+} */
 
-/* Dropdown Content (Hidden by Default) */
+/* Dropdown Content (Hidden by Default) 
 .dropdown-content, .dropdown-status {
   display: none;
   position: absolute;
@@ -51,20 +53,20 @@ th, td {
   min-width: inherit;
   box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
   z-index: 1;
-}
+}*/
 
-/* Links inside the dropdown */
+/* Links inside the dropdown 
 .dropdown-content a, .dropdown-status button {
   color: black;
   padding: 8px 10px;
   display: block;
   margin-right: auto;
-}
+}*/
 
-/* Change color of dropdown links on hover */
+/* Change color of dropdown links on hover 
 .dropdown-content a:hover, .dropdown-status button:hover {
   background-color: #ddd;
-}
+}*/
 
 /* Show the dropdown menu on hover
 .dropdown:hover .dropdown-content, .dropdown:hover .dropdown-status {
@@ -75,7 +77,7 @@ th, td {
 /*.dropdown:hover .dropbtnsys, .dropdown:hover .dropbtnsta {
   background-color: #AED6F1;
   cursor: pointer;
-}*/
+}
 
 .option {
   border: none;
@@ -89,20 +91,21 @@ th, td {
 .nav-item{
   padding-right: 10px;
   padding-left: 10px;
-}
+}*/
 
 
 /* ----------- id styles ----------- */
 
+/*
 #select-system {
   border: none;
   background: none;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(0, 0, 0, 0.65);
 }
 
 #select-system:hover {
   color: rgba(255, 255, 255, 0.75);
-}
+}*/
 
 #div-induct-robot {
   padding-top: 5px;
@@ -113,19 +116,42 @@ th, td {
   padding-right: 5px;
 }
 
+/*
 #select-event, #div-dropdown-status button {
   min-width: 200px;
 }
 
-#select-system, #div-dropdown-system button {
+#dropdown-system, #div-dropdown-system button {
   min-width: 65px;
 }
-
+*/
+/*
 #navbar-items-right{
   justify-content: right;
   display: inline-flex;
   align-items: center;
   vertical-align: middle;
+}
+
+#navbarNav { 
+  justify-content: space-between;
+ }
+
+
+.bg-light { 
+    background-color: ;
+ }
+*/
+div.container {
+  justify-content: left !important  ;
+}
+
+#base-ul-dropdown-system-options {
+  max-width: 200px;
+}
+
+#base-input-navbar-search {
+    width: 200px;
 }
 
 #putaway-request { 
@@ -137,17 +163,17 @@ th, td {
   overflow-y: auto;
  }
 
- #table-job-events td, #table-job-events th, #table-order-job th, #table-putaway-job th, #table-order-job td, #table-putaway-job td {
+ #jobview-table-job-events td, #jobview-table-job-events th, #table-order-job th, #table-putaway-job th, #table-order-job td, #table-putaway-job td {
   padding-left: 5px;
   padding-right: 5px;
 }
 
-#table-job-events {
+#jobview-table-job-events {
   max-height: 200px;
   overflow-y: auto;
 }
 
-#table-job-tasks {
+#jobview-table-job-tasks {
   max-height: 200px;
   overflow-y: auto;
 }
@@ -179,6 +205,14 @@ label.task-data {
   min-width: 128px;
 }
 
+label.putaway-request { 
+  min-width: 115px;
+ }
+
+label.system-auth {
+  min-width: 80px;
+}
+
 .task-sn-capture{
   display: grid;
 }
@@ -195,4 +229,10 @@ div.task-data, div.task-sn-capture {
 
 span {
   display: flex;
+}
+
+.jobview-header {
+  border-bottom: solid;
+  border-bottom-width: thin;
+  border-bottom-color: black !important;
 }

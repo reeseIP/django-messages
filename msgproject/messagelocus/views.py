@@ -380,6 +380,7 @@ def jobview(request, JobId):
 
 	return render(request, "messagelocus/jobview.html", {'JobId': JobId,
 														 'job_data': job_data,
+														 'job_type': job_type,
 														 'formset': formset,
 														 'events': job_events,
 														 })
@@ -387,15 +388,14 @@ def jobview(request, JobId):
 @login_required
 def putawayjobrequest(request):
 	''' request a putawayjob from SAP system '''
-	if request.method == 'GET':
-		return render(request, "messagelocus/putawayjobrequest.html")
-	elif request.method == 'POST':
+	if request.method == 'POST':
 		job_data = {'LicensePlate':request.POST['licenseplate'],
 					'RequestRobot':request.POST['requestrobot'],}
 		
 		send_request(request,job_data,job_type='PutawayRequest')
 		messages.success(request,'Putaway Job Requested')
-		return redirect('/messagelocus/putawayjobrequest')
+		return JsonResponse({'response':'valid'})
+		#return redirect('/messagelocus/putawayjobrequest')
 
 
 @login_required
@@ -534,6 +534,8 @@ def sendtask(request, JobId):
 	new_task.JobId_id = job_data['id']
 	new_task.save()
 
+	print(serial_numbers)
+
 	for item in serial_numbers:
 		new_serial = OrderSerialNumbers()
 		new_serial.JobId_id = job_data['id']
@@ -542,6 +544,16 @@ def sendtask(request, JobId):
 		new_serial.save()
 
 	return redirect('/messagelocus/{}'.format(JobId))
+
+
+@login_required
+def sendprint(request,JobId):
+	job = get_job(JobId=JobId)
+	job_data = job['job_data']
+	job_type = job['job_type']
+	send_request(request,job_data,job_type,"PRINT","LOCL")
+	return redirect('/messagelocus/{}'.format(JobId))
+
 
 @login_required
 def set_target_user(request):

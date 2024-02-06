@@ -5,7 +5,8 @@
 	<br>
 	<div id= 'jobview-div-header'>
 		<div id='jobview-div-job-info'>
-			<h4>Job Information</h4>
+			<h4 class='jobview-header'>Job Information</h4>
+			<ul>
 			{% for key, value in job_data.items %}
 				{% if key == 'id' or key == 'active' %}
 			    <li id='jobview-jobinfo-{{ key }}' style='display: none;'>
@@ -17,6 +18,7 @@
 			    </li>
 			    {% endif %}
 			{% endfor %}
+		</ul>
 		</div>
 		<br>
 		<div id='jobview-div-job-events'>
@@ -24,11 +26,28 @@
 			<!-- comment line -->
 			<form method='post' id='form-send-event'>
 				{% csrf_token %}
-				<div class="dropdown">
+				<!--<div class="dropdown">
 					<span class="dropbtnsta">
 					  	<button type='button' id='select-event'>--- Select Event --- &#11206;</button>
-					</span>
-					<div class="dropdown-status" id='div-dropdown-status'>
+					</span>-->
+	                  <div class="nav-item dropdown">
+	                  <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" id="jobview-a-dropdown-event">Select Event</a>
+	                  <ul class="dropdown-menu" aria-labelledby="navbarDropdown" id='jobview-ul-dropdown-event-options'>
+	                    <li><a class="dropdown-item" href="#" name='accept'>Accept</a></li>
+	                    <li><a class="dropdown-item" href="#" name='reject'>Reject</a></li>
+	                    <li><a class="dropdown-item" href="#" name='induct'>Induct</a></li>
+	                    <li><a class="dropdown-item" href="#" name='complete'>Complete</a></li>
+	                    <li><a class="dropdown-item" href="#" name='cancelcomplete'>Cancel Complete</a></li>
+	                    <li><a class="dropdown-item" href="#" name='cancelreject'>Cancel Reject</a></li>
+	                    <li><a class="dropdown-item" href="#" name='updatecomplete'>Update Complete</a></li>
+	                    <li><a class="dropdown-item" href="#" name='updatereject'>Update Reject</a></li>
+	                    {% if job_type == 'OrderJob' %}
+					  		<li><a class="dropdown-item" href="#" name='print'>Print</a></li>
+					  	{% endif %}
+	                    
+	                  </ul>
+	                </div>
+					<!--<div class="dropdown-status" id='div-dropdown-status'>
 					  	<button type='button' class='option' name='accept'>Accept</button>
 					  	<button type='button' class='option' name='reject'>Reject</button>
 					  	<button type='button' class='option' name='induct'>Induct</button>
@@ -37,8 +56,11 @@
 					  	<button type='button' class='option' name='cancelreject'>Cancel Reject</button>
 					  	<button type='button' class='option' name='updatecomplete'>Update Complete</button>
 					  	<button type='button' class='option' name='updatereject'>Update Reject</button>
+					  	{% if job_type == 'OrderJob' %}
+					  		<button type='button' class='option' name='print'>Print</button>
+					  	{% endif %}
 					</div>
-				</div>
+				</div>-->
 				<button class='send-request' type='submit' name='btn-send-event' id='btn-send-event'>Send</button>
 				<div id="div-induct-robot">
 					<label id='lbl-induct-robot'>Robot: </label><input id='inp-induct-robot'type='entry' name='robot' value='{{ job_data.JobRobot }}'>
@@ -50,35 +72,36 @@
 
 <!-- Job Task Table -->
 <!-------------------------------------------------------------------->
-	<h4>Job Tasks</h4>
-	<table id='table-job-tasks'>
-		<thead>
-			<tr>
-				<th>JobTaskId</th>
-			</tr>
-		</thead>
-		<tbody>
+<h4 class='jobview-header'>Job Tasks</h4>
+<table class="table table-hover" id='jobview-table-job-tasks'>
+          <thead>
+          <tr>
+            <th scope="col">JobTaskId</th>
+          </tr>
+          </thead>
+          <tbody>
 			{% for form in formset %}
 				<tr>
 				 	<td><a type='button' class='btn-task-data'>{{ form.JobTaskId.value }}</a></td>
 				</tr>
 			{% endfor %}
-		</tbody>
-	</table>
+          </tbody>
+        </table>
 	<br>
 
 <!-- Job Event Table -->
 <!-------------------------------------------------------------------->
-	<h4>Event Log</h4>
-	<table id='table-job-events'>
-		<thead>
-			<tr>
-				<th>Event Type</th>
-				<th>Date</th>
-				<th>Event Info</th>
-			</tr>
-		</thead>
-		<tbody>
+
+<h4 class='jobview-header'>Event Log</h4>
+<table class="table table-hover" id='jobview-table-job-events'>
+          <thead>
+          <tr>
+            <th scope="col">Event Type</th>
+            <th scope="col">Date</th>
+            <th scope="col">Event Info</th>
+          </tr>
+          </thead>
+          <tbody>
 			{% for event in events %}
 				<tr>
 					<td>{{ event.EventType }}</td>
@@ -86,9 +109,9 @@
 					<td>{{ event.EventInfo }}</td>
 				</tr>
 			{% endfor %}
-		</tbody>
-	</table>
-	</ul>
+          </tbody>
+        </table>
+	<br>
 
     <a href="/messagelocus/{{ JobId }}/closejob/">Close Job</a>
 

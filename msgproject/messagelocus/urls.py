@@ -23,4 +23,5 @@ urlpatterns = [
 	path("<JobId>/updatereject/", views.sendupdatereject, name='sendupdatereject'),
 	path("<JobId>/task/", views.sendtask, name='sendtask'),
 	path("<JobId>/closejob/", views.close_job, name='close_job'),
+	path("<JobId>/print/", views.sendprint, name='sendprint'),
 ]
