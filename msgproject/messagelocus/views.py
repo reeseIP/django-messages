@@ -31,11 +31,11 @@ def send_request(request,job_data,job_type,event_type=None,event_info=None,tasks
 											"JobId":job_data["JobId"],
 											"JobStatus":"Completed",
 											"JobDate":date,
-											"JobStation":None,
+											"JobStation":'',
 											"RequestId":job_data["RequestId"],
 											"ToteId":job_data["ToteId"],
 											"JobRobot":job_data['JobRobot'],
-											"JobMethod":None,
+											"JobMethod":'',
 											"JobTasks": tasks
 											}}
 	elif job_type == 'PutawayJob':
@@ -48,7 +48,7 @@ def send_request(request,job_data,job_type,event_type=None,event_info=None,tasks
 											"JobId":job_data['JobId'],
 											"JobDate":date,
 											"JobStatus":'Completed',
-											"JobStation":None,
+											"JobStation":'',
 											"JobRobot":job_data['JobRobot'],
 											"JobTasks": tasks
 											}}	
@@ -71,7 +71,9 @@ def send_request(request,job_data,job_type,event_type=None,event_info=None,tasks
 						"Quantity": '1',
 						"Serial": serial_number}
 
+	print(job_message)
 	return job_message
+	
 
 	if event_model:
 		# event entry
@@ -152,6 +154,7 @@ def login_user(request):
 
 @login_required
 def logout_user(request):
+	print(request.user)
 	tar_sys_users = ExternalUsers.objects.filter(created_by=request.user).delete()
 	logout(request)
 	response = redirect('/messagelocus/login/')
@@ -341,7 +344,6 @@ def inbound(request):
 @login_required
 def jobview(request, JobId):
 	''' overview for job details'''
-	
 	job = get_job(JobId=JobId)
 	job_data = job['job_data']
 	job_type = job['job_type']
@@ -377,7 +379,6 @@ def jobview(request, JobId):
 	# keep hidden on page
 	#del job_data['id'] 
 	#del job_data['active']
-
 	return render(request, "messagelocus/jobview.html", {'JobId': JobId,
 														 'job_data': job_data,
 														 'job_type': job_type,
@@ -423,16 +424,13 @@ def sendinduct(request, JobId):
 	job_data = job['job_data']
 	job_type = job['job_type']
 	job_query = job['job_query']
-	if request.POST['robot']:
-		job_query.JobRobot = request.POST['robot']
-		job_query.save()
-		job_data['JobRobot'] = request.POST['robot']
-		if job_type == 'OrderJob':
-			send_request(request,job_data,job_type,"TOTEINDUCT")
-		elif job_type == 'PutawayJob':
-			send_request(request,job_data,job_type,"PUTINDUCT")
-	else:
-		messages.error(request, 'Please enter a Robot')
+	job_query.JobRobot = request.POST['robot']
+	job_query.save()
+	job_data['JobRobot'] = request.POST['robot']
+	if job_type == 'OrderJob':
+		send_request(request,job_data,job_type,"TOTEINDUCT")
+	elif job_type == 'PutawayJob':
+		send_request(request,job_data,job_type,"PUTINDUCT")
 	return redirect('/messagelocus/{}'.format(JobId))
 
 @login_required
@@ -442,15 +440,32 @@ def sendcomplete(request, JobId):
 	job_data = job['job_data']
 	job_type = job['job_type']
 
+	serial_numbers = []
+
+	serial_query = OrderSerialNumbers.objects.filter(JobId_id=job['job_query'].id)
+
 	task_data = []
 	if job_type == 'OrderJob':
-		tasks = OrderTaskResults.objects.filter(JobId_id=job_data['id'])
-		for task in tasks:
-			task_info = task.get_data()
-			del task_info['id']
-			del task_info['timestamp']
-			task_data.append(task_info)
-		send_request(request,job_data,job_type,"PICKCOMPLETE",None,tasks=task_data)
+		tasks = OrderTaskResults.objects.filter(JobId_id=job_data['id'])[:]
+
+		d = {x.JobTaskId: x for x in tasks}
+		mylist = list(d.values())
+
+		for task in mylist:
+			last_task = OrderTaskResults.get_last_task(job_data['id'],task.JobTaskId)
+			last_task_data = last_task.get_data()
+			for serial in serial_query:
+				if last_task_data['id'] == serial.JobTaskId_id:
+					serial_numbers.append(serial.SerialNo)
+			if serial_numbers:
+				last_task_data['SerialNo'] = serial_numbers.copy()
+			del last_task_data['id']
+			del last_task_data['timestamp']
+			task_data.append(last_task_data)
+			serial_numbers.clear()
+			del last_task_data
+			print(task_data)
+		send_request(request,job_data,job_type,"PICKCOMPLETE",'',tasks=task_data)
 	elif job_type == 'PutawayJob':
 		tasks = PutawayTaskResults.objects.filter(JobId_id=job_data['id'])
 		for task in tasks:
@@ -458,7 +473,7 @@ def sendcomplete(request, JobId):
 			del task_info['id']
 			del task_info['timestamp']
 			task_data.append(task_info)
-		send_request(request,job_data,job_type,"PUTCOMPLETE",None,tasks=task_data)						
+		send_request(request,job_data,job_type,"PUTCOMPLETE",'',tasks=task_data)						
 	return redirect('/messagelocus/{}'.format(JobId))
 
 @login_required
@@ -504,8 +519,6 @@ def sendtask(request, JobId):
 	task_data = {}
 	serial_numbers = []
 
-	print(form_data)
-
 	for item in form_data[1:]:
 		if item[0][0:2] == 'SN':
 			# capture serial numbers
@@ -515,6 +528,9 @@ def sendtask(request, JobId):
 			index = len(item[0])
 			index_of_dash = item[0].rfind('-', 0, index)
 			task_data[item[0][index_of_dash+1:]] = item[1]
+
+	if serial_numbers:
+		task_data['SerialNo'] = serial_numbers
 
 	job = get_job(JobId=JobId)
 	job_data = job['job_data']
@@ -533,8 +549,6 @@ def sendtask(request, JobId):
 
 	new_task.JobId_id = job_data['id']
 	new_task.save()
-
-	print(serial_numbers)
 
 	for item in serial_numbers:
 		new_serial = OrderSerialNumbers()
@@ -606,3 +620,24 @@ def validate_serial_number(request):
 		response = {}
 		response['status_code'] = 200
 		return JsonResponse(response)
+
+
+@login_required
+def check_job_exists(request):
+	orderjob = OrderJobs.objects.filter(JobId=request.POST['search'])
+	putawayjob = PutawayJobs.objects.filter(JobId=request.POST['search'])
+
+	if not orderjob or putawayjob:
+		return JsonResponse({'job_exists': False})
+	else:
+		return JsonResponse({'job_exists': True})
+
+@login_required
+def delete_external_user(request):
+	entry = ExternalUsers.objects.filter(username=request.POST['username'],
+												system=request.POST['system'],
+												created_by=request.user)
+	if entry.delete()[1]:
+		messages.success(request,'User successfully deleted.')
+	else:
+		messages.error(request,'Unable to delete user.')

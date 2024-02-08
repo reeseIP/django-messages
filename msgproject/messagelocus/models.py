@@ -9,7 +9,10 @@ def hlp_get_data(obj_inst):
 	fields = obj_inst._meta.get_fields()
 	for field in fields:
 		if 'Field' in type(field).__name__:
-			data[field.name] = getattr(obj_inst,field.name)
+			attr = getattr(obj_inst,field.name)
+			if attr == None:
+				attr = ''
+			data[field.name] = attr
 	return(data)
 
 

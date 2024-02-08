@@ -1,12 +1,12 @@
 {% extends 'messagelocus/base.html' %}
 {% block content %}
 {% if orderjob_list %}
-    <h1>Order Jobs</h1>
-    <table id='table-order-job'>
+    <h1 class='active-header'>Order Jobs</h1>
+    <table class='table table-hover table-striped' id='active-table-orderjobs'>
         <thead>
             <tr>
-                <th>JobId</th>
-                <th>Latest Event</th>
+                <th scope="col">JobId</th>
+                <th scope="col">Latest Event</th>
             </tr>
         </thead>
         <tbody>
@@ -19,18 +19,21 @@
         </tbody>
     </table>
     <br>
+    <br>
 {% endif %}
 
 {% if putawayjob_list %}
-    <div class='putaway-header'>
-        <h1>Putaway Jobs</h1>
-        <button type='button' id='active-button-putaway-request'>Request</button>
-    </div>
-    <table id='table-putaway-job'>
+    
+        <h1 class='active-header' id='active-h1-putawayjobs'>
+            <label style='padding-right: 10px'>Putaway Jobs</label>
+            <button class='btn btn-primary btn-sm' type='button' id='active-button-putaway-request'>Request</button>
+        </h1>
+    
+    <table class='table table-hover table-striped' id='active-table-putawayjobs'>
         <thead>
             <tr>
-                <th>JobId</th>
-                <th>Latest Event</th>
+                <th scope="col">JobId</th>
+                <th scope="col">Latest Event</th>
             </tr>
         </thead>
         <tbody>
@@ -61,16 +64,16 @@
                     <div class='putaway-request'>
                         <div class='putaway-request-licenseplate'>
                             <label class='putaway-request'>License Plate:</label>
-                            <input type='entry' name='licenseplate'>
+                            <input type='entry' name='licenseplate' id='active-input-licenseplate'>
                         </div>
                         <div class='putaway-request-requestrobot'>
                             <label class='putaway-request'>Request Robot:</label>
-                            <input type='entry' name='requestrobot'>
+                            <input type='entry' name='requestrobot' id='active-input-requestrobot'>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-success submit" type="submit">Request Job</button>
+                    <button class="btn btn-primary submit" type="submit">Request Job</button>
                     <button type="button" class="btn btn-default close" data-dismiss="modal">Close</button>
                 </div>
             </form>

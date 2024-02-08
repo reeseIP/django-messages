@@ -4,15 +4,15 @@
 		<form action="/messagelocus/login/" method="post">
 			{% csrf_token %}
 			<div>
-				<label for="name">Username:</label>
+				<label class='system-auth' for="name">Username:</label>
 				<input type='text' id='username' name='username'>
 			</div>
-			<div>
-				<label for="mail">Password:</label>
+			<div style='padding-bottom: 5px'>
+				<label class='system-auth'for="mail">Password:</label>
 				<input type='password' id='password' name='password'/>
 			</div>
-			<div>
-				<button type='submit'>Log in</button>
+			<div id='login-div-buttons'>
+				<button class='btn btn-primary' type='submit'>Log in</button>
 			<div>
 		</form>
 	</div>
