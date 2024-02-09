@@ -24,13 +24,28 @@
 
 <body>
 
-        <nav class="navbar navbar-light bg-light">
+        
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
           <div class="container">
+            <div id='base-div-nav-items-left'>
+            <div id='base-div-nav-brand'>
+            <img class='nav-item' src="{% static 'images/email64.png' %}" width='64' height ='48' alt='=(' style='padding-right: 10px'>
             {% if user.is_authenticated %}
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-              <img src="{% static 'images/email.png' %}" alt='=('>
+              <span class="navbar-toggler-icon"></span>
             </button>
+          </div>
+            <div class="navbar-collapse collapse" id="navbarSupportedContent">
               <ul class="navbar-nav">
+                <li class='nav-item'>
+                  <form class="d-flex nav-item" id='base-form-search'>
+                    {% csrf_token %}
+                    <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search" id="base-input-navbar-search" name='search'>
+                    <button class="btn btn-outline-dark" type="submit">
+                      <img src='{% static "images/search24px.png" %}' alt='=('>
+                    </button>
+                  </form>
+                </li>
                 <li class="nav-item">
                   <a class="nav-link" href="/messagelocus/active/">Active</a>
                 </li>
@@ -38,10 +53,14 @@
                   <a class="nav-link" href="/messagelocus/closed/">Closed</a>
                 </li>
               </ul>
-            <div id='base-div-user-controls'>
+            </div>
+
+          </div>
+            <div id='base-div-nav-items-right'>
+                      <div id='base-div-user-controls'>
             <div class="dropdown">
-              <button class="btn btn-secondary dropdown-toggle" type="button" id="base-button-dropdown-user" data-bs-toggle="dropdown" aria-expanded="false">
-                User
+              <button class="btn btn-outline-dark dropdown-toggle" type="button" id="base-button-dropdown-user" data-bs-toggle="dropdown" aria-expanded="false">
+                <img src='{% static "images/user24px.png" %}' alt='=('>
               </button>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="base-button-dropdown-user" style="">
                 <li><h6 class="dropdown-header">Target System Users</h6></li>
@@ -56,10 +75,10 @@
                       {% csrf_token %}
                       <input hidden name='username' value='{{ user.username }}'>
                       <input hidden name='system' value='{{ user.system }}'>
-                      <button class='btn btn-danger btn-sm btn-delete-user' type='submit'>Delete</button></li>
-                      
+                      <button class='btn btn-danger btn-sm btn-delete-user' type='submit'>Delete</button>
                   </form>
                 {% endfor %}
+              </li>
               </ul>
                 <li><a class="dropdown-item" href="#" id='base-a-add-new-user'>+ Add New User</a></li>
                 <li><hr class="dropdown-divider"></li>
@@ -68,21 +87,16 @@
                 </li>
               </ul>
             </div>
-            </div>
-            <div class="navbar-collapse collapse" id="navbarSupportedContent">
-              <form class="d-flex" id='base-form-search'>
-                {% csrf_token %}
-                <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search" id="base-input-navbar-search" name='search'>
-                <button class="btn btn-outline-dark" type="submit">Search</button>
-              </form>
-            {% else %}
-              <img src="{% static 'images/email.png' %}" alt='=('>
             {% endif %}
+          </div>
 
             </div>
+
 
           </div>
-        </nav>
+        
+      </nav>
+      
 
   <!-- Navigation -->
   <!--<nav class="navbar navbar-expand-lg navbar-light bg-light" >

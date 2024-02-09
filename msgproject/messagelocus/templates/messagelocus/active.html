@@ -1,7 +1,7 @@
 {% extends 'messagelocus/base.html' %}
 {% block content %}
 {% if orderjob_list %}
-    <h1 class='active-header'>Order Jobs</h1>
+    <h4 class='active-header'>Order Jobs</h4>
     <table class='table table-hover table-striped' id='active-table-orderjobs'>
         <thead>
             <tr>
@@ -24,10 +24,10 @@
 
 {% if putawayjob_list %}
     
-        <h1 class='active-header' id='active-h1-putawayjobs'>
+        <h4 class='active-header' id='active-h4-putawayjobs'>
             <label style='padding-right: 10px'>Putaway Jobs</label>
             <button class='btn btn-primary btn-sm' type='button' id='active-button-putaway-request'>Request</button>
-        </h1>
+        </h4>
     
     <table class='table table-hover table-striped' id='active-table-putawayjobs'>
         <thead>

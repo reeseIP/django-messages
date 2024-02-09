@@ -1,10 +1,10 @@
 {% extends 'messagelocus/base.html' %}
 
 {% block content %}
-	<h1>{{ JobId }}</h1>
+	<h3>{{ JobId }}</h3>
 	<br>
 		<div id='jobview-div-job-info'>
-			<h4 class='jobview-header'>Job Information</h4>
+			<h5 class='jobview-header'>Job Information</h5>
 			<table class='table table-striped' id='jobview-table-job-info'>
 			{% for key, value in job_data.items %}
 				{% if key == 'id' or key == 'active' %}
@@ -26,7 +26,7 @@
 		<br>
 
 		<div>
-			<h4 class='jobview-header'>Job Events</h4>
+			<h5 class='jobview-header'>Job Events</h5>
 			<!-- comment line -->
 			<form method='post' id='form-send-event'>
 				{% csrf_token %}
@@ -36,7 +36,7 @@
 					</span>-->
 	                <div id='jobview-div-job-events'>
 	                  <select id="jobview-select-dropdown-event" class="form-select">
-	                  	<option value="" selected disabled hidden>Select Event</option>
+	                  	<option value="" selected disabled hidden id='jobview-option-initial-event'>Select Event</option>
 	                	<option>Accept</option>
 	                    <option>Reject</option>
 	                    <option>Induct</option>
@@ -64,7 +64,7 @@
 
 <!-- Job Task Table -->
 <!-------------------------------------------------------------------->
-<h4 class='jobview-header'>Job Tasks</h4>
+<h5 class='jobview-header'>Job Tasks</h5>
 <table class="table table-hover table-striped" id='jobview-table-job-tasks'>
           <thead>
           <tr>
@@ -84,7 +84,7 @@
 <!-- Job Event Table -->
 <!-------------------------------------------------------------------->
 
-<h4 class='jobview-header'>Event Log</h4>
+<h5 class='jobview-header'>Event Log</h5>
 <table class="table table-hover table-striped" id='jobview-table-job-events'>
           <thead>
           <tr>
@@ -120,7 +120,7 @@
           <!--<form class="form" role="form" action='/messagelocus/set_target_user/' method="post">-->
 	            {% csrf_token %}
 	            <div class="modal-header">
-	             	<h4 class="modal-title">Task Data</h4>
+	             	<h5 class="modal-title">Task Data</h5>
 	            </div>
 	            <div class="modal-body">
 	            	<div class='task-data'>

@@ -124,9 +124,14 @@ $('#modalSystem button.submit').on('click', function(e) {
 	e.preventDefault()
 	var modalObject = $(this).closest('.modal');
 	var system = $('#base-select-target-system').val();
+	if ($('#tarSysUser').val() == '' || $('#tarSysPass').val() == '' || $('#base-select-target-system').val() == null) {
+		alert('Please fill out all fields.')
+		return
+	}
 	$.post('/messagelocus/set_target_user/', {csrfmiddlewaretoken:getCookie('csrftoken'), sessionid:getCookie('sessionid'), system:system, username:$("#tarSysUser").val(), password:$("#tarSysPass").val()}, function(result) {
 		if (result == 'Invalid User') {
 			alert('Invalid User');
+			return
 		}
 		else { 
 			setCookie('system',system,1);
@@ -361,9 +366,13 @@ $('#base-div-user-controls').on('click', 'button.btn-delete-user', function(e) {
 	$.ajax({ 
 		url: '/messagelocus/delete_external_user/',
 		type: 'post',
-		data: $(this).closest('form').serialize()
+		data: $(this).closest('form').serialize(),
+		success: function(response) {
+			window.location.reload();
+		}
 	});
 });
+
 
 			
 		

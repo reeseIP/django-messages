@@ -641,3 +641,5 @@ def delete_external_user(request):
 		messages.success(request,'User successfully deleted.')
 	else:
 		messages.error(request,'Unable to delete user.')
+
+	return JsonResponse({})

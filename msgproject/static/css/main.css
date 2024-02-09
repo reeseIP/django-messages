@@ -133,19 +133,21 @@ th, td {
   vertical-align: middle;
 }
 
-#navbarNav { 
-  justify-content: space-between;
+.navbar-nav { 
+  display: flex !important;
  }
-
-
+*/
+/*
 .bg-light { 
     background-color: ;
  }
 
-
-div.container {
+*/
+.navbar .container {
   justify-content: left !important  ;
-}*/
+  flex-wrap: nowrap !important;
+}
+
 
 #base-ul-dropdown-system-options {
   max-width: 200px;
@@ -251,7 +253,7 @@ div.task-data span {
   max-width: 200px;
 }
 
-#active-h1-putawayjobs {
+#active-h4-putawayjobs {
   display: inline-flex;
 }
 
@@ -272,3 +274,40 @@ div.task-data span {
 #base-ul-active-users li {
   display: flex;
 }
+
+#base-div-user-controls {
+  padding-right: 10px;
+}
+
+/*
+.navbar { 
+  justify-content: left !important;
+  flex-wrap: nowrap !important;
+ }
+*/
+ #base-div-nav-items-right {
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
+  align-self: normal;
+ }
+
+ #base-div-nav-items-left {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+ }
+
+
+ .btn-outline-dark:hover {
+  background-color: rgba(0, 0, 0, 0.075) !important;
+ }
+
+ .nav-item { 
+  padding-right: 5px;
+  }
+/*
+  #base-div-nav-items-brand {
+    display: flex;
+    padding-bottom: 10px;
+  }*/
