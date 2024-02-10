@@ -1,8 +1,11 @@
+# admin.py
 from django.contrib import admin
-from .models import OrderJobs, OrderTasks, OrderTaskResults, PutawayJobs, PutawayTasks, PutawayTaskResults, OrderSerialNumbers, OrderJobEvents, PutawayJobEvents, ExternalUsers, ExternalSystems
+from .models import ( OrderJobs, OrderTasks, OrderTaskResults, OrderSerialNumbers, OrderJobEvents,
+					PutawayJobs, PutawayTasks, PutawayTaskResults, PutawayJobEvents, 
+					ExternalUsers, ExternalSystems )
 
 
-# Register your models here.
+# register models
 admin.site.register(OrderJobs)
 admin.site.register(OrderTasks)
 admin.site.register(OrderTaskResults)

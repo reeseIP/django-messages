@@ -3,12 +3,12 @@
 	<div class="login-wrapper">
 		<form action="/messagelocus/login/" method="post">
 			{% csrf_token %}
-			<div>
-				<label class='system-auth' for="name">Username:</label>
+			<div class='system-auth'>
+				<label for="name">Username:</label>
 				<input type='text' id='username' name='username'>
 			</div>
-			<div style='padding-bottom: 5px'>
-				<label class='system-auth'for="mail">Password:</label>
+			<div class='system-auth'>
+				<label for="mail">Password:</label>
 				<input type='password' id='password' name='password'/>
 			</div>
 			<div id='login-div-buttons'>

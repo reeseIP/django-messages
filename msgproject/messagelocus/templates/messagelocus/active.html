@@ -1,55 +1,83 @@
 {% extends 'messagelocus/base.html' %}
 {% block content %}
-{% if orderjob_list %}
-    <h4 class='active-header'>Order Jobs</h4>
+
+    <h4 class='active-header'>
+        <label id='active-label-order-header'>Order Jobs</label>
+    </h4>
+    <div class='table-responsive'>
     <table class='table table-hover table-striped' id='active-table-orderjobs'>
         <thead>
             <tr>
-                <th scope="col">JobId</th>
-                <th scope="col">Latest Event</th>
+                {% for field in orderjob_fields %}
+                    <th scope="col">{{ field }}</th>
+                {% endfor %}
             </tr>
         </thead>
         <tbody>
-        {% for job in orderjob_list %}
+        {% for order in orderjob_list %}
             <tr>
-                <td><a href="/messagelocus/{{ job.JobId }}/">{{ job.JobId }}</a></td>
-                <td>{{ job.latest_event }}</td>
+            {% for key, value in order.items %}
+                {% if key == 'id' or key == 'active' %}
+                    <td name='{{ key }}' style='display: none;'>
+                        <label class=active-label-job-data>{{ value }}</label>
+                    </td>
+                {% elif key == 'JobId' %}
+                    <td name='{{ key }}'>
+                        <a href="/messagelocus/{{ value }}/">{{ value }}</a>
+                    </td>
+                {% else %}
+                    <td name='{{ key }}'>
+                        <label class=active-label-job-data>{{ value }}</label>
+                    </td>
+                {% endif %}
+            {% endfor %}
             </tr>
         {% endfor %}
         </tbody>
     </table>
+</div>
     <br>
     <br>
-{% endif %}
 
-{% if putawayjob_list %}
     
         <h4 class='active-header' id='active-h4-putawayjobs'>
-            <label style='padding-right: 10px'>Putaway Jobs</label>
-            <button class='btn btn-primary btn-sm' type='button' id='active-button-putaway-request'>Request</button>
+            <label id='active-label-putaway-header'>Putaway Jobs</label>
+            <button class='btn btn-outline-primary btn-sm' type='button' id='active-button-putaway-request'>Request</button>
         </h4>
     
+    <div class='table-responsive'>
     <table class='table table-hover table-striped' id='active-table-putawayjobs'>
         <thead>
             <tr>
-                <th scope="col">JobId</th>
-                <th scope="col">Latest Event</th>
+                {% for field in putawayjob_fields %}
+                    <th scope="col">{{ field }}</th>
+                {% endfor %}
             </tr>
         </thead>
         <tbody>
-        {% for job in putawayjob_list %}
+        {% for putaway in putawayjob_list %}
             <tr>
-                <td><a href="/messagelocus/{{ job.JobId }}/">{{ job.JobId }}</a></td>
-                <td>{{ job.latest_event }}</td>
+            {% for key, value in putaway.items %}
+            
+                {% if key == 'id' or key == 'active' %}
+                    <td name='{{ key }}' style='display: none;'>
+                        <label class=active-label-job-data>{{ value }}</label>
+                    </td>
+                {% elif key == 'JobId' %}
+                    <td name='{{ key }}'>
+                        <a href="/messagelocus/{{ value }}/">{{ value }}</a>
+                    </td>
+                {% else %}
+                    <td name='{{ key }}'>
+                        <label class=active-label-job-data>{{ value }}</label>
+                    </td>
+                {% endif %}
+            {% endfor %}
             </tr>
         {% endfor %}
         </tbody>
     </table>
-{% endif %}
-
-{% if not orderjob_list and not putawayjob_list %}
-    <p>No jobs are available.</p>
-{% endif %}
+</div>
 
     <div class="modal fade" id="active-modal-putaway-request" role="dialog">
       <div class="modal-dialog">

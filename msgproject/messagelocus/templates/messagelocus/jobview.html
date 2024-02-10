@@ -27,13 +27,8 @@
 
 		<div>
 			<h5 class='jobview-header'>Job Events</h5>
-			<!-- comment line -->
 			<form method='post' id='form-send-event'>
 				{% csrf_token %}
-				<!--<div class="dropdown">
-					<span class="dropbtnsta">
-					  	<button type='button' id='select-event'>--- Select Event --- &#11206;</button>
-					</span>-->
 	                <div id='jobview-div-job-events'>
 	                  <select id="jobview-select-dropdown-event" class="form-select">
 	                  	<option value="" selected disabled hidden id='jobview-option-initial-event'>Select Event</option>
@@ -51,7 +46,7 @@
 	             		</select>
 	                
 					
-				<button class='btn btn-primary btn-sm' type='submit' name='btn-send-event' id='jobview-btn-send-event'>Send</button>
+				<button class='btn btn-outline-primary btn-sm' type='submit' name='btn-send-event' id='jobview-btn-send-event'>Send</button>
 				</div>
 				<div id="div-induct-robot">
 					<label id='lbl-induct-robot'>Robot: </label><input id='inp-induct-robot'type='entry' name='robot' value='{{ job_data.JobRobot }}'>
@@ -65,21 +60,33 @@
 <!-- Job Task Table -->
 <!-------------------------------------------------------------------->
 <h5 class='jobview-header'>Job Tasks</h5>
+<div class='table-responsive'>
 <table class="table table-hover table-striped" id='jobview-table-job-tasks'>
           <thead>
           <tr>
-            <th scope="col">JobTaskId</th>
+          	{% for field in task_header %}
+            	<th scope="col">{{ field }}</th>
+            {% endfor %}
           </tr>
           </thead>
           <tbody>
 			{% for form in formset %}
 				<tr>
-				 	<td><a type='button' class='btn-task-data'>{{ form.JobTaskId.value }}</a></td>
+					{% for field in form %}
+						<td>
+							{% if field.name == 'JobTaskId' %}
+								<a type='button' class='btn-task-data'>{{ field.value }}</a>
+							{% else %}
+								<label class='jobview-label-task-data'>{{ field.value }}</a>
+							{% endif %}
+						</td>
+				 	{% endfor %}
 				</tr>
 			{% endfor %}
           </tbody>
         </table>
-	<br>
+</div>
+<br>
 
 <!-- Job Event Table -->
 <!-------------------------------------------------------------------->
@@ -117,7 +124,6 @@
         <!-- Modal content-->
         <div class="modal-content">
        		<form class='taskData' method="post" action='task/'>
-          <!--<form class="form" role="form" action='/messagelocus/set_target_user/' method="post">-->
 	            {% csrf_token %}
 	            <div class="modal-header">
 	             	<h5 class="modal-title">Task Data</h5>

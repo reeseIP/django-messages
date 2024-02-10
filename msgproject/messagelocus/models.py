@@ -15,6 +15,14 @@ def hlp_get_data(obj_inst):
 			data[field.name] = attr
 	return(data)
 
+def hlp_get_fields(cls):
+	data = {}
+	fields = cls._meta.get_fields()
+	for field in fields:
+		if 'Field' in type(field).__name__:
+			data[field.name] = ''
+	return(data)
+
 
 class OrderJobs(models.Model):
 	JobId = models.CharField(max_length=50)
@@ -28,6 +36,10 @@ class OrderJobs(models.Model):
 	JobRobot = models.CharField(max_length=50, blank=True, null=True)
 	active = models.BooleanField(default=True)
 
+	@classmethod
+	def get_fields(cls):
+		return hlp_get_fields(cls)
+
 	def __str__(self):
 		return self.JobId
 
@@ -36,6 +48,7 @@ class OrderJobs(models.Model):
 
 	def get_data(self):
 		return hlp_get_data(self)
+
 
 
 class OrderTasks(models.Model):
@@ -83,6 +96,10 @@ class OrderTasks(models.Model):
 	CaptureSerialNo = models.BooleanField(default=False)
 	CaptureSerialNoQty = models.IntegerField(default=0)
 
+	@classmethod
+	def get_fields(cls):
+		return hlp_get_fields(cls)
+
 	def __str__(self):
 		return self.JobTaskId
 
@@ -128,6 +145,10 @@ class OrderTaskResults(models.Model):
 	timestamp = models.DateTimeField(auto_now=True)
 
 	@classmethod
+	def get_fields(cls):
+		return hlp_get_fields(cls)
+
+	@classmethod
 	def get_last_task(cls,JobId,JobTaskId):
 		''' get the data for the last task sent '''
 		tasks = cls.objects.filter(JobId_id=JobId,JobTaskId=JobTaskId).order_by('-timestamp')
@@ -151,6 +172,10 @@ class PutawayJobs(models.Model):
 	JobPriority = models.CharField(max_length=10,blank=True,null=True)
 	JobRobot = models.CharField(max_length=50, blank=True, null=True)
 	active = models.BooleanField(default=True)
+
+	@classmethod
+	def get_fields(cls):
+		return hlp_get_fields(cls)
 
 	def __str__(self):
 		return self.JobId
@@ -203,6 +228,10 @@ class PutawayTasks(models.Model):
 	Custom9 = models.CharField(max_length=250,blank=True,null=True)
 	Custom10 = models.CharField(max_length=250,blank=True,null=True)
 
+	@classmethod
+	def get_fields(cls):
+		return hlp_get_fields(cls)
+
 	def __str__(self):
 		return self.JobTaskId
 
@@ -249,6 +278,10 @@ class PutawayTaskResults(models.Model):
 	timestamp = models.DateTimeField(auto_now=True)
 
 	@classmethod
+	def get_fields(cls):
+		return hlp_get_fields(cls)
+
+	@classmethod
 	def get_last_task(cls,JobId,JobTaskId):
 		''' get the data for the last task sent '''
 		tasks = cls.objects.filter(JobId_id=JobId,JobTaskId=JobTaskId).order_by('-timestamp')
@@ -272,6 +305,10 @@ class OrderJobEvents(models.Model):
 	timestamp = models.DateTimeField(auto_now=True)
 
 	@classmethod
+	def get_fields(cls):
+		return hlp_get_fields(cls)
+
+	@classmethod
 	def get_last_event(cls,JobId):
 		last_event = cls.objects.filter(JobId=JobId).order_by('-timestamp')
 		return last_event[0]
@@ -293,6 +330,10 @@ class PutawayJobEvents(models.Model):
 	EventInfo = models.CharField(max_length=250)
 	timestamp = models.DateTimeField(auto_now=True)
 
+	@classmethod
+	def get_fields(cls):
+		return hlp_get_fields(cls)
+
 	def __str__(self):
 		return('{}: {}'.format(self.JobId, self.EventType))
 
@@ -310,6 +351,10 @@ class OrderSerialNumbers(models.Model):
 	JobId = models.ForeignKey(OrderJobs, on_delete=models.CASCADE)
 	JobTaskId = models.ForeignKey(OrderTaskResults, on_delete=models.CASCADE)
 	SerialNo = models.CharField(max_length=100,null=False)
+
+	@classmethod
+	def get_fields(cls):
+		return hlp_get_fields(cls)
 
 
 class ExternalUsers(models.Model):
@@ -336,6 +381,10 @@ class ExternalUsers(models.Model):
         null=True
     )
 
+	@classmethod
+	def get_fields(cls):
+		return hlp_get_fields(cls)
+
 
 class ExternalSystems(models.Model):
 	system = models.CharField(max_length=3,null=False)
@@ -346,3 +395,7 @@ class ExternalSystems(models.Model):
 
 	def __repr__(self):
 		return('{}: {}'.format(self.system, self.url))
+
+	@classmethod
+	def get_fields(cls):
+		return hlp_get_fields(cls)

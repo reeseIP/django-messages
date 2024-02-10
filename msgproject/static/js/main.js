@@ -61,16 +61,6 @@ $(document).ready( function() {
 	}
 });
 
-// on click select event button, display event dropdown list
-//$('#jobview-a-dropdown-event').on('click',function() {
-//	$('#div-dropdown-status').toggle();
-//});
-
-// dropdown system options
-//$('#base-a-dropdown-system').on('click',function() {
-//	$('#base-ul-dropdown-system-options').toggle();
-//});
-
 /* on click dropdown list option set the select event button
  to the clicked option.  If option = induct, display robot input */
 $('#jobview-select-dropdown-event').on('change', function(){ 
@@ -91,24 +81,8 @@ $('#jobview-select-dropdown-event').on('change', function(){
 		else if (name == 'Update Reject') { action = 'updatereject' }
 		$('#div-induct-robot').hide();
 	}
-	//$('#jobview-a-dropdown-event').html(name);
 	$('#form-send-event').attr('action',action+'/');
-	//$('#div-dropdown-status').toggle();
 });
-
-// dropdown system option button click
-//$('#base-ul-dropdown-system-options a.dropdown-item').on('click', function(){ 
-//	var name = $(this).html();
-//	var action = $(this).attr('name');
-//	if (!(sessionStorage.system == name)) {
-//		$("#modalSystem").modal("toggle");
-//	};
-//	//$('#base-ul-dropdown-system-options').toggle();
-//	// set the system in sessionStorage, set the HTML name and cookie 
-//	// in function after credentials are set, otherwise revert the 
-//	// sessionStorage to the cookie value
-//	sessionStorage.system = name;
-//});
 
 // modalSystem close button click
 $('#modalSystem button.close').on('click', function() { 
@@ -326,6 +300,9 @@ $('#form-send-event').on('submit', function(e) {
 $('#base-form-search').on('submit', function(e) { 
 	e.preventDefault();
 	var jobid = $('#base-input-navbar-search').val();
+	if ($('#base-input-navbar-search').val() == '') {
+		return;
+	}
 	$.ajax({ 
 		url: '/messagelocus/check_job_exists/',
 		type: 'post',
@@ -342,7 +319,7 @@ $('#base-form-search').on('submit', function(e) {
 	});
 });
 
-$('#base-div-user-controls').on('click', 'a.dropdown-item', function(e) { 
+$('#base-div-user-controls').on('click', 'a.nav-link', function(e) { 
 	var closest_ul = $(this).closest('ul').get(0);
 	var active_users = $('#base-ul-active-users').get(0);
 
@@ -363,28 +340,26 @@ $('#base-div-user-controls').on('click', 'a.dropdown-item', function(e) {
 
 $('#base-div-user-controls').on('click', 'button.btn-delete-user', function(e) { 
 	e.preventDefault();
+	var username = $(this).parent().find('.base-input-username').val();
+	var system = $(this).parent().find('.base-input-system').val();
 	$.ajax({ 
 		url: '/messagelocus/delete_external_user/',
 		type: 'post',
 		data: $(this).closest('form').serialize(),
 		success: function(response) {
+			if (getCookie('system') == system && getCookie('username') == username) {
+				eraseCookie('system')
+				eraseCookie('username')
+			}
 			window.location.reload();
 		}
 	});
 });
 
-
-			
-		
-//$('#base-ul-dropdown-system-options a.dropdown-item').on('click', function(){ 
-//	var name = $(this).html();
-//	var action = $(this).attr('name');
-//	if (!(sessionStorage.system == name)) {
-//		$("#modalSystem").modal("toggle");
-//	};
-//	//$('#base-ul-dropdown-system-options').toggle();
-//	// set the system in sessionStorage, set the HTML name and cookie 
-//	// in function after credentials are set, otherwise revert the 
-//	// sessionStorage to the cookie value
-//	sessionStorage.system = name;
-//});
+$('#jobview-btn-send-event').on('click', function(e) {
+	if ($('#jobview-select-dropdown-event').val() == null) {
+		e.preventDefault();
+		alert('Please select an event.');
+		return;
+	}
+});

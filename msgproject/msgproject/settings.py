@@ -30,7 +30,6 @@ ALLOWED_HOSTS = [
     
 ]
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -134,10 +133,3 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = '/messagelocus/login'
 
 SESSION_COOKIE_HTTPONLY = False
-
-### URLs and credentials for sending requests
-#TEST_POST_URL = 
-#TEST_POST_AUTH = 
-#
-#PROD_POST_URL = 
-#PROD_POST_AUTH = 
