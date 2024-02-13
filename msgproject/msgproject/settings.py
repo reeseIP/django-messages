@@ -67,7 +67,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'utils.context_processors.system_context',
-                'utils.context_processors.user_context'
+                'utils.context_processors.user_context',
             ],
         },
     },
@@ -133,3 +133,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = '/messagelocus/login'
 
 SESSION_COOKIE_HTTPONLY = False
+SESSION_COOKIE_AGE = 86400

@@ -49,16 +49,11 @@ function checkValidSerials(modalObject) {
   	return { valid: counter, total: total };
 }
 	
-
 // document ready
 $(document).ready( function() {
 	var system = getCookie('system');
-	if (system) { 
-		$('#base-a-dropdown-system').html(system);
-	}
-	else {
-		$('#base-a-dropdown-system').html('System');
-	}
+	var username = getCookie('username');
+	$("#flexRadioDefault"+system+username).attr('checked','')
 });
 
 /* on click dropdown list option set the select event button
@@ -87,7 +82,6 @@ $('#jobview-select-dropdown-event').on('change', function(){
 // modalSystem close button click
 $('#modalSystem button.close').on('click', function() { 
 	var modalObject = $(this).closest('.modal');
-	sessionStorage.system = getCookie('system');
 	modalObject.modal("toggle");
 	clearModal(modalObject);
 	$('#base-select-target-system').val($('#base-option-system-initial').val())
@@ -102,19 +96,26 @@ $('#modalSystem button.submit').on('click', function(e) {
 		alert('Please fill out all fields.')
 		return
 	}
-	$.post('/messagelocus/set_target_user/', {csrfmiddlewaretoken:getCookie('csrftoken'), sessionid:getCookie('sessionid'), system:system, username:$("#tarSysUser").val(), password:$("#tarSysPass").val()}, function(result) {
-		if (result == 'Invalid User') {
-			alert('Invalid User');
-			return
-		}
-		else { 
+	$.ajax({
+		url:'/messagelocus/set_target_user/', 
+		type:'post',
+		data: { csrfmiddlewaretoken:getCookie('csrftoken'), 
+				sessionid:getCookie('sessionid'), 
+				system:system, 
+				username:$("#tarSysUser").val(), 
+				password:$("#tarSysPass").val()
+			   }, 
+		success: function(response) {
+		if (response.status_code == 200) {
 			setCookie('system',system,1);
 			setCookie('username',$("#tarSysUser").val(),1);
 			$('#base-a-dropdown-system').html(getCookie('system'));
 			modalObject.modal("toggle");
-			window.location.reload();
+			
 		}
 		clearModal(modalObject);
+		window.location.reload();
+	}
  	 });
 });
 
@@ -149,32 +150,30 @@ $('.btn-task-data').on('click', function() {
 					    	</div>\
 					    	<div class='task-sn-capture-data'>"
 			if (serQty > 0) {
-			
-			while (serQtyReq > 0) {
-	    		markup = markup + "<div class='task-sn-input-row'>\
-	    							<input name='SN"+serQty+"' class='task-sn' id='"+task+"SN"+serQty+"'>\
-	    							<button class='btn-sm btn-success submit snValidate' type='submit'>Validate</button>\
-	    							<button class='btn-sm btn-edit snEdit' type='button' style='display:none;'>Edit</button>\
-	    							</div>"
-	    		serQtyReq = serQtyReq - 1
-	    		serQty = serQty - 1
-	    	}
-	    	if (!(serQtyEnt == 0)) {
-	    		$.each(serialnumbers, function(data) { 
+				while (serQtyReq > 0) {
 		    		markup = markup + "<div class='task-sn-input-row'>\
-		    							<input name='SN"+serQty+"' class='task-sn snValid' value='"+serialnumbers[data]+"' disabled='disabled'>\
-		    							<button class='btn-sm btn-success submit snValidate' type='submit' style='display: none;'>Validate</button>\
-		    							<button class='btn-sm btn-edit snEdit' type='button'>Edit</button>\
+		    							<input name='SN"+serQty+"' class='task-sn' id='"+task+"SN"+serQty+"'>\
+		    							<button class='btn-sm btn-success submit snValidate' type='submit'>Validate</button>\
+		    							<button class='btn-sm btn-edit snEdit' type='button' style='display:none;'>Edit</button>\
 		    							</div>"
 		    		serQtyReq = serQtyReq - 1
 		    		serQty = serQty - 1
-	    		});
-			}
-		target.append(markup)	
-		}	
-		$('#'+task).modal('toggle');
-		
-	}
+		    	}
+		    	if (!(serQtyEnt == 0)) {
+		    		$.each(serialnumbers, function(data) { 
+			    		markup = markup + "<div class='task-sn-input-row'>\
+			    							<input name='SN"+serQty+"' class='task-sn snValid' value='"+serialnumbers[data]+"' disabled='disabled'>\
+			    							<button class='btn-sm btn-success submit snValidate' type='submit' style='display: none;'>Validate</button>\
+			    							<button class='btn-sm btn-edit snEdit' type='button'>Edit</button>\
+			    							</div>"
+			    		serQtyReq = serQtyReq - 1
+			    		serQty = serQty - 1
+		    		});
+				}
+				target.append(markup)	
+			}	
+			$('#'+task).modal('toggle');	
+		}
 	});
 });
 
@@ -185,26 +184,29 @@ $('form').on('click', 'button.snValidate', function(e){
     var serialnumber = $(this).prev().val();
     var target = $(this).prev();
     var button = $(this).next();
-
     if (serialnumber == '') { 
     	alert('Please enter a serial number for validation!')
     	return
     }
-
     $.ajax({
         url: '/messagelocus/validate_serial_number/',
         type: 'post',
         data: {'csrfmiddlewaretoken': getCookie('csrftoken'),'JobId': jobid, 'JobTaskId': jobtaskid, 'SerialNumber':serialnumber},
-        success: function(response){
+        success: function(response) {
         	if (response.status_code == 200) { 
-				target.attr('disabled','disabled');
-				target.addClass('snValid');
-				var valid = checkValidSerials($(target).closest('.modal'))
-				$(target).closest('.modal').find('div.task-sn-capture-header').find('label.task-sn-capture-label-ent').html(valid['valid']);
-				button.toggle();
+    			if (response.data.ISERROR == 'false' || response.data.isError == 'false') {
+					target.attr('disabled','disabled');
+					target.addClass('snValid');
+					var valid = checkValidSerials($(target).closest('.modal'))
+					$(target).closest('.modal').find('div.task-sn-capture-header').find('label.task-sn-capture-label-ent').html(valid['valid']);
+					button.toggle();
+				}
+				else { 
+	        		alert('Invalid Serial Number')
+	        	}
         	}
         	else { 
-        		alert('Invalid Serial Number')
+        		alert('Invalid Server Response: '+response.status_code)
         	}
         }
     });
@@ -224,21 +226,19 @@ $('form.taskData').on('click', 'button.taskSend', function(e) {
     var jobid = $('#jobview-jobinfo-JobId').find('label.value').html();
     var jobtaskid = $(this).closest('div.taskData').attr('id');
     var valid = checkValidSerials($(this).closest('.modal'))
-
-    if (!(valid['valid'] == valid['total'])) { 
+    if (!(valid['valid'] == valid['total']) && !(valid['total'] == undefined)) { 
+    	i
     	alert('Please validate all serial number entries.')
     	return
     }
-
     $.each($('#'+jobtaskid).find('.task-sn-capture-data').children(), function(key,value) { 
     	$(this).find('input').attr('disabled', false)
     });
-
     $.ajax({
         url: '/messagelocus/'+jobid+'/task/',
         type: 'post',
         data: $(this).closest('form').serialize(),
-        success: function(response){
+        success: function(response) {
 			$('#'+jobtaskid).find('.task-sn-capture').empty();
         	$('#'+jobtaskid).modal('toggle');
         }
@@ -275,7 +275,7 @@ $('#active-modal-putaway-request').on('click', 'button.submit', function(e) {
 	});
 });
 
-$('#form-send-event').on('submit', function(e) { 
+$('#form-send-event').one('submit', function(e) { 
 	e.preventDefault()
 	var jobid = $('#jobview-jobinfo-JobId').find('label.value').html();
 	var action = $(this).attr('action')
@@ -287,15 +287,9 @@ $('#form-send-event').on('submit', function(e) {
 		alert('Please select an event.');
 		return
 	}
-	$.ajax({ 
-		url: '/messagelocus/'+jobid+'/'+action,
-		type: 'post',
-		data: $('#form-send-event').serialize(),
-		success: function(response) { 
-			window.location.reload();
-		}
-	});
+	$(this).submit();
 });
+
 
 $('#base-form-search').on('submit', function(e) { 
 	e.preventDefault();
@@ -308,7 +302,7 @@ $('#base-form-search').on('submit', function(e) {
 		type: 'post',
 		data: $('#base-form-search').serialize(),
 		success: function(response) { 
-			if (response.job_exists) {
+			if (response.status_code == 200) {
 				window.location.href = '/messagelocus/'+jobid+'/';
 			}
 			else {
@@ -343,7 +337,7 @@ $('#base-div-user-controls').on('click', 'button.btn-delete-user', function(e) {
 	var username = $(this).parent().find('.base-input-username').val();
 	var system = $(this).parent().find('.base-input-system').val();
 	$.ajax({ 
-		url: '/messagelocus/delete_external_user/',
+		url: '/messagelocus/delete_target_user/',
 		type: 'post',
 		data: $(this).closest('form').serialize(),
 		success: function(response) {
@@ -362,4 +356,14 @@ $('#jobview-btn-send-event').on('click', function(e) {
 		alert('Please select an event.');
 		return;
 	}
+});
+
+$('#jobview-btn-close-job').on('click', function(e) { 
+	e.preventDefault();
+	var jobid = $('#jobview-jobinfo-JobId').find('label.value').html();
+	$.ajax({ 
+		url: '/messagelocus/close_job/',
+		type: 'post',
+		data: {'csrfmiddlewaretoken': getCookie('csrftoken'),'JobId': jobid}
+	});
 });

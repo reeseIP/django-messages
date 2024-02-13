@@ -65,7 +65,7 @@
           <thead>
           <tr>
           	{% for field in task_header %}
-            	<th scope="col">{{ field }}</th>
+            	<th scope="col"><label>{{ field }}</label></th>
             {% endfor %}
           </tr>
           </thead>
@@ -77,7 +77,7 @@
 							{% if field.name == 'JobTaskId' %}
 								<a type='button' class='btn-task-data'>{{ field.value }}</a>
 							{% else %}
-								<label class='jobview-label-task-data'>{{ field.value }}</a>
+								<label>{{ field.value }}</label></a>
 							{% endif %}
 						</td>
 				 	{% endfor %}
@@ -92,29 +92,33 @@
 <!-------------------------------------------------------------------->
 
 <h5 class='jobview-header'>Event Log</h5>
+<div class='table-responsive'>
 <table class="table table-hover table-striped" id='jobview-table-job-events'>
           <thead>
           <tr>
-            <th scope="col">Event Type</th>
-            <th scope="col">Date</th>
-            <th scope="col">Event Info</th>
+            <th scope="col"><label>Event Type</label></th>
+            <th scope="col"><label>Date</label></th>
+            <th scope="col"><label>Event Info</label></th>
           </tr>
           </thead>
           <tbody>
 			{% for event in events %}
 				<tr>
-					<td>{{ event.EventType }}</td>
-					<td>{{ event.JobDate }}</td>
-					<td>{{ event.EventInfo }}</td>
+					<td><label>{{ event.EventType }}</label></td>
+					<td><label>{{ event.JobDate }}</label></td>
+					<td><label>{{ event.EventInfo }}</label></td>
 				</tr>
 			{% endfor %}
           </tbody>
         </table>
+    </div>
 	<br>
 
+	{% if job_data.active %}
 	<button class='btn btn-outline-primary' id='jobview-btn-close-job'>
     	Close Job
 	</button>
+	{% endif %}	
 
 	{{ formset.management_form }}
 	{% for form in formset %}

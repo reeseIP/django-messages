@@ -18,15 +18,54 @@ tr {
 
 .putaway-header { 
   width: 100%;
- }
+}
 
- .navbar>.container {
+.navbar>.container {
   justify-content: left !important  ;
   flex-wrap: nowrap !important;
 }
 
+.modal {
+  overflow: hidden !important;
+}
+
+.modal-content, .modal-dialog {
+  max-width: fit-content !important;
+}
+
+.task-sn-capture{
+  display: grid;
+}
+
+.jobview-header, .active-header, .closed-header {
+  border-bottom: solid;
+  border-bottom-width: thin;
+  border-bottom-color: black !important;
+  width: 100%;
+}
+
+.base-label-username {
+  padding-right: 5px;
+}
+
+.nav-item { 
+  padding-right: 5px;
+}
+
+.taskData input {
+  max-height: 22px;
+}
+
 
 /* ----------- id styles ----------- */
+
+#active-table-orderjobs label,
+#active-table-putawayjobs label,
+#jobview-table-job-tasks label, 
+#jobview-table-job-events label { 
+  min-width: max-content;
+  padding-right: 20px;
+ }
 
 #div-induct-robot {
   padding-top: 5px;
@@ -35,10 +74,6 @@ tr {
 
 #lbl-induct-robot {
   padding-right: 5px;
-}
-
-#base-ul-dropdown-system-options {
-  max-width: 200px;
 }
 
 #base-input-navbar-search {
@@ -59,58 +94,9 @@ tr {
   min-width: 145px;
 }
 
-#jobview-div-job-info{
+#jobview-div-job-info {
   width:100%;
   justify-content: left;
-}
-
-.modal {
-  overflow: hidden !important;
-}
-
-.modal-content, .modal-dialog {
-  max-width: fit-content !important;
-}
-
-.taskData input {
-  max-height: 22px;
-}
-
-label.task-data {
-  min-width: 128px;
-}
-
-label.putaway-request { 
-  min-width: 115px;
- }
-
-div.system-auth label {
-  min-width: 80px;
-}
-
-.task-sn-capture{
-  display: grid;
-}
-
-.taskData div.modal-body {
-  display: flex;
-  justify-content: left;
-}
-
-div.task-data, div.task-sn-capture {
-  display: inline-block;
-  padding-right: 50px;
-}
-
-div.task-data span {
-  display: flex;
-}
-
-.jobview-header, .active-header, .closed-header {
-  border-bottom: solid;
-  border-bottom-width: thin;
-  border-bottom-color: black !important;
-  width: 100%;
 }
 
 #jobview-div-job-events {
@@ -133,16 +119,7 @@ div.task-data span {
 #login-div-buttons { 
   display: flex;
   justify-content: flex-end;
- }
-
- div.login-wrapper {
-  max-width: fit-content;
- }
-
- li.nav-item {
-  display: flex;
-  align-items: center;
- }
+}
 
 #base-ul-active-users li {
   display: flex;
@@ -154,10 +131,6 @@ div.task-data span {
   padding-left: 0px;
 }
 
-#base-ul-active-users:hover {
-  background-color: white;
-}
-
 #base-div-user-controls {
   padding-top: 6px;
   padding-right: 10px;
@@ -165,61 +138,98 @@ div.task-data span {
   display: flex;
 }
 
-.base-label-username {
-  padding-right: 5px;
-}
-
- #base-div-nav-items-right {
+#base-div-nav-items-right {
   display: flex;
   width: 100%;
   justify-content: flex-end;
   align-self: normal;
- }
+}
 
- #base-div-nav-items-left {
+#base-div-nav-items-left {
   width: 100%;
   display: flex;
   flex-wrap: wrap;
- }
+}
 
+#active-label-putaway-header, #active-label-order-header {
+  padding-right: 10px;
+  padding-bottom: 5px;
+}
 
- .btn-outline-dark:hover, .btn-outline-dark:focus, .btn-outline-dark:active {
-  background-color: rgba(0, 0, 0, 0.075) !important;
- }
-
- .nav-item { 
-  padding-right: 5px;
-  }
-
-  #active-label-putaway-header, #active-label-order-header {
-    padding-right: 10px;
-    padding-bottom: 5px;
-  }
-
-  .jobview-label-task-data, .active-label-job-data {
-    min-width: max-content;
-    padding-right: 10px;
-  }
-
-  #base-div-user-credentials {
-    padding-top: 10px;
-  }
-
-  .putaway-request-licenseplate, div.system-auth { 
-    padding-bottom: 3px;
-   }
-
-   button.btn-delete-user {
-    padding: 2px !important;
-    display: flex;
-   }
-
-   button.btn.btn-outline-dark {
-    max-height: 32px;
-    display: flex;
-    align-items: center;
+#base-div-user-credentials {
+  padding-top: 10px;
 }
 
 #base-form-search .input-group {
   flex-wrap: nowrap;
+}
+
+#base-ul-active-users .base-user-delete { 
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
+}
+
+
+/* ----------- selector styles ----------- */
+
+.btn-outline-dark:hover, .btn-outline-dark:focus, .btn-outline-dark:active {
+  background-color: rgba(0, 0, 0, 0.075) !important;
+}
+
+#base-ul-active-users:hover {
+  background-color: white;
+}
+
+
+/* ----------- other styles ----------- */
+
+button.btn-delete-user {
+  padding: 2px !important;
+  display: flex;
+}
+
+button.btn.btn-outline-dark {
+  max-height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.putaway-request-licenseplate, div.system-auth { 
+  padding-bottom: 3px;
+}
+
+label.task-data {
+  min-width: 128px;
+}
+
+label.putaway-request { 
+  min-width: 115px;
+}
+
+div.system-auth label {
+  min-width: 80px;
+}
+
+div.login-wrapper {
+  max-width: fit-content;
+}
+
+li.nav-item {
+  display: flex;
+  align-items: center;
+}
+
+.taskData div.modal-body {
+  display: flex;
+  justify-content: left;
+}
+
+div.task-data, div.task-sn-capture {
+  display: inline-block;
+  padding-right: 50px;
+}
+
+div.task-data span {
+  display: flex;
 }

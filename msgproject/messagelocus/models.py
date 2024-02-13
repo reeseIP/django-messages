@@ -151,8 +151,8 @@ class OrderTaskResults(models.Model):
 	@classmethod
 	def get_last_task(cls,JobId,JobTaskId):
 		''' get the data for the last task sent '''
-		tasks = cls.objects.filter(JobId_id=JobId,JobTaskId=JobTaskId).order_by('-timestamp')
-		return tasks[0]
+		task = cls.objects.filter(JobId_id=JobId,JobTaskId=JobTaskId).order_by('-timestamp').first()
+		return task
 
 	def __str__(self):
 		return ('{}: {}'.format(self.id, self.JobTaskId))
@@ -284,8 +284,8 @@ class PutawayTaskResults(models.Model):
 	@classmethod
 	def get_last_task(cls,JobId,JobTaskId):
 		''' get the data for the last task sent '''
-		tasks = cls.objects.filter(JobId_id=JobId,JobTaskId=JobTaskId).order_by('-timestamp')
-		return tasks[0]
+		task = cls.objects.filter(JobId_id=JobId,JobTaskId=JobTaskId).order_by('-timestamp').first()
+		return task
 
 	def __str__(self):
 		return ('{}: {}'.format(self.id, self.JobTaskId))
@@ -310,8 +310,8 @@ class OrderJobEvents(models.Model):
 
 	@classmethod
 	def get_last_event(cls,JobId):
-		last_event = cls.objects.filter(JobId=JobId).order_by('-timestamp')
-		return last_event[0]
+		last_event = cls.objects.filter(JobId=JobId).order_by('-timestamp').first()
+		return last_event
 
 	def __str__(self):
 		return('{}: {}'.format(self.JobId, self.EventType))
@@ -363,14 +363,10 @@ class ExternalUsers(models.Model):
 	username = models.CharField(
 		("username"),
 		max_length=150,
-		unique=True,
 		help_text= (
 			"Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
 		),
 		validators=[username_validator],
-		error_messages={
-			"unique": ("A user with that username already exists."),
-		},
 	)
 	csrf_token = models.CharField(max_length=32,null=False)
 	sessionid = models.CharField(max_length=32,null=False)

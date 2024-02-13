@@ -22,7 +22,7 @@ import datetime
 
 
 ### helper methods
-def send_request(request,job_data,job_type,event_type=None,event_info=None,tasks=None,serial_number=None):
+def send_request(request,job_data,job_type,event_type="",event_info="",tasks="",serial_number=""):
 	date = datetime.datetime.now().strftime(format='%Y-%m-%dT%H:%M:%S')
 	if job_type == 'OrderJob':
 		event_model = OrderJobEvents
@@ -72,29 +72,29 @@ def send_request(request,job_data,job_type,event_type=None,event_info=None,tasks
 						"Quantity": '1',
 						"Serial": serial_number}
 
-	if event_model:
-		# event entry
-		event = event_model()
-		event.JobId_id = job_data['id']
-		event.EventType = event_type
-		event.JobDate = date
-		if event_type == 'PICK' or event_type == 'PUT' or event_type == 'SERIAL':
-			event.EventInfo = '{} Job: {} Task: {} Sent.'.format(event_type,job_data['JobId'],tasks[0]['JobTaskId'])
-		else:
-			event.EventInfo = '{} Job: {} Sent.'.format(event_type,job_data['JobId'])
-		event.save()
+	try:
+		req_username = request.COOKIES['username']
+		req_system = request.COOKIES['system']
+	except KeyError:
+		messages.error(request, 'A valid target user needs to be set before sending a request.')
+		return
 
-	req_username = request.COOKIES['username']
-	req_system = request.COOKIES['system']
 
-	tar_user = ExternalUsers.objects.filter(username=req_username,system=req_system)[0]
-	tar_sys = ExternalSystems.objects.filter(system=req_system)[0]
+	tar_user = ExternalUsers.objects.filter(username=req_username,system=req_system).first()
+	tar_sys = ExternalSystems.objects.filter(system=req_system).first()
+
+	if job_type == 'SerialValidation':
+		index = tar_sys.url.find('?')
+		tar_sys.url = tar_sys.url[:index] + '/validateSerial' + tar_sys.url[index:]
 
 	if tar_user and tar_sys:
-		client = requests.session()
+		#client = requests.session()
 		response = requests.post(tar_sys.url,
 								json=job_message,
 								auth=(tar_user.username,tar_user.password))
+	else:
+		messages.error(request, 'A valid target user needs to be set before sending a request.')
+		return
 
 	# local testing
 	#URL = http://127.0.0.1:8000
@@ -102,15 +102,28 @@ def send_request(request,job_data,job_type,event_type=None,event_info=None,tasks
 	#response = client.post(URL,
 	#						json=json.dumps(job_message))
 
-	if response and event_type != 'SERIAL':
+	if response:
 		if response.status_code == 200:
-			messages.success(request, '{} {} sent!'.format(job_type,event_type))
+			if event_type != 'SERIAL':
+				messages.success(request, '{} {} sent!'.format(job_type,event_type))
+			if event_model:
+				# event entry
+				event = event_model()
+				event.JobId_id = job_data['id']
+				event.EventType = event_type
+				event.JobDate = date
+				if event_type == 'PICK' or event_type == 'PUT':
+					event.EventInfo = '{} Job: {} Task: {} Sent.'.format(event_type,job_data['JobId'],tasks[0]['JobTaskId'])
+				elif event_type != 'SERIAL':
+					event.EventInfo = '{} Job: {} Sent.'.format(event_type,job_data['JobId'])
+				event.save()
 		elif response.status_code != 200:
 			messages.error(request, response.text)
 	else:
 		messages.error(request, 'Failed to send request')
 
 	return response
+
 
 def get_job(JobId):
 	try:
@@ -159,26 +172,24 @@ def logout_user(request):
 	response.delete_cookie('username')
 	response.delete_cookie('system')
 	return response
-	#return redirect('/messagelocus/login/')
-
 
 @login_required
 def active(request):
 	''' landing page - list of jobs'''
-	orders = OrderJobs.objects.filter(active=True).order_by('-JobId')[:]
-	putaways = PutawayJobs.objects.filter(active=True).order_by('-JobId')[:]
+	orders = OrderJobs.objects.filter(active=True).order_by('-JobId').all()
+	putaways = PutawayJobs.objects.filter(active=True).order_by('-JobId').all()
 
 	orderjob_list = []
 	putawayjob_list = []
 
 	for order in orders:
-		event = OrderJobEvents.objects.filter(JobId=order).order_by('-JobDate')[0]
+		event = OrderJobEvents.objects.filter(JobId=order).order_by('-JobDate').first()
 		order_data = order.get_data()
 		order_data['Latest Event'] = event.EventInfo
 		orderjob_list.append(order_data)
 
 	for putaway in putaways:
-		event = PutawayJobEvents.objects.filter(JobId=putaway).order_by('-JobDate')[0]
+		event = PutawayJobEvents.objects.filter(JobId=putaway).order_by('-JobDate').first()
 		putaway_data = putaway.get_data()
 		keyorder = ['JobId']
 		[keyorder.append(field) for field in putaway_data if field != 'JobId']
@@ -219,19 +230,19 @@ def active(request):
 @login_required
 def closed(request):
 	''' landing page - list of jobs'''
-	orders = OrderJobs.objects.filter(active=False).order_by('-JobId')[:]
-	putaways = PutawayJobs.objects.filter(active=False).order_by('-JobId')[:]
+	orders = OrderJobs.objects.filter(active=False).order_by('-JobId').all()
+	putaways = PutawayJobs.objects.filter(active=False).order_by('-JobId').all()
 
 	orderjob_list = []
 	putawayjob_list = []
 
 	for order in orders:
-		event = OrderJobEvents.objects.filter(JobId=order).order_by('-JobDate')[0]
+		event = OrderJobEvents.objects.filter(JobId=order).order_by('-JobDate').first()
 		orderjob_list.append({"JobId": order.JobId,
 							  "latest_event": event.EventInfo})
 
 	for putaway in putaways:
-		event = PutawayJobEvents.objects.filter(JobId=putaway).order_by('-JobDate')[0]
+		event = PutawayJobEvents.objects.filter(JobId=putaway).order_by('-JobDate').first()
 		putawayjob_list.append({"JobId": putaway.JobId,
 							    "latest_event": event.EventInfo})
 		
@@ -240,20 +251,22 @@ def closed(request):
 													  })
 
 @login_required
-def close_job(request, JobId):
+def close_job(request):
 	''' close a job '''
-	job = get_job(JobId=JobId)
+	job = get_job(request.POST['JobId'])
 	if job:
 		job_query = job['job_query']
 		job_query.active = False
 		job_query.save()
+		messages.success(request, 'Job {} Closed'.format(job.JobId))
 
 	else:
 		messages.error(request, 'Error occured when closing job')
 
-	return redirect('/messagelocus/{}'.format(JobId))
+	return redirect('/messagelocus/{}'.format(request.POST['JobId']))
 
 
+@csrf_exempt
 def inbound(request):
 	''' inbound messages '''
 	if request.method == 'POST':
@@ -384,8 +397,8 @@ def jobview(request, JobId):
 		event_model =PutawayJobEvents
 		TaskDataFormSet = formset_factory(PutawayTasksForm, extra=0)
 
-	tasks = task_model.objects.filter(JobId_id=job_data['id']).order_by('JobTaskId')[:]
-	events = event_model.objects.filter(JobId_id=job_data['id']).order_by('-JobDate')[:]
+	tasks = task_model.objects.filter(JobId_id=job_data['id']).order_by('JobTaskId').all()
+	events = event_model.objects.filter(JobId_id=job_data['id']).order_by('-JobDate').all()
 	
 	job_events = []
 	for event in events:
@@ -426,10 +439,10 @@ def putawayjobrequest(request):
 		job_data = {'LicensePlate':request.POST['licenseplate'],
 					'RequestRobot':request.POST['requestrobot'],}
 		
-		send_request(request,job_data,job_type='PutawayRequest')
-		messages.success(request,'Putaway Job Requested')
-		return JsonResponse({'response':'valid'})
-		#return redirect('/messagelocus/putawayjobrequest')
+		response = send_request(request,job_data,job_type='PutawayRequest')
+		if response.status_code == 200:
+			messages.success(request,'Putaway Job Requested')
+		return JsonResponse({'status_code':response.status_code})
 
 
 @login_required
@@ -479,7 +492,7 @@ def sendcomplete(request, JobId):
 
 	task_data = []
 	if job_type == 'OrderJob':
-		tasks = OrderTaskResults.objects.filter(JobId_id=job_data['id'])[:]
+		tasks = OrderTaskResults.objects.filter(JobId_id=job_data['id']).all()
 
 		d = {x.JobTaskId: x for x in tasks}
 		mylist = list(d.values())
@@ -570,24 +583,25 @@ def sendtask(request, JobId):
 
 	if job_type == 'OrderJob':
 		new_task = OrderTaskResults()
-		send_request(request,job_data,job_type,"PICK",None,[task_data])
+		response = send_request(request,job_data,job_type,"PICK",None,[task_data])
 	elif job_type == 'PutawayJob':
 		new_task = PutawayTaskResults()
-		send_request(request,job_data,job_type,"PUT",None,[task_data])	
+		response = send_request(request,job_data,job_type,"PUT",None,[task_data])	
 
-	# update the job data in the DB to capture the additional data sent
-	for key, value in task_data.items():
-		setattr(new_task,key,value)
-
-	new_task.JobId_id = job_data['id']
-	new_task.save()
-
-	for item in serial_numbers:
-		new_serial = OrderSerialNumbers()
-		new_serial.JobId_id = job_data['id']
-		new_serial.JobTaskId_id = new_task.id
-		new_serial.SerialNo = item
-		new_serial.save()
+	if response.status_code	== 200:
+		# update the job data in the DB to capture the additional data sent
+		for key, value in task_data.items():
+			setattr(new_task,key,value)
+	
+		new_task.JobId_id = job_data['id']
+		new_task.save()
+	
+		for item in serial_numbers:
+			new_serial = OrderSerialNumbers()
+			new_serial.JobId_id = job_data['id']
+			new_serial.JobTaskId_id = new_task.id
+			new_serial.SerialNo = item
+			new_serial.save()
 
 	return redirect('/messagelocus/{}'.format(JobId))
 
@@ -607,22 +621,33 @@ def set_target_user(request):
 		req_user = request.POST["username"] 
 		req_syst = request.POST["system"]
 
-		try:
-			user = ExternalUsers.objects.filter(username=req_user,system=req_syst)[0]
-			return HttpResponse('User Already Valid')
-		except IndexError:
-			user = ExternalUsers()
-			user.username = request.POST["username"] 
-			user.password = request.POST["password"]
-			user.csrf_token = request.POST["csrfmiddlewaretoken"]
-			user.sessionid = request.POST["sessionid"]
-			user.system = request.POST["system"]
-			user.created_by = request.user
-			try:
-				user.save()
-				return HttpResponse('Temporary User Created')
-			except IntegrityError:
-				return HttpResponse('Invalid User')
+		user = ExternalUsers.objects.filter(username=req_user,system=req_syst).first()
+		if user:
+			messages.info(request, 'User Already Valid')
+			return JsonResponse({'status_code': 200})
+		else:
+			tar_sys = ExternalSystems.objects.filter(system=req_syst).first()
+			# validate user is valid in external system
+			response = requests.get(tar_sys.url,
+										auth=(request.POST["username"],request.POST["password"]))
+			if response:
+				if response.status_code == 200:
+					user = ExternalUsers()
+					user.username = request.POST["username"] 
+					user.password = request.POST["password"]
+					user.csrf_token = request.POST["csrfmiddlewaretoken"]
+					user.sessionid = request.POST["sessionid"]
+					user.system = request.POST["system"]
+					user.created_by = request.user
+					try:
+						user.save()
+						messages.success(request, 'Temporary User {} Created'.format(user.username))
+						return JsonResponse({'status_code': 200})
+					except IntegrityError:
+						pass
+				
+			messages.error(request, 'Invalid User')
+			return JsonResponse({'status_code': 500})
 
 @login_required
 def get_capture_field_data(request):
@@ -630,9 +655,8 @@ def get_capture_field_data(request):
 	JobTaskId = request.POST['JobTaskId']
 	serial_numbers = []
 
-	task_obj = OrderTasks.objects.filter(JobTaskId=JobTaskId)
+	task_obj = OrderTasks.objects.filter(JobTaskId=JobTaskId).first()
 	if task_obj:
-		task_obj = task_obj[0]
 		var_ser_qty = task_obj.CaptureSerialNoQty
 
 		task_obj = OrderTaskResults.get_last_task(JobId=JobId,JobTaskId=JobTaskId)
@@ -651,10 +675,14 @@ def get_capture_field_data(request):
 @login_required
 def validate_serial_number(request):
 	if request.method == 'POST':
-		job_data = OrderJobs.objects.filter(id=request.POST['JobId'])[0].get_data()
+		return JsonResponse({'status_code':500,
+							 })
+		job_data = OrderJobs.objects.filter(id=request.POST['JobId']).first().get_data()
 		task_data = OrderTaskResults.get_last_task(JobId=request.POST['JobId'],JobTaskId=request.POST['JobTaskId']).get_data()
 		response = send_request(request,job_data=job_data,job_type='SerialValidation',event_type='SERIAL',event_info=None,tasks=task_data,serial_number=request.POST['SerialNumber'])
-		return JsonResponse({'status_code':response.status_code})
+		response_data = json.loads(response.text)
+		return JsonResponse({'status_code':response.status_code,
+							 'data': response_data})
 
 
 @login_required
@@ -663,12 +691,12 @@ def check_job_exists(request):
 	putawayjob = PutawayJobs.objects.filter(JobId=request.POST['search'])
 
 	if not orderjob or putawayjob:
-		return JsonResponse({'job_exists': False})
+		return JsonResponse({'status_code': 500})
 	else:
-		return JsonResponse({'job_exists': True})
+		return JsonResponse({'status_code': 200})
 
 @login_required
-def delete_external_user(request):
+def delete_target_user(request):
 	entry = ExternalUsers.objects.filter(username=request.POST['username'],
 												system=request.POST['system'],
 												created_by=request.user)
@@ -677,4 +705,4 @@ def delete_external_user(request):
 	else:
 		messages.error(request,'Unable to delete user.')
 
-	return JsonResponse({})
+	return JsonResponse({'status_code': 200})

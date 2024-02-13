@@ -9,7 +9,7 @@
         <thead>
             <tr>
                 {% for field in orderjob_fields %}
-                    <th scope="col">{{ field }}</th>
+                    <th scope="col"><label>{{ field }}</label></th>
                 {% endfor %}
             </tr>
         </thead>
@@ -19,7 +19,7 @@
             {% for key, value in order.items %}
                 {% if key == 'id' or key == 'active' %}
                     <td name='{{ key }}' style='display: none;'>
-                        <label class=active-label-job-data>{{ value }}</label>
+                        <label>{{ value }}</label>
                     </td>
                 {% elif key == 'JobId' %}
                     <td name='{{ key }}'>
@@ -27,7 +27,7 @@
                     </td>
                 {% else %}
                     <td name='{{ key }}'>
-                        <label class=active-label-job-data>{{ value }}</label>
+                        <label>{{ value }}</label>
                     </td>
                 {% endif %}
             {% endfor %}
@@ -50,7 +50,7 @@
         <thead>
             <tr>
                 {% for field in putawayjob_fields %}
-                    <th scope="col">{{ field }}</th>
+                    <th scope="col"><label>{{ field }}</label></th>
                 {% endfor %}
             </tr>
         </thead>
@@ -61,7 +61,7 @@
             
                 {% if key == 'id' or key == 'active' %}
                     <td name='{{ key }}' style='display: none;'>
-                        <label class=active-label-job-data>{{ value }}</label>
+                        <label>{{ value }}</label>
                     </td>
                 {% elif key == 'JobId' %}
                     <td name='{{ key }}'>
@@ -69,7 +69,7 @@
                     </td>
                 {% else %}
                     <td name='{{ key }}'>
-                        <label class=active-label-job-data>{{ value }}</label>
+                        <label>{{ value }}</label>
                     </td>
                 {% endif %}
             {% endfor %}
