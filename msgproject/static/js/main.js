@@ -27,9 +27,10 @@ function eraseCookie(name) {
 
 function clearModal(modalObject) {
 	var modalData = $(modalObject).find('div.modal-body');
+	$(modalObject).find('.modal-error').hide();
   	modalData.children().each(function(child) { 
 	    $(this).find('input').val('');
- 	 });
+ 	 }); 	
 }
 
 function checkValidSerials(modalObject) { 
@@ -93,7 +94,8 @@ $('#modalSystem button.submit').on('click', function(e) {
 	var modalObject = $(this).closest('.modal');
 	var system = $('#base-select-target-system').val();
 	if ($('#tarSysUser').val() == '' || $('#tarSysPass').val() == '' || $('#base-select-target-system').val() == null) {
-		alert('Please fill out all fields.')
+		$(modalObject).find('.modal-error').show();
+		//alert('Please fill out all fields.')
 		return
 	}
 	$.ajax({
@@ -260,7 +262,8 @@ $('#active-modal-putaway-request').on('click', 'button.submit', function(e) {
 	e.preventDefault();
 	var modalObject = $(this).closest('.modal');
 	if ($('#active-input-licenseplate').val() == '' || $('#active-input-requestrobot').val() == '' ) {
-		alert('Please fill out all fields.')
+		$(modalObject).find('.modal-error').show();
+		//alert('Please fill out all fields.')
 		return
 	}
 	$.ajax({ 

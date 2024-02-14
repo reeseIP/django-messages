@@ -6,22 +6,26 @@
   <!-------------------------------------------------------------------->
   {% if orderjob_list %}
     <h4 class='closed-header'>Order Jobs</h4>
-    <table class='table table-hover table-striped' id='closed-table-orderjobs'>
-      <thead>
-        <tr>
-          <th scope='col'>JobId</th>
-          <th scope='col'>Latest Event</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for job in orderjob_list %}
-          <tr>
-            <td><a href="/messagelocus/{{ job.JobId }}/">{{ job.JobId }}</a></td>
-            <td>{{ job.latest_event }}</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <div class='closed-div-table-wrapper'>
+        <div class='table-responsive' id='closed-div-table-orderjobs'>
+            <table class='table table-hover table-striped'>
+              <thead>
+                <tr>
+                  <th scope='col'>JobId</th>
+                  <th scope='col'>Latest Event</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for job in orderjob_list %}
+                  <tr>
+                    <td><a href="/messagelocus/{{ job.JobId }}/">{{ job.JobId }}</a></td>
+                    <td>{{ job.latest_event }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+        </div>
+      </div>
     <br>
     <br>
   {% endif %}
@@ -33,22 +37,26 @@
     <div class='putaway-header'>
       <h4 class='closed-header'>Putaway Jobs</h4>
     </div>
-    <table class='table table-hover table-striped' id='closed-table-putawayjobs'>
-      <thead>
-        <tr>
-          <th scope='col'>JobId</th>
-          <th scope='col'>Latest Event</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for job in putawayjob_list %}
-          <tr>
-            <td><a href="/messagelocus/{{ job.JobId }}/">{{ job.JobId }}</a></td>
-            <td>{{ job.latest_event }}</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <div class='closed-div-table-wrapper'>
+    <div class='table-responsive' id='closed-div-table-putawayjobs'>
+        <table class='table table-hover table-striped'>
+          <thead>
+            <tr>
+              <th scope='col'>JobId</th>
+              <th scope='col'>Latest Event</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for job in putawayjob_list %}
+              <tr>
+                <td><a href="/messagelocus/{{ job.JobId }}/">{{ job.JobId }}</a></td>
+                <td>{{ job.latest_event }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+    </div>
+  </div>
   {% endif %}
 
 {% endblock %}

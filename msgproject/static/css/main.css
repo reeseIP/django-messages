@@ -56,11 +56,20 @@ tr {
   max-height: 22px;
 }
 
+.modal-error {
+  display: flex;
+  justify-content: center;
+  padding-top: 10px;
+  color: red;
+}
+
 
 /* ----------- id styles ----------- */
 
-#active-table-orderjobs label,
-#active-table-putawayjobs label,
+#active-div-table-orderjobs label,
+#active-div-table-putawayjobs label,
+#closed-div-table-orderjobs label,
+#closed-div-table-putawayjobs label,
 #jobview-table-job-tasks label, 
 #jobview-table-job-events label { 
   min-width: max-content;
@@ -86,9 +95,19 @@ tr {
   margin-bottom: 5px;
 }
 
-#active-table-orderjobs, #active-table-putawayjobs {
+
+#active-div-table-orderjobs, 
+#active-div-table-putawayjobs,
+#closed-div-table-orderjobs, 
+#closed-div-table-putawayjobs {
+  max-height: 325px;
   margin-bottom: 5px;
 }
+
+.active-div-table-wrapper, .closed-div-table-wrapper {
+  height: 325px;
+}
+
 
 #jobview-div-job-info label.key {
   min-width: 145px;
@@ -183,6 +202,12 @@ tr {
 
 
 /* ----------- other styles ----------- */
+
+@media (min-width: 1800px) {
+    .container{
+        min-width: 1800px;
+    }
+}
 
 button.btn-delete-user {
   padding: 2px !important;

@@ -185,7 +185,10 @@ def active(request):
 	for order in orders:
 		event = OrderJobEvents.objects.filter(JobId=order).order_by('-JobDate').first()
 		order_data = order.get_data()
-		order_data['Latest Event'] = event.EventInfo
+		if event:
+			order_data['Latest Event'] = event.EventInfo
+		else:
+			order_data['Latest Event'] = ''
 		orderjob_list.append(order_data)
 
 	for putaway in putaways:
@@ -194,8 +197,10 @@ def active(request):
 		keyorder = ['JobId']
 		[keyorder.append(field) for field in putaway_data if field != 'JobId']
 		putaway_data = {k: putaway_data[k] for k in keyorder if k in putaway_data}
-
-		putaway_data['Latest Event'] = event.EventInfo
+		if event:
+			putaway_data['Latest Event'] = event.EventInfo
+		else:
+			putaway_data['Latest Event'] = ''
 		putawayjob_list.append(putaway_data)
 
 	orderjob_fields = OrderJobs.get_fields()

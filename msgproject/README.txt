@@ -2,6 +2,7 @@
 
 requires python 3.9 interpreter and git
 
+*** instructions for deployment from command line ***
 create virtual environmen in target directory
 	- python -m venv env
 
@@ -26,4 +27,7 @@ settings.py
 
 start the server
 	- python manage.py runserver
+
+create target system entries with admin console
+	- http://domain.name:8000/admin/messagelocus/externalsystems/
 
