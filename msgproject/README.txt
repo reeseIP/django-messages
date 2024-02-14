@@ -1,8 +1,7 @@
 --- Initial Setup ---
 
-requires python 3.9.1 interpreter and git
-
-download python 3.9.1 @ https://www.python.org/downloads/
+requires python 3.9.1 interpreter
+	- download python 3.9.1 @ https://www.python.org/downloads/
 
 *** instructions for deployment from command line ***
 create virtual environmen in target directory
@@ -11,8 +10,8 @@ create virtual environmen in target directory
 activate virtural environment
 	- env\scripts\activate
 
-clone repository from github
-	git clone https://github.com/reeseIP/django-messages
+clone or copy repository from github into target directory
+	- git clone https://github.com/reeseIP/django-messages
 
 navigate to directory containing requirements.txt and install
 	- pip install -r requirements.txt 

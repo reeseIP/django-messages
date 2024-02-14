@@ -113,7 +113,11 @@ def send_request(request,job_data,job_type,event_type="",event_info="",tasks="",
 				event.EventType = event_type
 				event.JobDate = date
 				if event_type == 'PICK' or event_type == 'PUT':
-					event.EventInfo = '{} Job: {} Task: {} Sent.'.format(event_type,job_data['JobId'],tasks[0]['JobTaskId'])
+					try:
+						task = tasks[0]['JobTaskId']
+					except IndexError:
+						task = ''
+					event.EventInfo = '{} Job: {} Task: {} Sent.'.format(event_type,job_data['JobId'],task)
 				elif event_type != 'SERIAL':
 					event.EventInfo = '{} Job: {} Sent.'.format(event_type,job_data['JobId'])
 				event.save()
@@ -276,10 +280,14 @@ def inbound(request):
 	''' inbound messages '''
 	if request.method == 'POST':
 		auth_header = request.META['HTTP_AUTHORIZATION']
-		encoded_credentials = auth_header.split(' ')[1] # Removes "Basic " to isolate credentials
-		decoded_credentials = base64.b64decode(encoded_credentials).decode("utf-8").split(':')
-		username = decoded_credentials[0]
-		password = decoded_credentials[1]
+		try:
+			encoded_credentials = auth_header.split(' ')[1] # Removes "Basic " to isolate credentials
+			decoded_credentials = base64.b64decode(encoded_credentials).decode("utf-8").split(':')
+			username = decoded_credentials[0]
+			password = decoded_credentials[1]
+		except IndexError:
+			return HttpResponse('Invalid Credentials')
+
 		user = authenticate(request, username=username, password=password)
 		if user is not None:
 			json_data = json.load(io.BytesIO(request.body))
@@ -353,9 +361,6 @@ def inbound(request):
 									elif field.name == 'ExecQty':
 										value = task['TaskQty']
 										setattr(new_result_task,field.name,value)
-									elif field.name == 'SerialNo':
-										value = task['CaptureSerialNo']
-										setattr(new_result_task,field.name,value)
 									else:
 										try:
 											value = task[field.name]
@@ -367,6 +372,7 @@ def inbound(request):
 											value = None
 										setattr(new_result_task,field.name,value)
 
+								print(new_task)
 								new_task.save()
 								new_result_task.save()
 
@@ -381,6 +387,8 @@ def inbound(request):
 				event.EventType = v1['EventType']
 				event.JobDate = v1['JobDate']
 				event.save()
+
+				return HttpResponse('Job Successfully Created')
 
 		else:
 			return HttpResponse('Invalid Credentials')
@@ -420,15 +428,12 @@ def jobview(request, JobId):
 		task_data.append(last_task.get_data())
 
 	formset = TaskDataFormSet(initial=task_data)
-
-	task_header = []
-	if formset:
-		for field in formset[0]:
-			task_header.append(field.name)
-
+	
+	task_header = task_model.get_fields()
 	# keep hidden on page
-	#del job_data['id'] 
-	#del job_data['active']
+	del task_header['id'] 
+	del task_header['timestamp']
+	
 	return render(request, "messagelocus/jobview.html", {'JobId': JobId,
 														 'job_data': job_data,
 														 'job_type': job_type,
@@ -569,44 +574,47 @@ def sendtask(request, JobId):
 	task_data = {}
 	serial_numbers = []
 
-	for item in form_data[1:]:
-		if item[0][0:2] == 'SN':
-			# capture serial numbers
-			serial_numbers.append(item[1])
-		else:
-			# data in for is formatted form-X-fieldname, parse off form-X-
-			index = len(item[0])
-			index_of_dash = item[0].rfind('-', 0, index)
-			task_data[item[0][index_of_dash+1:]] = item[1]
+	try:
+		for item in form_data[1:]:
+			if item[0][0:2] == 'SN':
+				# capture serial numbers
+				serial_numbers.append(item[1])
+			else:
+				# data in for is formatted form-X-fieldname, parse off form-X-
+				index = len(item[0])
+				index_of_dash = item[0].rfind('-', 0, index)
+				task_data[item[0][index_of_dash+1:]] = item[1]
 
-	if serial_numbers:
-		task_data['SerialNo'] = serial_numbers
+		if serial_numbers:
+			task_data['SerialNo'] = serial_numbers
 
-	job = get_job(JobId=JobId)
-	job_data = job['job_data']
-	job_type = job['job_type']
+		job = get_job(JobId=JobId)
+		job_data = job['job_data']
+		job_type = job['job_type']
 
-	if job_type == 'OrderJob':
-		new_task = OrderTaskResults()
-		response = send_request(request,job_data,job_type,"PICK",None,[task_data])
-	elif job_type == 'PutawayJob':
-		new_task = PutawayTaskResults()
-		response = send_request(request,job_data,job_type,"PUT",None,[task_data])	
+		if job_type == 'OrderJob':
+			new_task = OrderTaskResults()
+			response = send_request(request,job_data,job_type,"PICK",None,[task_data])
+		elif job_type == 'PutawayJob':
+			new_task = PutawayTaskResults()
+			response = send_request(request,job_data,job_type,"PUT",None,[task_data])	
 
-	if response.status_code	== 200:
-		# update the job data in the DB to capture the additional data sent
-		for key, value in task_data.items():
-			setattr(new_task,key,value)
-	
-		new_task.JobId_id = job_data['id']
-		new_task.save()
-	
-		for item in serial_numbers:
-			new_serial = OrderSerialNumbers()
-			new_serial.JobId_id = job_data['id']
-			new_serial.JobTaskId_id = new_task.id
-			new_serial.SerialNo = item
-			new_serial.save()
+		if response.status_code	== 200:
+			# update the job data in the DB to capture the additional data sent
+			for key, value in task_data.items():
+				setattr(new_task,key,value)
+		
+			new_task.JobId_id = job_data['id']
+			new_task.save()
+		
+			for item in serial_numbers:
+				new_serial = OrderSerialNumbers()
+				new_serial.JobId_id = job_data['id']
+				new_serial.JobTaskId_id = new_task.id
+				new_serial.SerialNo = item
+				new_serial.save()
+	except IndexError:
+		messages.error(request, 'Failed to read task data.')
 
 	return redirect('/messagelocus/{}'.format(JobId))
 
@@ -694,8 +702,9 @@ def validate_serial_number(request):
 def check_job_exists(request):
 	orderjob = OrderJobs.objects.filter(JobId=request.POST['search'])
 	putawayjob = PutawayJobs.objects.filter(JobId=request.POST['search'])
+	print(putawayjob)
 
-	if not orderjob or putawayjob:
+	if not orderjob and not putawayjob:
 		return JsonResponse({'status_code': 500})
 	else:
 		return JsonResponse({'status_code': 200})
