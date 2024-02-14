@@ -1,49 +1,50 @@
+<!-- base.html -->
 {% load static i18n %}
 <!DOCTYPE html>
-{% get_current_language as language_code %}
+  {% get_current_language as language_code %}
 
-<html lang="{{ language_code }}">
+  <html lang="{{ language_code }}">
 
-  <head>
-    <title>{% spaceless %}{% block title %}Home{% endblock %}{% endspaceless %}</title>
-    <meta charset="UTF-8">
-    <meta name="msapplication-TileColor" content="#da532c">
-    <meta name="theme-color" content="#ffffff">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <head>
+      <title>{% spaceless %}{% block title %}Home{% endblock %}{% endspaceless %}</title>
+      <meta charset="UTF-8">
+      <meta name="msapplication-TileColor" content="#da532c">
+      <meta name="theme-color" content="#ffffff">
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    {# site meta and seo meta tags, override on specific pages as necessary. #}
+      {# site meta and seo meta tags, override on specific pages as necessary. #}
+      {% block site_meta %}{% endblock %}
+      {% block extra_css %}{% endblock %}
+      {% block head_js %}{% endblock %}
 
-    {% block site_meta %}{% endblock %}
-    {% block extra_css %}{% endblock %}
-    {% block head_js %}{% endblock %}
+      <!-- CSS -->
+      <link href="{% static 'css/main.css' %}" rel="stylesheet" type="text/css" />
+      <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet" type="text/css" />
+    </head>
 
-    <link href="{% static 'css/main.css' %}" rel="stylesheet" type="text/css" />
-    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet" type="text/css" />
-  </head>
-
-<body>
-
-        
-        <nav class="navbar navbar-expand-lg navbar-light bg-light">
-          <div class="container">
-            <div id='base-div-nav-items-left'>
+    <body>
+      <!-- NavBar -->
+      <!-------------------------------------------------------------------->
+      <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container">
+          <div id='base-div-nav-items-left'>
             <div id='base-div-nav-brand'>
-            <img class='nav-item' src="{% static 'images/email64.png' %}" width='64' height ='48' alt='=(' style='padding-right: 10px'>
-            {% if user.is_authenticated %}
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-              <span class="navbar-toggler-icon"></span>
-            </button>
-          </div>
+              <img class='nav-item' src="{% static 'images/email64.png' %}" width='64' height ='48' alt='=(' style='padding-right: 10px'>
+              {% if user.is_authenticated %}
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                  <span class="navbar-toggler-icon"></span>
+                </button>
+            </div>
             <div class="navbar-collapse collapse" id="navbarSupportedContent">
               <ul class="navbar-nav">
                 <li class='nav-item'>
                   <form class="d-flex nav-item" id='base-form-search'>
                     {% csrf_token %}
-                  <div class="input-group">
-                    <input class="form-control" type="search" placeholder="Search" aria-label="Search" id="base-input-navbar-search" name='search'>
-                    <button class="btn btn-outline-dark" type="submit">
-                      <img src='{% static "images/search24px.png" %}' alt='=('>
-                    </button>
+                    <div class="input-group">
+                      <input class="form-control" type="search" placeholder="Search" aria-label="Search" id="base-input-navbar-search" name='search'>
+                      <button class="btn btn-outline-dark" type="submit">
+                        <img src='{% static "images/search24px.png" %}' alt='=('>
+                      </button>
                     </div>
                   </form>
                 </li>
@@ -55,88 +56,82 @@
                 </li>
               </ul>
             </div>
-
           </div>
-            <div id='base-div-nav-items-right'>
-                      <div id='base-div-user-controls'>
-            <div class="dropdown">
-              <button class="btn btn-outline-dark dropdown-toggle" type="button" id="base-button-dropdown-user" data-bs-toggle="dropdown" aria-expanded="false">
-                <img src='{% static "images/user24px.png" %}' alt='=('>
-              </button>
-              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="base-button-dropdown-user" id='base-ul-user-dropdown'>
-                <li>
-                  <h6 class="dropdown-header">Target System Users</h6> 
-                </li>
-                <ul class='list-group' id='base-ul-active-users'>
-                {% for user in active_users %}
+          <div id='base-div-nav-items-right'>
+            <div id='base-div-user-controls'>
+              <div class="dropdown">
+                <button class="btn btn-outline-dark dropdown-toggle" type="button" id="base-button-dropdown-user" data-bs-toggle="dropdown" aria-expanded="false">
+                  <img src='{% static "images/user24px.png" %}' alt='=('>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="base-button-dropdown-user" id='base-ul-user-dropdown'>
+                  <li><h6 class="dropdown-header">Target System Users</h6></li>
+                  <ul class='list-group' id='base-ul-active-users'>
+                    {% for user in active_users %}
+                      <li class="dropdown-item">
+                        <a class="nav-link" href="#">
+                          <div class='form-check'>
+                            <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault{{ user.system }}{{ user.username }}">
+                            <label class='base-label-system'>{{ user.system }}</label>: 
+                            <label class='base-label-username'>{{ user.username }}</label>
+                          </div>
+                        </a>
+                        <div class='base-user-delete'>
+                         <form class='base-user-delete'>
+                            {% csrf_token %}
+                            <input hidden readonly class='base-input-username' name='username' value='{{ user.username }}'>
+                            <input hidden readonly class='base-input-system' name='system' value='{{ user.system }}'>
+                            <button class='btn btn-danger btn-sm btn-delete-user' type='submit'>
+                              <img src='{% static "images/icons8-trash-16.png" %}' alt='=('>
+                            </button>
+                          </form>
+                        </div>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                  <li class="dropdown-item"><a class='nav-link' href="#" id='base-a-add-new-user'>New User</a></li>
+                  <li><hr class="dropdown-divider"></li>
                   <li class="dropdown-item">
-                    <a class="nav-link" href="#">
-                    <div class='form-check'>
-                      <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault{{ user.system }}{{ user.username }}">
-                    <label class='base-label-system'>{{ user.system }}</label>: 
-                    <label class='base-label-username'>{{ user.username }}</label>
-                    </div>
-                   </a>
-                   <div class='base-user-delete'>
-                   <form class='base-user-delete'>
-                      {% csrf_token %}
-                      <input hidden readonly class='base-input-username' name='username' value='{{ user.username }}'>
-                      <input hidden readonly class='base-input-system' name='system' value='{{ user.system }}'>
-                      <button class='btn btn-danger btn-sm btn-delete-user' type='submit'>
-                        <img src='{% static "images/icons8-trash-16.png" %}' alt='=('>
-                      </button>
-                  </form>
-                </div>
-                {% endfor %}
-              </li>
-              </ul>
-                <li class="dropdown-item"><a class='nav-link' href="#" id='base-a-add-new-user'>New User</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li class="dropdown-item">
-                <a class="nav-link" href="/messagelocus/logout/" id='base-a-user-logout'>Logout</a>
-                </li>
-              </ul>
+                  <a class="nav-link" href="/messagelocus/logout/" id='base-a-user-logout'>Logout</a>
+                  </li>
+                </ul>
+              </div>
+              {% endif %}
             </div>
-            {% endif %}
           </div>
-
-            </div>
-
-
-          </div>
-        
+        </div>
       </nav>
       
-  <div class="site-content">
-    <div class="container">
-      {% if messages %}
-        <div class="messages" id='base-div-messages'>
-        {% for message in messages %}
-          <div class="alert alert-warning alert-dismissible fade show" role="alert">
-              {{ message }}
-              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
-              </button>
-          </div>
-        {% endfor %}
-        </div>
-      {% endif %}
+
+      <!-- Site Content -->
+      <!-------------------------------------------------------------------->
+      <div class="site-content">
+        <div class="container">
+          <!-- Server Messages -->
+          {% if messages %}
+            <div class="messages" id='base-div-messages'>
+              {% for message in messages %}
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                  {{ message }}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
           <!-- Modal: Target System Credentials -->
           <div class="modal fade" id="modalSystem" role="dialog">
             <div class="modal-dialog">
-
-              <!-- Modal content-->
               <div class="modal-content">
-                  <div class="modal-header">
-                    <h4 class="modal-title">Target System Credentials</h4>
-                  </div>
-                  <div class="modal-body">
-                    <select id="base-select-target-system" class="form-select">
-                      <option value="" selected disabled hidden id='base-option-system-initial'>System</option>
-                      {% for system in systems %}
-                         <option class="dropdown-item">{{ system }}</option>
-                      {% endfor %}
+                <div class="modal-header">
+                  <h4 class="modal-title">Target System Credentials</h4>
+                </div>
+                <div class="modal-body">
+                  <select id="base-select-target-system" class="form-select">
+                    <option value="" selected disabled hidden id='base-option-system-initial'>System</option>
+                    {% for system in systems %}
+                       <option class="dropdown-item">{{ system }}</option>
+                    {% endfor %}
                   </select>
-                    <div id='base-div-user-credentials'>
+                  <div id='base-div-user-credentials'>
                     <div class='system-auth'>
                       <label for="name">Username:</label>
                       <input id='tarSysUser'type='text' name='username'>
@@ -147,22 +142,23 @@
                     </div> 
                   </div>
                 </div>
-                  <div class="modal-footer">
-                    <button class="btn btn-primary submit" type="submit">Submit</button>
-                    <button type="button" class="btn btn-default close" data-dismiss="modal">Close</button>
-                  </div>
+                <div class="modal-footer">
+                  <button class="btn btn-primary submit" type="submit">Submit</button>
+                  <button type="button" class="btn btn-default close" data-dismiss="modal">Close</button>
+                </div>
               </div>
             </div>
           </div>
-      {% block content %}{% endblock %}
-    </div>
-    </div>
-  </div>
-  {% block footer_js %}
-    <script type="text/javascript" src="{% static 'js/jquery-3.7.1.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/main.js' %}"></script>
-  {% endblock %}
+          {% block content %}{% endblock %}
+        </div>
+      </div>
 
-</body>
-</html>
+      <!-- JavaScript -->
+      {% block footer_js %}
+        <script type="text/javascript" src="{% static 'js/jquery-3.7.1.min.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/main.js' %}"></script>
+      {% endblock %}
+
+    </body>
+  </html>

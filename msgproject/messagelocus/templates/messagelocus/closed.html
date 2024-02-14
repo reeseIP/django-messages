@@ -1,51 +1,54 @@
+<!-- closed.html -->
 {% extends 'messagelocus/base.html' %}
 {% block content %}
-{% if orderjob_list %}
+
+  <!-- OrderJob Table -->
+  <!-------------------------------------------------------------------->
+  {% if orderjob_list %}
     <h4 class='closed-header'>Order Jobs</h4>
     <table class='table table-hover table-striped' id='closed-table-orderjobs'>
-        <thead>
-            <tr>
-                <th scope='col'>JobId</th>
-                <th scope='col'>Latest Event</th>
-            </tr>
-        </thead>
-        <tbody>
+      <thead>
+        <tr>
+          <th scope='col'>JobId</th>
+          <th scope='col'>Latest Event</th>
+        </tr>
+      </thead>
+      <tbody>
         {% for job in orderjob_list %}
-            <tr>
-                <td><a href="/messagelocus/{{ job.JobId }}/">{{ job.JobId }}</a></td>
-                <td>{{ job.latest_event }}</td>
-            </tr>
+          <tr>
+            <td><a href="/messagelocus/{{ job.JobId }}/">{{ job.JobId }}</a></td>
+            <td>{{ job.latest_event }}</td>
+          </tr>
         {% endfor %}
-        </tbody>
+      </tbody>
     </table>
     <br>
     <br>
-{% endif %}
+  {% endif %}
 
-{% if putawayjob_list %}
+
+  <!-- PutawayJob Table -->
+  <!-------------------------------------------------------------------->
+  {% if putawayjob_list %}
     <div class='putaway-header'>
-        <h4 class='closed-header'>Putaway Jobs</h4>
+      <h4 class='closed-header'>Putaway Jobs</h4>
     </div>
     <table class='table table-hover table-striped' id='closed-table-putawayjobs'>
-        <thead>
-            <tr>
-                <th scope='col'>JobId</th>
-                <th scope='col'>Latest Event</th>
-            </tr>
-        </thead>
-        <tbody>
+      <thead>
+        <tr>
+          <th scope='col'>JobId</th>
+          <th scope='col'>Latest Event</th>
+        </tr>
+      </thead>
+      <tbody>
         {% for job in putawayjob_list %}
-            <tr>
-                <td><a href="/messagelocus/{{ job.JobId }}/">{{ job.JobId }}</a></td>
-                <td>{{ job.latest_event }}</td>
-            </tr>
+          <tr>
+            <td><a href="/messagelocus/{{ job.JobId }}/">{{ job.JobId }}</a></td>
+            <td>{{ job.latest_event }}</td>
+          </tr>
         {% endfor %}
-        </tbody>
+      </tbody>
     </table>
-{% endif %}
-
-{% if not orderjob_list and not putawayjob_list %}
-    <p>No jobs are available.</p>
-{% endif %}
+  {% endif %}
 
 {% endblock %}

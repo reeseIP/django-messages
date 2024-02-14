@@ -1,112 +1,118 @@
+<!-- active.html -->
 {% extends 'messagelocus/base.html' %}
 {% block content %}
 
-    <h4 class='active-header'>
-        <label id='active-label-order-header'>Order Jobs</label>
-    </h4>
-    <div class='table-responsive'>
-    <table class='table table-hover table-striped' id='active-table-orderjobs'>
-        <thead>
-            <tr>
-                {% for field in orderjob_fields %}
-                    <th scope="col"><label>{{ field }}</label></th>
-                {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-        {% for order in orderjob_list %}
-            <tr>
-            {% for key, value in order.items %}
-                {% if key == 'id' or key == 'active' %}
-                    <td name='{{ key }}' style='display: none;'>
-                        <label>{{ value }}</label>
-                    </td>
-                {% elif key == 'JobId' %}
-                    <td name='{{ key }}'>
-                        <a href="/messagelocus/{{ value }}/">{{ value }}</a>
-                    </td>
-                {% else %}
-                    <td name='{{ key }}'>
-                        <label>{{ value }}</label>
-                    </td>
-                {% endif %}
-            {% endfor %}
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-</div>
-    <br>
-    <br>
+	<!-- OrderJob Table -->
+  <!-------------------------------------------------------------------->
+	<h4 class='active-header'>
+		<label id='active-label-order-header'>Order Jobs</label>
+	</h4>
+	<div class='table-responsive'>
+		<table class='table table-hover table-striped' id='active-table-orderjobs'>
+			<thead>
+				<tr>
+					{% for field in orderjob_fields %}
+						<th scope="col"><label>{{ field }}</label></th>
+					{% endfor %}
+				</tr>
+			</thead>
+			<tbody>
+			{% for order in orderjob_list %}
+				<tr>
+				{% for key, value in order.items %}
+					{% if key == 'id' or key == 'active' %}
+						<td name='{{ key }}' style='display: none;'>
+							<label>{{ value }}</label>
+						</td>
+					{% elif key == 'JobId' %}
+						<td name='{{ key }}'>
+							<a href="/messagelocus/{{ value }}/">{{ value }}</a>
+						</td>
+					{% else %}
+						<td name='{{ key }}'>
+							<label>{{ value }}</label>
+						</td>
+					{% endif %}
+				{% endfor %}
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+	</div>
+	<br>
+	<br>
 
-    
-        <h4 class='active-header' id='active-h4-putawayjobs'>
-            <label id='active-label-putaway-header'>Putaway Jobs</label>
-            <button class='btn btn-outline-primary btn-sm' type='button' id='active-button-putaway-request'>Request</button>
-        </h4>
-    
-    <div class='table-responsive'>
-    <table class='table table-hover table-striped' id='active-table-putawayjobs'>
-        <thead>
-            <tr>
-                {% for field in putawayjob_fields %}
-                    <th scope="col"><label>{{ field }}</label></th>
-                {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-        {% for putaway in putawayjob_list %}
-            <tr>
-            {% for key, value in putaway.items %}
-            
-                {% if key == 'id' or key == 'active' %}
-                    <td name='{{ key }}' style='display: none;'>
-                        <label>{{ value }}</label>
-                    </td>
-                {% elif key == 'JobId' %}
-                    <td name='{{ key }}'>
-                        <a href="/messagelocus/{{ value }}/">{{ value }}</a>
-                    </td>
-                {% else %}
-                    <td name='{{ key }}'>
-                        <label>{{ value }}</label>
-                    </td>
-                {% endif %}
-            {% endfor %}
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-</div>
+	
+	<!-- PutawayJob Table -->
+  <!-------------------------------------------------------------------->
+	<h4 class='active-header' id='active-h4-putawayjobs'>
+		<label id='active-label-putaway-header'>Putaway Jobs</label>
+		<button class='btn btn-outline-primary btn-sm' type='button' id='active-button-putaway-request'>Request</button>
+	</h4>
+	
+	<div class='table-responsive'>
+		<table class='table table-hover table-striped' id='active-table-putawayjobs'>
+			<thead>
+				<tr>
+					{% for field in putawayjob_fields %}
+						<th scope="col"><label>{{ field }}</label></th>
+					{% endfor %}
+				</tr>
+			</thead>
+			<tbody>
+				{% for putaway in putawayjob_list %}
+					<tr>
+						{% for key, value in putaway.items %}
+							{% if key == 'id' or key == 'active' %}
+								<td name='{{ key }}' style='display: none;'>
+									<label>{{ value }}</label>
+								</td>
+							{% elif key == 'JobId' %}
+								<td name='{{ key }}'>
+									<a href="/messagelocus/{{ value }}/">{{ value }}</a>
+								</td>
+							{% else %}
+								<td name='{{ key }}'>
+									<label>{{ value }}</label>
+								</td>
+							{% endif %}
+						{% endfor %}
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
 
-    <div class="modal fade" id="active-modal-putaway-request" role="dialog">
-      <div class="modal-dialog">
-        <!-- Modal content-->
-        <div class="modal-content">
-            <form class='putaway-request' id='active-form-putaway-request'>
-                {% csrf_token %}
-                <div class="modal-header">
-                    <h4 class="modal-title">Putaway Job Request</h4>
-                </div>
-                <div class="modal-body">
-                    <div class='putaway-request'>
-                        <div class='putaway-request-licenseplate'>
-                            <label class='putaway-request'>License Plate:</label>
-                            <input type='entry' name='licenseplate' id='active-input-licenseplate'>
-                        </div>
-                        <div class='putaway-request-requestrobot'>
-                            <label class='putaway-request'>Request Robot:</label>
-                            <input type='entry' name='requestrobot' id='active-input-requestrobot'>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-primary submit" type="submit">Request Job</button>
-                    <button type="button" class="btn btn-default close" data-dismiss="modal">Close</button>
-                </div>
-            </form>
-        </div>
-      </div>
-    </div>
+
+	<!-- PutawayRequest Modal -->
+  <!-------------------------------------------------------------------->
+	<div class="modal fade" id="active-modal-putaway-request" role="dialog">
+	  <div class="modal-dialog">
+			<div class="modal-content">
+				<form class='putaway-request' id='active-form-putaway-request'>
+					{% csrf_token %}
+					<div class="modal-header">
+						<h4 class="modal-title">Putaway Job Request</h4>
+					</div>
+					<div class="modal-body">
+						<div class='putaway-request'>
+							<div class='putaway-request-licenseplate'>
+								<label class='putaway-request'>License Plate:</label>
+								<input type='entry' name='licenseplate' id='active-input-licenseplate'>
+							</div>
+							<div class='putaway-request-requestrobot'>
+								<label class='putaway-request'>Request Robot:</label>
+								<input type='entry' name='requestrobot' id='active-input-requestrobot'>
+							</div>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button class="btn btn-primary submit" type="submit">Request Job</button>
+						<button type="button" class="btn btn-default close" data-dismiss="modal">Close</button>
+					</div>
+				</form>
+			</div>
+	  </div>
+	</div>
 
 {% endblock %}

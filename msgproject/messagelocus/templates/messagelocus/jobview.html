@@ -1,160 +1,161 @@
+<!-- jobview.html -->
 {% extends 'messagelocus/base.html' %}
-
 {% block content %}
 	<h3>{{ JobId }}</h3>
 	<br>
-		<div id='jobview-div-job-info'>
-			<h5 class='jobview-header'>Job Information</h5>
-			<table class='table table-striped' id='jobview-table-job-info'>
+
+  <!-- Job Information Table -->
+  <!-------------------------------------------------------------------->
+	<div id='jobview-div-job-info'>
+		<h5 class='jobview-header'>Job Information</h5>
+		<table class='table table-striped' id='jobview-table-job-info'>
 			{% for key, value in job_data.items %}
 				{% if key == 'id' or key == 'active' %}
-				<tr style='display: none;'>
-			    <td id='jobview-jobinfo-{{ key }}'>
-			    	<label class='key'>{{ key }}: </label><label class='value'>{{ value }}</label>
-			    </td>
-				</tr>
+					<tr style='display: none;'>
+				    <td id='jobview-jobinfo-{{ key }}'>
+				    	<label class='key'>{{ key }}: </label><label class='value'>{{ value }}</label>
+				    </td>
+					</tr>
 				{% else %}
-				<tr>
-			    <td id='jobview-jobinfo-{{ key }}'>
-			    	<label class='key'>{{ key }}: </label><label class='value'>{{ value }}</label>
-			    </td>
-				</tr>
-			    {% endif %}
+					<tr>
+				    <td id='jobview-jobinfo-{{ key }}'>
+				    	<label class='key'>{{ key }}: </label><label class='value'>{{ value }}</label>
+				    </td>
+					</tr>
+			  {% endif %}
 			{% endfor %}
-			</table>
-		</div>
-		<br>
-
-		<div>
-			<h5 class='jobview-header'>Job Events</h5>
-			<form method='post' id='form-send-event'>
-				{% csrf_token %}
-	                <div id='jobview-div-job-events'>
-	                  <select id="jobview-select-dropdown-event" class="form-select">
-	                  	<option value="" selected disabled hidden id='jobview-option-initial-event'>Select Event</option>
-	                	<option>Accept</option>
-	                    <option>Reject</option>
-	                    <option>Induct</option>
-	                    <option>Complete</option>
-	                    <option>Cancel Complete</option>
-	                    <option>Cancel Reject</option>
-	                    <option>Update Complete</option>
-	                    <option>Update Reject</option>
-	                    {% if job_type == 'OrderJob' %}
-					  		<option>Print</option>
-					  	{% endif %}
-	             		</select>
-	                
-					
-				<button class='btn btn-outline-primary btn-sm' type='submit' name='btn-send-event' id='jobview-btn-send-event'>Send</button>
-				</div>
-				<div id="div-induct-robot">
-					<label id='lbl-induct-robot'>Robot: </label><input id='inp-induct-robot'type='entry' name='robot' value='{{ job_data.JobRobot }}'>
-				</div>
-			</form>
-			
-		</div>
-		<br>
-		<br>
-
-<!-- Job Task Table -->
-<!-------------------------------------------------------------------->
-<h5 class='jobview-header'>Job Tasks</h5>
-<div class='table-responsive'>
-<table class="table table-hover table-striped" id='jobview-table-job-tasks'>
-          <thead>
-          <tr>
-          	{% for field in task_header %}
-            	<th scope="col"><label>{{ field }}</label></th>
-            {% endfor %}
-          </tr>
-          </thead>
-          <tbody>
-			{% for form in formset %}
-				<tr>
-					{% for field in form %}
-						<td>
-							{% if field.name == 'JobTaskId' %}
-								<a type='button' class='btn-task-data'>{{ field.value }}</a>
-							{% else %}
-								<label>{{ field.value }}</label></a>
-							{% endif %}
-						</td>
-				 	{% endfor %}
-				</tr>
-			{% endfor %}
-          </tbody>
-        </table>
-</div>
-<br>
-
-<!-- Job Event Table -->
-<!-------------------------------------------------------------------->
-
-<h5 class='jobview-header'>Event Log</h5>
-<div class='table-responsive'>
-<table class="table table-hover table-striped" id='jobview-table-job-events'>
-          <thead>
-          <tr>
-            <th scope="col"><label>Event Type</label></th>
-            <th scope="col"><label>Date</label></th>
-            <th scope="col"><label>Event Info</label></th>
-          </tr>
-          </thead>
-          <tbody>
-			{% for event in events %}
-				<tr>
-					<td><label>{{ event.EventType }}</label></td>
-					<td><label>{{ event.JobDate }}</label></td>
-					<td><label>{{ event.EventInfo }}</label></td>
-				</tr>
-			{% endfor %}
-          </tbody>
-        </table>
-    </div>
+		</table>
+	</div>
 	<br>
 
+  <!-- Job Send Event Form -->
+  <!-------------------------------------------------------------------->
+	<div>
+		<h5 class='jobview-header'>Job Events</h5>
+		<form method='post' id='form-send-event'>
+			{% csrf_token %}
+	      <div id='jobview-div-job-events'>
+	        <select id="jobview-select-dropdown-event" class="form-select">
+	        		<option value="" selected disabled hidden id='jobview-option-initial-event'>Select Event</option>
+	      			<option>Accept</option>
+	          	<option>Reject</option>
+	          	<option>Induct</option>
+	          	<option>Complete</option>
+	          	<option>Cancel Complete</option>
+	          	<option>Cancel Reject</option>
+	          	<option>Update Complete</option>
+	          	<option>Update Reject</option>
+	          	{% if job_type == 'OrderJob' %}
+				  		<option>Print</option>
+				  	{% endif %}
+	         </select>
+				<button class='btn btn-outline-primary btn-sm' type='submit' name='btn-send-event' id='jobview-btn-send-event'>Send</button>
+			</div>
+			<div id="div-induct-robot">
+				<label id='lbl-induct-robot'>Robot: </label><input id='inp-induct-robot'type='entry' name='robot' value='{{ job_data.JobRobot }}'>
+			</div>
+		</form>
+	</div>
+	<br>
+	<br>
+
+	<!-- Job Task Table -->
+	<!-------------------------------------------------------------------->
+	<h5 class='jobview-header'>Job Tasks</h5>
+	<div class='table-responsive'>
+		<table class="table table-hover table-striped" id='jobview-table-job-tasks'>
+		  <thead>
+		  <tr>
+		  	{% for field in task_header %}
+		    	<th scope="col"><label>{{ field }}</label></th>
+		    {% endfor %}
+		  </tr>
+		  </thead>
+		  <tbody>
+				{% for form in formset %}
+					<tr>
+						{% for field in form %}
+							<td>
+								{% if field.name == 'JobTaskId' %}
+									<a type='button' class='btn-task-data'>{{ field.value }}</a>
+								{% else %}
+									<label>{{ field.value }}</label></a>
+								{% endif %}
+							</td>
+					 	{% endfor %}
+					</tr>
+				{% endfor %}
+		  </tbody>
+		</table>
+	</div>
+	<br>
+
+	<!-- Job Event Table -->
+	<!-------------------------------------------------------------------->
+	<h5 class='jobview-header'>Event Log</h5>
+	<div class='table-responsive'>
+		<table class="table table-hover table-striped" id='jobview-table-job-events'>
+		  <thead>
+		  <tr>
+		    <th scope="col"><label>Event Type</label></th>
+		    <th scope="col"><label>Date</label></th>
+		    <th scope="col"><label>Event Info</label></th>
+		  </tr>
+		  </thead>
+		  <tbody>
+				{% for event in events %}
+					<tr>
+						<td><label>{{ event.EventType }}</label></td>
+						<td><label>{{ event.JobDate }}</label></td>
+						<td><label>{{ event.EventInfo }}</label></td>
+					</tr>
+				{% endfor %}
+		  </tbody>
+		</table>
+	</div>
+	<br>
+
+	<!-- Close Job Button -->
 	{% if job_data.active %}
-	<button class='btn btn-outline-primary' id='jobview-btn-close-job'>
-    	Close Job
-	</button>
+		<button class='btn btn-outline-primary' id='jobview-btn-close-job'>
+	    	Close Job
+		</button>
 	{% endif %}	
 
+
+	<!-- Target System User Credentials Modal -->
+	<!-------------------------------------------------------------------->
 	{{ formset.management_form }}
 	{% for form in formset %}
-    <!-- Modal: Target System Credentials -->
     <div class="modal fade taskData" id="{{ form.JobTaskId.value }}" role="dialog">
       <div class="modal-dialog">
-        <!-- Modal content-->
         <div class="modal-content">
        		<form class='taskData' method="post" action='task/'>
-	            {% csrf_token %}
-	            <div class="modal-header">
-	             	<h5 class="modal-title">Task Data</h5>
-	            </div>
-	            <div class="modal-body">
-	            	<div class='task-data'>
-						{% for field in form %}
-							{% if field.name == 'SerialNo' %}
-							{% else %}
-				        	<span>
-				        		<label class='task-data' for="{{ field.auto_id }}">{{ field.name }}:</label> {{ field }}
-				        	</span>
-				        	{% endif %}
-				    	{% endfor %}
-			    	</div>
-			    	<div class='task-sn-capture' style='display: none;'>
-
-			    	</div>
-	            </div>
-	            <div class="modal-footer">
-	            	<button class="btn btn-primary submit taskSend" type="submit">Send Task</button>
-	            	<button type="button" class="btn btn-default close" data-dismiss="modal">Close</button>
-	            </div>
+	          {% csrf_token %}
+	          <div class="modal-header">
+	           	<h5 class="modal-title">Task Data</h5>
+	          </div>
+	          <div class="modal-body">
+	            <div class='task-data'>
+								{% for field in form %}
+									{% if field.name == 'SerialNo' %}
+									{% else %}
+						        	<span>
+						        		<label class='task-data' for="{{ field.auto_id }}">{{ field.name }}:</label> {{ field }}
+						        	</span>
+						        	{% endif %}
+						    	{% endfor %}
+			    		</div>
+			    		<div class='task-sn-capture' style='display: none;'></div>
+	          </div>
+	          <div class="modal-footer">
+	           	<button class="btn btn-primary submit taskSend" type="submit">Send Task</button>
+	          	<button type="button" class="btn btn-default close" data-dismiss="modal">Close</button>
+	          </div>
         	</form>
         </div>
       </div>
     </div>
-    {% endfor %}
+  {% endfor %}
 
 {% endblock %}
