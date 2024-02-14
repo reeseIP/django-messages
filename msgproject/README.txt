@@ -1,6 +1,8 @@
 --- Initial Setup ---
 
-requires python 3.9 interpreter and git
+requires python 3.9.1 interpreter and git
+
+download python 3.9.1 @ https://www.python.org/downloads/
 
 *** instructions for deployment from command line ***
 create virtual environmen in target directory
