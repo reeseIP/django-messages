@@ -29,7 +29,9 @@
         <div class="container">
           <div id='base-div-nav-items-left'>
             <div id='base-div-nav-brand'>
-              <img class='nav-item' src="{% static 'images/email64.png' %}" width='64' height ='48' alt='=(' style='padding-right: 10px'>
+              <div style="padding-right: 20px">
+                <img class='nav-item' src="{% static 'images/email64.png' %}" width='64' height ='48' alt='=('>
+              </div>
               {% if user.is_authenticated %}
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                   <span class="navbar-toggler-icon"></span>
@@ -41,9 +43,9 @@
                   <form class="d-flex nav-item" id='base-form-search'>
                     {% csrf_token %}
                     <div class="input-group">
-                      <input class="form-control" type="search" placeholder="Search" aria-label="Search" id="base-input-navbar-search" name='search'>
-                      <button class="btn btn-outline-dark" type="submit">
-                        <img src='{% static "images/search24px.png" %}' alt='=('>
+                      <input class="form-control form-control-sm" type="search" placeholder="Search" aria-label="Search" id="base-input-navbar-search" name='search'>
+                      <button class="input-group-text btn btn-sm btn-outline-dark" type="submit">
+                        <img src='{% static "images/search16px.png" %}' alt='=('>
                       </button>
                     </div>
                   </form>

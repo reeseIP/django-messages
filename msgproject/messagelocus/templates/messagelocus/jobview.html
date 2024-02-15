@@ -35,7 +35,7 @@
 		<form method='post' id='form-send-event'>
 			{% csrf_token %}
 	      <div id='jobview-div-job-events'>
-	        <select id="jobview-select-dropdown-event" class="form-select">
+	        <select id="jobview-select-dropdown-event" class="form-select form-select-sm">
 	        		<option value="" selected disabled hidden id='jobview-option-initial-event'>Select Event</option>
 	      			<option>Accept</option>
 	          	<option>Reject</option>
@@ -49,7 +49,7 @@
 				  		<option>Print</option>
 				  	{% endif %}
 	         </select>
-				<button class='btn btn-outline-primary btn-sm' type='submit' name='btn-send-event' id='jobview-btn-send-event'>Send</button>
+				<button class='btn btn-sm btn-outline-primary' type='submit' name='btn-send-event' id='jobview-btn-send-event'>Send</button>
 			</div>
 			<div id="div-induct-robot">
 				<label id='lbl-induct-robot'>Robot: </label><input id='inp-induct-robot'type='entry' name='robot' value='{{ job_data.JobRobot }}'>
@@ -117,7 +117,7 @@
 
 	<!-- Close Job Button -->
 	{% if job_data.active %}
-		<button class='btn btn-outline-primary' id='jobview-btn-close-job'>
+		<button class='btn btn-sm btn-outline-primary' id='jobview-btn-close-job'>
 	    	Close Job
 		</button>
 	{% endif %}	

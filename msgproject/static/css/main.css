@@ -8,6 +8,10 @@ tr {
    height: 12px;
 }
 
+th {
+  position: sticky; top: 0; z-index: 1;
+}
+
 
 /* ----------- class styles ----------- */
 
@@ -66,6 +70,10 @@ tr {
 
 /* ----------- id styles ----------- */
 
+#base-div-nav-brand {
+  display: flex;
+}
+
 #active-div-table-orderjobs label,
 #active-div-table-putawayjobs label,
 #closed-div-table-orderjobs label,
@@ -74,6 +82,16 @@ tr {
 #jobview-table-job-events label { 
   min-width: max-content;
   padding-right: 20px;
+ }
+
+#active-div-table-orderjobs, 
+#active-div-table-putawayjobs,
+#closed-div-table-orderjobs, 
+#closed-div-table-putawayjob,
+#jobview-table-job-tasks,
+#jobview-table-job-events,
+#jobview-table-job-info { 
+  font-size: 14px;
  }
 
 #div-induct-robot {
@@ -90,7 +108,7 @@ tr {
     max-height: 32px;
 }
 
-#jobview-table-job-tasks {
+#jobview-table-job-tasks, #jobview-table-job-events {
   max-height: 200px;
   margin-bottom: 5px;
 }
@@ -111,6 +129,7 @@ tr {
 
 #jobview-div-job-info label.key {
   min-width: 145px;
+  font-weight: bold;
 }
 
 #jobview-div-job-info {
@@ -123,7 +142,7 @@ tr {
 }
 
 #jobview-select-dropdown-event {
-  max-width: 200px;
+  max-width: 500px;
 }
 
 #active-h4-putawayjobs {
@@ -151,7 +170,7 @@ tr {
 }
 
 #base-div-user-controls {
-  padding-top: 6px;
+  padding-top: 8px;
   padding-right: 10px;
   align-items: flex-start;
   display: flex;
@@ -218,6 +237,10 @@ button.btn.btn-outline-dark {
   max-height: 32px;
   display: flex;
   align-items: center;
+}
+
+button.navbar-toggler { 
+  align-self: center;
 }
 
 .putaway-request-licenseplate, div.system-auth { 
