@@ -200,7 +200,7 @@ def active(request):
 	for putaway in putaways:
 		event = PutawayJobEvents.objects.filter(JobId=putaway).order_by('-JobDate').first()
 		putaway_data = putaway.get_data()
-		keyorder = ['JobId']
+		keyorder = ['JobId', 'JobDate', 'JobPriority', 'RequestId', 'LicensePlate', 'JobRobot']
 		[keyorder.append(field) for field in putaway_data if field != 'JobId']
 		putaway_data = {k: putaway_data[k] for k in keyorder if k in putaway_data}
 		if event:
@@ -219,7 +219,7 @@ def active(request):
 	del putawayjob_fields['active']
 
 	# change the sort order of putaway fields
-	keyorder = ['JobId']
+	keyorder = ['JobId', 'JobDate', 'JobPriority', 'RequestId', 'LicensePlate', 'JobRobot']
 	[keyorder.append(field) for field in putawayjob_fields if field != 'JobId']
 	
 	putawayjob_fields = {k: putawayjob_fields[k] for k in keyorder if k in putawayjob_fields}
@@ -263,7 +263,7 @@ def closed(request):
 	for putaway in putaways:
 		event = PutawayJobEvents.objects.filter(JobId=putaway).order_by('-JobDate').first()
 		putaway_data = putaway.get_data()
-		keyorder = ['JobId']
+		keyorder = ['JobId', 'JobDate', 'JobPriority', 'RequestId', 'LicensePlate', 'JobRobot']
 		[keyorder.append(field) for field in putaway_data if field != 'JobId']
 		putaway_data = {k: putaway_data[k] for k in keyorder if k in putaway_data}
 		if event:
@@ -282,7 +282,7 @@ def closed(request):
 	del putawayjob_fields['active']
 
 	# change the sort order of putaway fields
-	keyorder = ['JobId']
+	keyorder = ['JobId', 'JobDate', 'JobPriority', 'RequestId', 'LicensePlate', 'JobRobot']
 	[keyorder.append(field) for field in putawayjob_fields if field != 'JobId']
 	
 	putawayjob_fields = {k: putawayjob_fields[k] for k in keyorder if k in putawayjob_fields}
