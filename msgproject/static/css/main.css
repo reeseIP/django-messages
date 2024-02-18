@@ -69,11 +69,10 @@ th label {
   max-height: 22px;
 }
 
-.modal-error {
+.invalid-feedback {
   display: flex;
   justify-content: center;
   padding-top: 10px;
-  color: red;
 }
 
 .task-sn-input-row { 

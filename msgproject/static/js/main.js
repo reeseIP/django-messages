@@ -34,7 +34,7 @@ function eraseCookie(name) {
 // clear modal
 function clearModal(modalObject) {
 	var modalData = $(modalObject).find('div.modal-body');
-	$(modalObject).find('.modal-error').hide();
+	$(modalObject).find('.invalid-feedback').hide();
   	modalData.children().each(function(child) { 
 	    $(this).find('input').val('');
  	 }); 	
@@ -120,7 +120,8 @@ $('#modalSystem button.submit').on('click', function(e) {
 	var modalObject = $(this).closest('.modal');
 	var system = $('#base-select-target-system').val();
 	if ($('#tarSysUser').val() == '' || $('#tarSysPass').val() == '' || $('#base-select-target-system').val() == null) {
-		$(modalObject).find('.modal-error').show();
+		$(modalObject).find('.invalid-feedback').show();
+		$(modalObject).find('.invalid-feedback').css('display','flex')
 		//alert('Please fill out all fields.')
 		return
 	}
@@ -294,7 +295,8 @@ $('#active-modal-putaway-request').on('click', 'button.submit', function(e) {
 	e.preventDefault();
 	var modalObject = $(this).closest('.modal');
 	if ($('#active-input-licenseplate').val() == '' || $('#active-input-requestrobot').val() == '' ) {
-		$(modalObject).find('.modal-error').show();
+		$(modalObject).find('.invalid-feedback').show();
+		$(modalObject).find('.invalid-feedback').css('display','flex')
 		//alert('Please fill out all fields.')
 		return
 	}
