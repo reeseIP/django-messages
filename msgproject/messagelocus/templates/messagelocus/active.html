@@ -27,11 +27,11 @@
     					</td>
     				{% elif key == 'JobId' %}
     					<td name='{{ key }}'>
-    						<a href="/messagelocus/{{ value }}/">{{ value }}</a>
+    						<button class='btn btn-sm btn-outline-primary button-table-data button-get-job'>{{ value }}</button>
     					</td>
     				{% else %}
     					<td name='{{ key }}'>
-    						<label>{{ value }}</label>
+    						<label class='table-data'>{{ value }}</label>
     					</td>
     				{% endif %}
     			{% endfor %}
@@ -49,7 +49,7 @@
     <!-------------------------------------------------------------------->
     <h4 class='active-header' id='active-h4-putawayjobs'>
     	<label id='active-label-putaway-header'>Putaway Jobs</label>
-    	<button class='btn btn-outline-primary btn-sm' type='button' id='active-button-putaway-request'>Request</button>
+    	<button class='btn btn-sm btn-info' type='button' id='active-button-putaway-request'>Request</button>
     </h4>
     <div class='active-div-table-wrapper'>
     <div class='table-responsive' id='active-div-table-putawayjobs'>
@@ -71,11 +71,11 @@
     							</td>
     						{% elif key == 'JobId' %}
     							<td name='{{ key }}'>
-    								<a href="/messagelocus/{{ value }}/">{{ value }}</a>
+    								<button class='btn btn-sm btn-outline-primary button-table-data button-get-job'>{{ value }}</button>
     							</td>
     						{% else %}
     							<td name='{{ key }}'>
-    								<label>{{ value }}</label>
+    								<label class='table-data'>{{ value }}</label>
     							</td>
     						{% endif %}
     					{% endfor %}
@@ -113,7 +113,7 @@
                       </div>
 					</div>
 					<div class="modal-footer">
-						<button class="btn btn-primary submit" type="submit">Request Job</button>
+						<button class="btn btn-success submit" type="submit">Request Job</button>
 						<button type="button" class="btn btn-default close" data-dismiss="modal">Close</button>
 					</div>
 				</form>

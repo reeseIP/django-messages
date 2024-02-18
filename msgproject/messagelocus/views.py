@@ -79,7 +79,6 @@ def send_request(request,job_data,job_type,event_type="",event_info="",tasks="",
 		messages.error(request, 'A valid target user needs to be set before sending a request.')
 		return
 
-
 	tar_user = ExternalUsers.objects.filter(username=req_username,system=req_system).first()
 	tar_sys = ExternalSystems.objects.filter(system=req_system).first()
 
@@ -95,6 +94,7 @@ def send_request(request,job_data,job_type,event_type="",event_info="",tasks="",
 	else:
 		messages.error(request, 'A valid target user needs to be set before sending a request.')
 		return
+
 
 	# local testing
 	#URL = http://127.0.0.1:8000
@@ -120,6 +120,8 @@ def send_request(request,job_data,job_type,event_type="",event_info="",tasks="",
 					event.EventInfo = '{} Job: {} Task: {} Sent.'.format(event_type,job_data['JobId'],task)
 				elif event_type != 'SERIAL':
 					event.EventInfo = '{} Job: {} Sent.'.format(event_type,job_data['JobId'])
+				else:
+					event.EventInfo = 'Validating Serial Number {} for Task {}.'.format(job_message['Serial'],job_message['JobTaskId'])
 				event.save()
 		elif response.status_code != 200:
 			messages.error(request, response.text)
@@ -228,12 +230,16 @@ def active(request):
 	orderjob_fields.append('Latest Event')
 	putawayjob_fields.append('Latest Event')
 
-
+	try:
+		theme = request.COOKIES['theme']
+	except KeyError:
+		theme = 'light'
 		
 	return render(request, 'messagelocus/active.html', {'orderjob_list': orderjob_list,
 														'orderjob_fields': orderjob_fields,
 													   'putawayjob_list': putawayjob_list,
 													   'putawayjob_fields': putawayjob_fields,
+													   'theme': theme
 													  })
 
 @login_required
@@ -247,16 +253,56 @@ def closed(request):
 
 	for order in orders:
 		event = OrderJobEvents.objects.filter(JobId=order).order_by('-JobDate').first()
-		orderjob_list.append({"JobId": order.JobId,
-							  "latest_event": event.EventInfo})
+		order_data = order.get_data()
+		if event:
+			order_data['Latest Event'] = event.EventInfo
+		else:
+			order_data['Latest Event'] = ''
+		orderjob_list.append(order_data)
 
 	for putaway in putaways:
 		event = PutawayJobEvents.objects.filter(JobId=putaway).order_by('-JobDate').first()
-		putawayjob_list.append({"JobId": putaway.JobId,
-							    "latest_event": event.EventInfo})
+		putaway_data = putaway.get_data()
+		keyorder = ['JobId']
+		[keyorder.append(field) for field in putaway_data if field != 'JobId']
+		putaway_data = {k: putaway_data[k] for k in keyorder if k in putaway_data}
+		if event:
+			putaway_data['Latest Event'] = event.EventInfo
+		else:
+			putaway_data['Latest Event'] = ''
+		putawayjob_list.append(putaway_data)
+
+	orderjob_fields = OrderJobs.get_fields()
+	putawayjob_fields = PutawayJobs.get_fields()
+
+	# dont pass these to the html doc
+	del orderjob_fields['id']
+	del orderjob_fields['active']
+	del putawayjob_fields['id']
+	del putawayjob_fields['active']
+
+	# change the sort order of putaway fields
+	keyorder = ['JobId']
+	[keyorder.append(field) for field in putawayjob_fields if field != 'JobId']
+	
+	putawayjob_fields = {k: putawayjob_fields[k] for k in keyorder if k in putawayjob_fields}
+
+	orderjob_fields = list(orderjob_fields.keys())
+	putawayjob_fields = list(putawayjob_fields.keys())
+
+	orderjob_fields.append('Latest Event')
+	putawayjob_fields.append('Latest Event')
+
+	try:
+		theme = request.COOKIES['theme']
+	except KeyError:
+		theme = 'light'
 		
 	return render(request, 'messagelocus/closed.html', {'orderjob_list': orderjob_list,
+														'orderjob_fields': orderjob_fields,
 													   'putawayjob_list': putawayjob_list,
+													   'putawayjob_fields': putawayjob_fields,
+													   'theme': theme
 													  })
 
 @login_required
@@ -267,12 +313,13 @@ def close_job(request):
 		job_query = job['job_query']
 		job_query.active = False
 		job_query.save()
-		messages.success(request, 'Job {} Closed'.format(job.JobId))
-
+		messages.success(request, 'Job {} Closed'.format(job_query.JobId))
+		response = {'status_code': 200}
 	else:
 		messages.error(request, 'Error occured when closing job')
+		response = {'status_code': 500}
 
-	return redirect('/messagelocus/{}'.format(request.POST['JobId']))
+	return JsonResponse(response)
 
 
 @csrf_exempt
@@ -433,6 +480,11 @@ def jobview(request, JobId):
 	# keep hidden on page
 	del task_header['id'] 
 	del task_header['timestamp']
+
+	try:
+		theme = request.COOKIES['theme']
+	except KeyError:
+		theme = 'light'
 	
 	return render(request, "messagelocus/jobview.html", {'JobId': JobId,
 														 'job_data': job_data,
@@ -440,6 +492,7 @@ def jobview(request, JobId):
 														 'task_header': task_header,
 														 'formset': formset,
 														 'events': job_events,
+														 'theme': theme
 														 })
 
 @login_required
@@ -688,8 +741,6 @@ def get_capture_field_data(request):
 @login_required
 def validate_serial_number(request):
 	if request.method == 'POST':
-		return JsonResponse({'status_code':500,
-							 })
 		job_data = OrderJobs.objects.filter(id=request.POST['JobId']).first().get_data()
 		task_data = OrderTaskResults.get_last_task(JobId=request.POST['JobId'],JobTaskId=request.POST['JobTaskId']).get_data()
 		response = send_request(request,job_data=job_data,job_type='SerialValidation',event_type='SERIAL',event_info=None,tasks=task_data,serial_number=request.POST['SerialNumber'])

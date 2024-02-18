@@ -8,22 +8,36 @@
     <h4 class='closed-header'>Order Jobs</h4>
     <div class='closed-div-table-wrapper'>
         <div class='table-responsive' id='closed-div-table-orderjobs'>
-            <table class='table table-hover table-striped'>
-              <thead>
-                <tr>
-                  <th scope='col'>JobId</th>
-                  <th scope='col'>Latest Event</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for job in orderjob_list %}
-                  <tr>
-                    <td><a href="/messagelocus/{{ job.JobId }}/">{{ job.JobId }}</a></td>
-                    <td>{{ job.latest_event }}</td>
-                  </tr>
+          <table class='table table-hover table-striped'>
+            <thead>
+              <tr>
+                {% for field in orderjob_fields %}
+                  <th scope="col"><label>{{ field }}</label></th>
                 {% endfor %}
-              </tbody>
-            </table>
+              </tr>
+            </thead>
+            <tbody>
+            {% for order in orderjob_list %}
+              <tr>
+              {% for key, value in order.items %}
+                {% if key == 'id' or key == 'active' %}
+                  <td name='{{ key }}' style='display: none;'>
+                    <label>{{ value }}</label>
+                  </td>
+                {% elif key == 'JobId' %}
+                  <td name='{{ key }}'>
+                    <button class='btn btn-sm btn-outline-primary button-table-data button-get-job'>{{ value }}</button>
+                  </td>
+                {% else %}
+                  <td name='{{ key }}'>
+                    <label class='table-data'>{{ value }}</label>
+                  </td>
+                {% endif %}
+              {% endfor %}
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
         </div>
       </div>
     <br>
@@ -39,22 +53,36 @@
     </div>
     <div class='closed-div-table-wrapper'>
     <div class='table-responsive' id='closed-div-table-putawayjobs'>
-        <table class='table table-hover table-striped'>
-          <thead>
-            <tr>
-              <th scope='col'>JobId</th>
-              <th scope='col'>Latest Event</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for job in putawayjob_list %}
-              <tr>
-                <td><a href="/messagelocus/{{ job.JobId }}/">{{ job.JobId }}</a></td>
-                <td>{{ job.latest_event }}</td>
-              </tr>
+      <table class='table table-hover table-striped'>
+        <thead>
+          <tr>
+            {% for field in putawayjob_fields %}
+              <th scope="col"><label>{{ field }}</label></th>
             {% endfor %}
-          </tbody>
-        </table>
+          </tr>
+        </thead>
+        <tbody>
+          {% for putaway in putawayjob_list %}
+            <tr>
+              {% for key, value in putaway.items %}
+                {% if key == 'id' or key == 'active' %}
+                  <td name='{{ key }}' style='display: none;'>
+                    <label>{{ value }}</label>
+                  </td>
+                {% elif key == 'JobId' %}
+                  <td name='{{ key }}'>
+                    <button class='btn btn-sm btn-outline-primary button-table-data button-get-job'>{{ value }}</button>
+                  </td>
+                {% else %}
+                  <td name='{{ key }}'>
+                    <label class='table-data'>{{ value }}</label>
+                  </td>
+                {% endif %}
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
   {% endif %}

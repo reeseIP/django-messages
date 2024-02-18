@@ -49,7 +49,7 @@
 				  		<option>Print</option>
 				  	{% endif %}
 	         </select>
-				<button class='btn btn-sm btn-outline-primary' type='submit' name='btn-send-event' id='jobview-btn-send-event'>Send</button>
+				<button class='btn btn-sm btn-primary' type='submit' name='btn-send-event' id='jobview-btn-send-event'>Send</button>
 			</div>
 			<div id="div-induct-robot">
 				<label id='lbl-induct-robot'>Robot: </label><input id='inp-induct-robot'type='entry' name='robot' value='{{ job_data.JobRobot }}'>
@@ -62,7 +62,7 @@
 	<!-- Job Task Table -->
 	<!-------------------------------------------------------------------->
 	<h5 class='jobview-header'>Job Tasks</h5>
-	<div class='table-responsive'>
+	<div class='table-responsive' id='jobview-div-table-job-tasks'>
 		<table class="table table-hover table-striped" id='jobview-table-job-tasks'>
 		  <thead>
 		  <tr>
@@ -77,9 +77,9 @@
 						{% for field in form %}
 							<td>
 								{% if field.name == 'JobTaskId' %}
-									<a type='button' class='btn-task-data'>{{ field.value }}</a>
+									<button class='btn btn-sm btn-outline-primary button-table-data button-get-task'>{{ field.value }}</button>
 								{% else %}
-									<label>{{ field.value }}</label></a>
+									<label class='table-data'>{{ field.value }}</label></a>
 								{% endif %}
 							</td>
 					 	{% endfor %}
@@ -89,11 +89,12 @@
 		</table>
 	</div>
 	<br>
+	<br>
 
 	<!-- Job Event Table -->
 	<!-------------------------------------------------------------------->
 	<h5 class='jobview-header'>Event Log</h5>
-	<div class='table-responsive'>
+	<div class='table-responsive' id='jobview-div-table-job-events'>
 		<table class="table table-hover table-striped" id='jobview-table-job-events'>
 		  <thead>
 		  <tr>
@@ -117,7 +118,7 @@
 
 	<!-- Close Job Button -->
 	{% if job_data.active %}
-		<button class='btn btn-sm btn-outline-primary' id='jobview-btn-close-job'>
+		<button class='btn btn-sm btn-danger' id='jobview-btn-close-job'>
 	    	Close Job
 		</button>
 	{% endif %}	
@@ -149,7 +150,7 @@
 			    		<div class='task-sn-capture' style='display: none;'></div>
 	          </div>
 	          <div class="modal-footer">
-	           	<button class="btn btn-primary submit taskSend" type="submit">Send Task</button>
+	           	<button class="btn btn-success submit task-send" type="submit">Send Task</button>
 	          	<button type="button" class="btn btn-default close" data-dismiss="modal">Close</button>
 	          </div>
         	</form>
