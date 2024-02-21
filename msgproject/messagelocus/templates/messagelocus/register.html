@@ -1,0 +1,25 @@
+<!-- register.html -->
+{% extends 'messagelocus/base.html' %}
+{% block content %}
+
+    <form method="post" id='register-form-user'>  
+        {% csrf_token %}  
+        <table id='register-table-user'>
+           {% for field in form %}
+           		<tr>
+           			<th>
+           				<label>
+           				{{ field.label }}</label>
+           			</th>
+           			<td>
+           				<div>
+	           				{{ field }}
+	           				<label>{{ field.help_text }}</label>
+           				</div>
+           			</td>
+           		</tr>
+           {% endfor %}
+       </table>
+       <button class='btn btn-success'>Register</button>
+    </form> 
+{% endblock %}

@@ -1,5 +1,7 @@
 # forms.py
 from django import forms
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
 from .models import OrderTaskResults, PutawayTaskResults
 
 class OrderTasksForm(forms.ModelForm):
@@ -31,3 +33,11 @@ class PutawayTasksForm(forms.ModelForm):
 		#self.fields["JobId"].widget.attrs["readonly"] = True
 		self.fields["JobTaskId"].widget.attrs["readonly"] = True
 		self.fields["TaskType"].widget.attrs["readonly"] = True
+
+
+class RegisterForm(UserCreationForm):
+	email = forms.EmailField()
+	
+	class Meta:
+		model = User
+		fields = ["username", "email", "password1", "password2"]

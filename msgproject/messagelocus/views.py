@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.forms import formset_factory
 from django.views.decorators.csrf import csrf_exempt
-from .forms import OrderTasksForm, PutawayTasksForm
+from .forms import OrderTasksForm, PutawayTasksForm, RegisterForm
 from .models import ( OrderJobs, OrderTasks, OrderTaskResults, OrderSerialNumbers, OrderJobEvents,
 					PutawayJobs, PutawayTasks, PutawayTaskResults, PutawayJobEvents,
 					ExternalUsers, ExternalSystems )
@@ -13,6 +13,7 @@ from .models import ( OrderJobs, OrderTasks, OrderTaskResults, OrderSerialNumber
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 import json
 import requests
@@ -154,10 +155,31 @@ def get_job(JobId):
 
 ### view methods
 def index(request):
-	return redirect('/messagelocus/active/')
+	return redirect('/messagelocus/login/')
+
+def register_user(request):
+	if request.method == 'GET':
+		form = RegisterForm()
+
+		return render(request, 'messagelocus/register.html', {'form': form})
+	elif request.method == 'POST':
+		form = RegisterForm(request.POST)
+		if form.is_valid():
+		    form.save()
+		    username = request.POST["username"]
+		    password = request.POST["password1"]
+		    user = authenticate(request, username=username, password=password)
+		    if user is not None:
+		    	login(request, user)
+		    	return redirect('/messagelocus/active/')
+		else:
+			messages.error(request,form.errors)
+			return render(request, 'messagelocus/register.html', {'form': form})
 
 def login_user(request):
 	if request.method == 'GET':
+		if request.user.is_authenticated:
+			return redirect('/messagelocus/active/')
 		return render(request, 'messagelocus/login.html')
 	elif request.method == 'POST':
 	    username = request.POST["username"]
@@ -375,10 +397,11 @@ def inbound(request):
 								value = None
 							setattr(new_job,field.name,value)
 						new_job.active = True
-						new_job.save()
+						#new_job.save()
 
 						# new tasks
 						job_tasks = v1['JobTasks']
+						job_tasks_buff = []
 						# task_type will be either OrderJobTask or PutawayJobTask for key
 						# and a list of tasks for value
 						for task_type, tasks in job_tasks.items():
@@ -418,10 +441,17 @@ def inbound(request):
 										except KeyError: # field was not supplied
 											value = None
 										setattr(new_result_task,field.name,value)
+								job_tasks_buff.append(new_task)
+								job_tasks_buff.append(new_result_task)
+								#new_task.save()
+								#new_result_task.save()
 
-								print(new_task)
-								new_task.save()
-								new_result_task.save()
+						try:
+							new_job.save()
+							[task.save() for task in job_tasks_buff]
+						except ValidationError as e:
+							new_job.delete()
+							return HttpResponse(e)
 
 				# event entry
 				event = event_model()
@@ -753,7 +783,6 @@ def validate_serial_number(request):
 def check_job_exists(request):
 	orderjob = OrderJobs.objects.filter(JobId=request.POST['search'])
 	putawayjob = PutawayJobs.objects.filter(JobId=request.POST['search'])
-	print(putawayjob)
 
 	if not orderjob and not putawayjob:
 		return JsonResponse({'status_code': 500})

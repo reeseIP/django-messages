@@ -96,6 +96,7 @@
                     <a class="nav-link" id='base-toggle-theme'>Toggle Theme</a>
                   </li>
                   <li><hr class="dropdown-divider"></li>
+                  <li class='dropdown-header'><label>Current User: {{ user }}</label></li>
                   <li class="dropdown-item">
                     <a class="nav-link" href="/messagelocus/logout/" id='base-a-user-logout'>Logout</a>
                   </li>
@@ -123,6 +124,7 @@
               {% endfor %}
             </div>
           {% endif %}
+          {% if user.is_authenticated %}
           <!-- Modal: Target System Credentials -->
           <div class="modal fade" id="modalSystem" role="dialog">
             <div class="modal-dialog">
@@ -158,6 +160,7 @@
               </div>
             </div>
           </div>
+          {% endif %}
           {% block content %}{% endblock %}
         </div>
       </div>

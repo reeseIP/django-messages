@@ -245,6 +245,43 @@ label.table-data {
   justify-content: flex-end;
 }
 
+#register-table-user th { 
+  vertical-align: top;
+  padding-top: 17px;
+  padding-right: 10px;
+}
+
+#register-table-user td { 
+  padding-top: 15px !important;
+}
+
+#register-table-user label { 
+  vertical-align: top;
+  padding-top: 5px;
+}
+
+#register-table-user div { 
+  display: flex;
+  flex-direction: column;
+}
+
+#register-table-user input { 
+  vertical-align: top;
+  max-height: 24px;
+}
+
+#register-table-user li { 
+  padding-top: 3px;
+}
+
+#register-form-user { 
+  display: inline-grid;
+}
+
+#register-form-user button { 
+  justify-self: right;
+}
+
 
 /* ----------- selector styles ----------- */
 
