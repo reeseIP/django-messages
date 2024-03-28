@@ -18,23 +18,35 @@ nav {
 
 th label { 
   font-weight: 600;
- }
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
 
 
 /* ----------- class styles ----------- */
 
-.site-content {
-  padding-top: 2rem;
-  padding-bottom: 2rem;
+#base-div-system-users .form-check {
+  display: flex;
+  align-items: center;
+  min-height: unset;
 }
-
-.putaway-header { 
-  width: 100%;
-}
-
 .navbar>.container {
   justify-content: left !important  ;
   flex-wrap: nowrap !important;
+}
+
+.site-content {
+  display: flex;
+  overflow-x: auto;
+  width: -webkit-fill-available;
+  margin-bottom: 60px;
+}
+
+.site-content>.container {
+  margin-top: 30px;
 }
 
 .modal {
@@ -58,11 +70,8 @@ th label {
 }
 
 .base-label-username {
-  padding-right: 5px;
-}
-
-.nav-item { 
-  padding-right: 5px;
+  padding-right: 10px;
+  padding-left: 10px;
 }
 
 .taskData input {
@@ -89,16 +98,109 @@ div.task-sn-input-row input {
   align-items: center;
 }
 
-label.table-data { 
+label.label-table-data, label.table-data { 
   align-items: center;
   min-height: 24px;
 }
 
+div.site-wrapper {
+  display:flex;
+  overflow-x: auto;
+  height: 100%;
+  
+}
+
 /* ----------- id styles ----------- */
+
+#navbarServices {
+  border-bottom: 1px solid var(--bs-border-color-translucent);
+}
+
+#base-ul-user-dropdown {
+  font-size: 12px;
+}
+
+#base-div-sidebar {
+  min-width: fit-content;
+  outline: 1px solid var(--bs-border-color-translucent);
+  overflow-y: auto;
+  font-size: 12px;
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+
+#base-div-sidebar .list-header {
+  border-bottom: 1px solid var(--bs-border-color-translucent);
+  font-weight: 600;
+  font-size: 14px;
+  padding-right: 20px;
+  padding-left: 20px;
+}
+
+#base-div-sidebar .list-header-sub1 {
+  border-top: 1px solid var(--bs-border-color-translucent);
+  border-bottom: 1px solid var(--bs-border-color-translucent);
+}
+
+#base-div-sidebar .list-item-sub1 {
+  border-bottom: 1px solid var(--bs-border-color-translucent);
+  padding-bottom: 3px;
+  padding-top: 3px;
+}
+
+#base-div-sidebar .list-header label,
+#base-div-sidebar .list-header-sub1 label {
+  color: #6c757d;
+}
+
+#base-div-sidebar label, #base-div-sidebar a  {
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+#base-div-sidebar .nav-item button {
+  padding-right: 30px;
+  padding-left: 40px;
+} 
+
+#base-div-sidebar .list-header-sub1 button {
+  font-weight: 500;
+  padding-right: 20px;
+  padding-left: 60px;
+} 
+
+#base-div-sidebar .list-item-sub1 a {
+  padding-right: 20px;
+  padding-left: 80px;
+} 
+
+#base-div-sidebar button {
+  padding: 5px;
+}
 
 #base-div-nav-brand {
   display: flex;
 }
+
+#navbarSupportedContent {
+  justify-content: space-between;
+}
+
+#navbarSupportedContent .nav-item {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.nav-link label:hover, .dropdown-item:hover, .form-check-input:hover {
+  cursor: pointer;
+}
+
+.dropdown-header {
+  padding-top: 0px !important;
+  padding-bottom: 0px !important;
+}
+
+
 
 #active-div-table-orderjobs label,
 #active-div-table-putawayjobs label,
@@ -136,7 +238,7 @@ label.table-data {
 }
 
 #base-input-navbar-search {
-  width: 200px;
+  max-width: 200px;
   max-height: 32px;
   border-color: #0dcaf0;
 }
@@ -145,20 +247,19 @@ label.table-data {
   max-height: 200px;
 }
 
-#jobview-table-job-tasks, #jobview-table-job-events {
-  margin-bottom: 5px;
-}
-
 #active-div-table-orderjobs, 
 #active-div-table-putawayjobs,
 #closed-div-table-orderjobs, 
 #closed-div-table-putawayjobs {
-  max-height: 325px;
-  margin-bottom: 5px;
+  max-height: 330px;
+}
+
+.table-responsive table {
+  margin-bottom: 0px;
 }
 
 .active-div-table-wrapper, .closed-div-table-wrapper {
-  height: 325px;
+  height: 330px;
 }
 
 
@@ -180,8 +281,9 @@ label.table-data {
   max-width: 500px;
 }
 
-#active-h4-putawayjobs {
+.active-header {
   display: inline-flex;
+  justify-content: space-between;
 }
 
 #active-button-putaway-request {
@@ -196,26 +298,25 @@ label.table-data {
   justify-content: flex-end;
 }
 
-#base-ul-active-users li {
+#base-div-system-users li.dropdown-item {
   display: flex;
   align-items: center;
 }
 
-#base-ul-active-users a {
+#base-div-system-users a {
   padding-right: 0px;
   padding-left: 0px;
 }
 
 #base-div-user-controls {
   padding-top: 4px;
-  padding-right: 10px;
   align-items: flex-start;
   display: flex;
 }
 
 #base-div-nav-items-right {
   display: flex;
-  width: 100%;
+  /*width: 100%;*/
   justify-content: flex-end;
   align-self: normal;
 }
@@ -226,10 +327,10 @@ label.table-data {
   flex-wrap: wrap;
 }
 
-#active-label-putaway-header, #active-label-order-header {
+/*#active-label-putaway-header, #active-label-order-header {
   padding-right: 10px;
   padding-bottom: 5px;
-}
+}*/
 
 #base-div-user-credentials {
   padding-top: 10px;
@@ -237,9 +338,10 @@ label.table-data {
 
 #base-form-search .input-group {
   flex-wrap: nowrap;
+  padding-right: 20px;
 }
 
-#base-ul-active-users .base-user-delete { 
+#base-div-system-users .base-user-delete { 
   display: flex;
   width: 100%;
   justify-content: flex-end;
@@ -293,12 +395,15 @@ label.table-data {
 
 @media (min-width: 1800px) {
     .container{
-        min-width: 1800px;
+        min-width: 1600px;
     }
 }
 
 button.btn-delete-user {
-  padding: 2px !important;
+  outline: none;
+  border: none;
+  background-color: unset;
+  padding: 1px !important;
   display: flex;
   font-size: 12px;
 }
@@ -324,7 +429,7 @@ button.sn-validate {
   justify-content: center;
 }
 
-button.button-table-data { 
+button.button-get-job, button.button-get-task { 
   max-height: 24px;
   align-items: center;
   display: flex;
@@ -368,4 +473,8 @@ div.task-data {
 div.task-data span {
   display: flex;
   padding-bottom: 2px;
+}
+
+div.modal-header {
+  justify-content: center;
 }

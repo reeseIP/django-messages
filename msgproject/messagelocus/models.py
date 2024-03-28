@@ -1,44 +1,80 @@
 # models.py
-from django.db import models
 from django.conf import settings
 from django.contrib.auth.validators import UnicodeUsernameValidator
-
-### helper methods
-def hlp_get_data(obj_inst):
-	data = {}
-	fields = obj_inst._meta.get_fields()
-	for field in fields:
-		if 'Field' in type(field).__name__:
-			attr = getattr(obj_inst,field.name)
-			if attr == None:
-				attr = ''
-			data[field.name] = attr
-	return(data)
-
-def hlp_get_fields(cls):
-	data = {}
-	fields = cls._meta.get_fields()
-	for field in fields:
-		if 'Field' in type(field).__name__:
-			data[field.name] = ''
-	return(data)
+from django.db import models
+from core.models import ModelHelp
 
 
-class OrderJobs(models.Model):
-	JobId = models.CharField(max_length=50)
-	JobDate = models.CharField(max_length=25)
-	JobPriority = models.CharField(max_length=10,blank=True,null=True)
+# adding excluded fields to the django Model Meta class.  These fields will not be displayed in the app
+# or considered for the message from the respective model
+models.options.DEFAULT_NAMES = models.options.DEFAULT_NAMES + ('exclude_fields',)
+
+
+''' Default Service Models '''
+#---------------------------------------------------------------------#
+
+class ExternalSystems(models.Model, ModelHelp):
+	system  = models.CharField(max_length=3,null=False,primary_key=True)
+	name 	= models.CharField(max_length=100)
+	url     = models.CharField(max_length=250,null=False)
+
+	def __str__(self):
+		return('{}: {}'.format(self.system, self.url))
+
+	def __repr__(self):
+		return('{}: {}'.format(self.system, self.url))
+
+
+class ExternalUsers(models.Model, ModelHelp):
+	username_validator = UnicodeUsernameValidator()
+	username   = models.CharField(
+					("username"),
+					max_length=150,
+					help_text= (
+						"Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
+					),
+					validators=[username_validator],
+				 )
+	password   = models.CharField( ("password"), max_length=128)
+	sessionid  = models.CharField(max_length=32,null=False)
+	system 	   = models.ForeignKey(ExternalSystems, on_delete=models.CASCADE, related_name='users')
+	created_by = models.ForeignKey(
+			        settings.AUTH_USER_MODEL,
+			        on_delete=models.CASCADE,
+			        null=True
+    			 )
+	active     = models.BooleanField(default=False)
+
+	def __str__(self):
+		return('{}: {}'.format(self.username, self.system))
+
+	def __repr__(self):
+		return('{}: {}'.format(self.username, self.system))
+
+
+
+''' Order Message Type Models '''
+#---------------------------------------------------------------------#
+class OrderJobs(models.Model, ModelHelp):
+	JobId 			 = models.CharField(max_length=50)
+	JobDate 		 = models.CharField(max_length=25)
+	JobPriority 	 = models.CharField(max_length=10,blank=True,null=True)
 	JobPriorityGroup = models.CharField(max_length=50,blank=True,null=True)
-	RequestId = models.CharField(max_length=50)
-	ToteId = models.CharField(max_length=50)
-	SingleUnit = models.BooleanField(default=False,null=True)
-	NextWorkArea = models.CharField(max_length=50, blank=True, null=True)
-	JobRobot = models.CharField(max_length=50, blank=True, null=True)
-	active = models.BooleanField(default=True)
+	RequestId 		 = models.CharField(max_length=50)
+	ToteId			 = models.CharField(max_length=50)
+	SingleUnit 		 = models.BooleanField(default=False,null=True)
+	NextWorkArea 	 = models.CharField(max_length=50, blank=True, null=True)
+	# additional fields
+	JobRobot		 = models.CharField(max_length=50, blank=True, null=True)
+	system 			 = models.ForeignKey(ExternalSystems, on_delete=models.CASCADE, related_name='orderjobs')
+	active			 = models.BooleanField(default=True)
 
-	@classmethod
-	def get_fields(cls):
-		return hlp_get_fields(cls)
+	class Meta:
+		exclude_fields = [
+			'id', # if no primary key is specified, this field is added as primary key
+			'system',
+			'active'
+		]
 
 	def __str__(self):
 		return self.JobId
@@ -46,59 +82,93 @@ class OrderJobs(models.Model):
 	def __repr__(self):
 		return self.JobId
 
-	def get_data(self):
-		return hlp_get_data(self)
+
+class OrderJobResults(models.Model, ModelHelp):
+	EventType  = models.CharField(max_length=50,blank=True,null=True)
+	EventInfo  = models.CharField(max_length=250,blank=True,null=True)
+	JobId 	   = models.CharField(max_length=50)
+	JobStatus  = models.CharField(max_length=50, default='Completed')
+	JobDate	   = models.CharField(max_length=25)
+	JobStation = models.CharField(max_length=50,blank=True,null=True)
+	RequestId  = models.CharField(max_length=50)
+	ToteId	   = models.CharField(max_length=50)
+	JobRobot   = models.CharField(max_length=50,blank=True,null=True)
+	JobMethod  = models.CharField(max_length=50,blank=True,null=True)
+	# additional fields
+	Job 	   = models.ForeignKey(OrderJobs, on_delete=models.CASCADE, related_name='jobresults')
+	timestamp  = models.DateTimeField(auto_now=True)
+	message	   = models.CharField(max_length=250,blank=True,null=True) 
+
+	class Meta:
+		exclude_fields = [
+			'id',
+			'Job_id',
+			'timestamp',
+			'message',
+		]
+
+	@classmethod
+	def get_last_result(cls,JobId):
+		last_result = cls.objects.filter(JobId_id=JobId).order_by('-timestamp').first()
+		return last_result
+
+	def __str__(self):
+		return('{}: {}'.format(self.JobId, self.EventType))
+
+	def __repr__(self):
+		return('{}: {}'.format(self.JobId, self.EventType))
 
 
-
-class OrderTasks(models.Model):
-	JobId = models.ForeignKey(OrderJobs, on_delete=models.CASCADE)
-	JobTaskId = models.CharField(max_length=50)
-	EventAction = models.CharField(max_length=50,blank=True,null=True)
-	OrderId = models.CharField(max_length=50,blank=True,null=True)
-	OrderLineId = models.CharField(max_length=50,blank=True,null=True)
-	OrderTaskId = models.CharField(max_length=50,blank=True,null=True)
-	OrderType = models.CharField(max_length=50,blank=True,null=True)
-	CustOwner = models.CharField(max_length=50,null=True)
-	SiteId = models.CharField(max_length=50,null=True)
-	TaskType = models.CharField(max_length=50)
-	TaskSequence = models.IntegerField(blank=True,null=True)
-	TaskSubSequence = models.IntegerField(blank=True,null=True)
+class OrderTasks(models.Model, ModelHelp):
+	JobTaskId 		   = models.CharField(max_length=50)
+	EventAction		   = models.CharField(max_length=50,blank=True,null=True)
+	OrderId 		   = models.CharField(max_length=50,blank=True,null=True)
+	OrderLineId		   = models.CharField(max_length=50,blank=True,null=True)
+	OrderTaskId 	   = models.CharField(max_length=50,blank=True,null=True)
+	OrderType 		   = models.CharField(max_length=50,blank=True,null=True)
+	CustOwner 		   = models.CharField(max_length=50,null=True)
+	SiteId 			   = models.CharField(max_length=50,null=True)
+	TaskType 		   = models.CharField(max_length=50)
+	TaskSequence 	   = models.IntegerField(blank=True,null=True)
+	TaskSubSequence	   = models.IntegerField(blank=True,null=True)
 	TaskTravelPriority = models.IntegerField(blank=True,null=True)
-	TaskLocation = models.CharField(max_length=50)
-	TaskZone = models.CharField(max_length=50,blank=True,null=True)
-	TaskWorkArea = models.CharField(max_length=50,blank=True,null=True)
-	TaskQty = models.IntegerField()
-	ItemNo = models.CharField(max_length=50)
-	ItemUPC = models.CharField(max_length=50,blank=True,null=True)
-	ItemDesc = models.CharField(max_length=50)
-	ItemStyle = models.CharField(max_length=50,blank=True,null=True)
-	ItemColor = models.CharField(max_length=50,blank=True,null=True)
-	ItemSize = models.CharField(max_length=50,blank=True,null=True)
-	ItemLength = models.DecimalField(max_digits=5,decimal_places=2,blank=True,null=True)
-	ItemWidth = models.DecimalField(max_digits=5,decimal_places=2,blank=True,null=True)
-	ItemHeight = models.DecimalField(max_digits=5,decimal_places=2,blank=True,null=True)
-	ItemWeight = models.DecimalField(max_digits=5,decimal_places=2,blank=True,null=True)
-	ItemImageUrl = models.CharField(max_length=250,blank=True)
-	Custom1 = models.CharField(max_length=250,blank=True,null=True)
-	Custom2 = models.CharField(max_length=250,blank=True,null=True)
-	Custom3 = models.CharField(max_length=250,blank=True,null=True)
-	Custom4 = models.CharField(max_length=250,blank=True,null=True)
-	Custom5 = models.CharField(max_length=250,blank=True,null=True)
-	Custom6 = models.CharField(max_length=250,blank=True,null=True)
-	Custom7 = models.CharField(max_length=250,blank=True,null=True)
-	Custom8 = models.CharField(max_length=250,blank=True,null=True)
-	Custom9 = models.CharField(max_length=250,blank=True,null=True)
-	Custom10 = models.CharField(max_length=250,blank=True,null=True)
-	LotNo = models.CharField(max_length=250,blank=True,null=True)
-	SerialNo = models.CharField(max_length=250,blank=True,null=True)
-	CaptureLotNo = models.BooleanField(default=False)
-	CaptureSerialNo = models.BooleanField(default=False)
+	TaskLocation 	   = models.CharField(max_length=50)
+	TaskZone 		   = models.CharField(max_length=50,blank=True,null=True)
+	TaskWorkArea   	   = models.CharField(max_length=50,blank=True,null=True)
+	TaskQty 		   = models.IntegerField()
+	ItemNo 			   = models.CharField(max_length=50)
+	ItemUPC 		   = models.CharField(max_length=50,blank=True,null=True)
+	ItemDesc 		   = models.CharField(max_length=50)
+	ItemStyle 		   = models.CharField(max_length=50,blank=True,null=True)
+	ItemColor 		   = models.CharField(max_length=50,blank=True,null=True)
+	ItemSize 		   = models.CharField(max_length=50,blank=True,null=True)
+	ItemLength 		   = models.DecimalField(max_digits=5,decimal_places=2,blank=True,null=True)
+	ItemWidth 		   = models.DecimalField(max_digits=5,decimal_places=2,blank=True,null=True)
+	ItemHeight 		   = models.DecimalField(max_digits=5,decimal_places=2,blank=True,null=True)
+	ItemWeight 		   = models.DecimalField(max_digits=5,decimal_places=2,blank=True,null=True)
+	ItemImageUrl 	   = models.CharField(max_length=250,blank=True)
+	Custom1 		   = models.CharField(max_length=250,blank=True,null=True)
+	Custom2 		   = models.CharField(max_length=250,blank=True,null=True)
+	Custom3 		   = models.CharField(max_length=250,blank=True,null=True)
+	Custom4 		   = models.CharField(max_length=250,blank=True,null=True)
+	Custom5 		   = models.CharField(max_length=250,blank=True,null=True)
+	Custom6 		   = models.CharField(max_length=250,blank=True,null=True)
+	Custom7 		   = models.CharField(max_length=250,blank=True,null=True)
+	Custom8 		   = models.CharField(max_length=250,blank=True,null=True)
+	Custom9 		   = models.CharField(max_length=250,blank=True,null=True)
+	Custom10 		   = models.CharField(max_length=250,blank=True,null=True)
+	LotNo 			   = models.CharField(max_length=250,blank=True,null=True)
+	SerialNo 		   = models.CharField(max_length=250,blank=True,null=True)
+	CaptureLotNo 	   = models.BooleanField(default=False)
+	CaptureSerialNo    = models.BooleanField(default=False)
 	CaptureSerialNoQty = models.IntegerField(default=0)
+	# additional fields
+	JobId 			   = models.ForeignKey(OrderJobs, on_delete=models.CASCADE, related_name='tasks')
 
-	@classmethod
-	def get_fields(cls):
-		return hlp_get_fields(cls)
+	class Meta:
+		exclude_fields = [
+			'id',
+		]
 
 	def __str__(self):
 		return self.JobTaskId
@@ -106,47 +176,48 @@ class OrderTasks(models.Model):
 	def __repr__(self):
 		return self.JobTaskId
 
-	def get_data(self):
-		return hlp_get_data(self)
 
-
-class OrderTaskResults(models.Model):
-	JobId = models.ForeignKey(OrderJobs, on_delete=models.CASCADE)
-	JobTaskId = models.CharField(max_length=50)
-	OrderId = models.CharField(max_length=50,blank=True,null=True)
-	OrderLineId = models.CharField(max_length=50,blank=True,null=True)
-	OrderTaskId = models.CharField(max_length=50,blank=True,null=True)
-	CustOwner = models.CharField(max_length=50,null=True)
-	SiteId = models.CharField(max_length=50,null=True)
-	TaskStatus = models.CharField(max_length=50,blank=True,null=True)
-	TaskType = models.CharField(max_length=50,blank=True,null=True)
-	TaskLocation = models.CharField(max_length=50,blank=True,null=True)
-	TaskQty = models.IntegerField()
-	ExecQty = models.IntegerField(blank=True,null=True)
-	ExecUser = models.CharField(max_length=50,blank=True,null=True)
-	ExecDate = models.CharField(max_length=25,blank=True,null=True)
-	ExecRobot = models.CharField(max_length=50,blank=True,null=True)
-	ItemNo = models.CharField(max_length=50)
-	ItemUPC = models.CharField(max_length=50,blank=True,null=True)
-	ExceptionCode = models.CharField(max_length=50,blank=True,null=True)
+class OrderTaskResults(models.Model, ModelHelp):
+	JobTaskId 		= models.CharField(max_length=50)
+	OrderId 		= models.CharField(max_length=50,blank=True,null=True)
+	OrderLineId 	= models.CharField(max_length=50,blank=True,null=True)
+	OrderTaskId 	= models.CharField(max_length=50,blank=True,null=True)
+	CustOwner 		= models.CharField(max_length=50,null=True)
+	SiteId 			= models.CharField(max_length=50,null=True)
+	TaskStatus 		= models.CharField(max_length=50,blank=True,null=True)
+	TaskType 		= models.CharField(max_length=50,blank=True,null=True)
+	TaskLocation 	= models.CharField(max_length=50,blank=True,null=True)
+	TaskQty 		= models.IntegerField()
+	ExecQty 		= models.IntegerField(blank=True,null=True)
+	ExecUser 		= models.CharField(max_length=50,blank=True,null=True)
+	ExecDate 		= models.CharField(max_length=25,blank=True,null=True)
+	ExecRobot 		= models.CharField(max_length=50,blank=True,null=True)
+	ItemNo 			= models.CharField(max_length=50)
+	ItemUPC 		= models.CharField(max_length=50,blank=True,null=True)
+	ExceptionCode   = models.CharField(max_length=50,blank=True,null=True)
 	ExceptionReason = models.CharField(max_length=50,blank=True,null=True)
-	Custom1 = models.CharField(max_length=250,blank=True,null=True)
-	Custom2 = models.CharField(max_length=250,blank=True,null=True)
-	Custom3 = models.CharField(max_length=250,blank=True,null=True)
-	Custom4 = models.CharField(max_length=250,blank=True,null=True)
-	Custom5 = models.CharField(max_length=250,blank=True,null=True)
-	Custom6 = models.CharField(max_length=250,blank=True,null=True)
-	Custom7 = models.CharField(max_length=250,blank=True,null=True)
-	Custom8 = models.CharField(max_length=250,blank=True,null=True)
-	Custom9 = models.CharField(max_length=250,blank=True,null=True)
-	Custom10 = models.CharField(max_length=250,blank=True,null=True)
-	LotNo = models.CharField(max_length=250,blank=True,null=True)
-	SerialNo = models.CharField(max_length=250,blank=True,null=True)
-	timestamp = models.DateTimeField(auto_now=True)
+	Custom1 		= models.CharField(max_length=250,blank=True,null=True)
+	Custom2 		= models.CharField(max_length=250,blank=True,null=True)
+	Custom3 		= models.CharField(max_length=250,blank=True,null=True)
+	Custom4 		= models.CharField(max_length=250,blank=True,null=True)
+	Custom5 		= models.CharField(max_length=250,blank=True,null=True)
+	Custom6 		= models.CharField(max_length=250,blank=True,null=True)
+	Custom7 		= models.CharField(max_length=250,blank=True,null=True)
+	Custom8 		= models.CharField(max_length=250,blank=True,null=True)
+	Custom9 		= models.CharField(max_length=250,blank=True,null=True)
+	Custom10 		= models.CharField(max_length=250,blank=True,null=True)
+	LotNo 			= models.CharField(max_length=250,blank=True,null=True)
+	SerialNo 		= models.CharField(max_length=250,blank=True,null=True)
+	# additional fields
+	JobId 			= models.ForeignKey(OrderJobResults, on_delete=models.CASCADE, related_name='taskresults')
+	timestamp 		= models.DateTimeField(auto_now=True)
 
-	@classmethod
-	def get_fields(cls):
-		return hlp_get_fields(cls)
+
+	class Meta:
+		exclude_fields = [
+			'id',
+			'timestamp',
+		]
 
 	@classmethod
 	def get_last_task(cls,JobId,JobTaskId):
@@ -160,22 +231,28 @@ class OrderTaskResults(models.Model):
 	def __repr__(self):
 		return ('{}: {}'.format(self.id, self.JobTaskId))
 
-	def get_data(self):
-		return hlp_get_data(self)
 
 
-class PutawayJobs(models.Model):
+''' Putaway Message Type Models '''
+#---------------------------------------------------------------------#
+
+class PutawayJobs(models.Model, ModelHelp):
 	LicensePlate = models.CharField(max_length=50)
-	RequestId = models.CharField(max_length=50)
-	JobId = models.CharField(max_length=50)
-	JobDate = models.CharField(max_length=25)
-	JobPriority = models.CharField(max_length=10,blank=True,null=True)
-	JobRobot = models.CharField(max_length=50, blank=True, null=True)
-	active = models.BooleanField(default=True)
+	RequestId 	 = models.CharField(max_length=50)
+	JobId 		 = models.CharField(max_length=50)
+	JobDate 	 = models.CharField(max_length=25)
+	JobPriority  = models.CharField(max_length=10,blank=True,null=True)
+	JobRobot	 = models.CharField(max_length=50, blank=True, null=True)
+	# additional fields
+	system 		 = models.ForeignKey(ExternalSystems, on_delete=models.CASCADE, related_name='putawayjobs')
+	active 		 = models.BooleanField(default=True)
 
-	@classmethod
-	def get_fields(cls):
-		return hlp_get_fields(cls)
+	class Meta:
+		exclude_fields = [
+			'id',
+			'system',
+			'active'
+		]
 
 	def __str__(self):
 		return self.JobId
@@ -183,54 +260,89 @@ class PutawayJobs(models.Model):
 	def __repr__(self):
 		return self.JobId
 
-	def get_data(self):
-		return hlp_get_data(self)
+
+class PutawayJobResults(models.Model, ModelHelp):
+	EventType 	 = models.CharField(max_length=50,blank=True,null=True)
+	EventInfo 	 = models.CharField(max_length=250,blank=True,null=True)
+	LicensePlate = models.CharField(max_length=50)
+	RequestId 	 = models.CharField(max_length=50)
+	JobId 		 = models.CharField(max_length=50)
+	JobDate 	 = models.CharField(max_length=25)
+	JobStatus 	 = models.CharField(max_length=50, default='Completed')
+	JobStation   = models.CharField(max_length=50,blank=True,null=True)
+	JobRobot 	 = models.CharField(max_length=50,blank=True,null=True)
+	# additional fields
+	Job 		 = models.ForeignKey(PutawayJobs, on_delete=models.CASCADE, related_name='jobresults')
+	timestamp 	 = models.DateTimeField(auto_now=True)
+	message	     = models.CharField(max_length=250,blank=True,null=True) 
 
 
-class PutawayTasks(models.Model):
-	JobId = models.ForeignKey(PutawayJobs, on_delete=models.CASCADE)
-	JobTaskId = models.CharField(max_length=50)
-	EventAction = models.CharField(max_length=50,blank=True,null=True)
-	InnerLicensePlate = models.CharField(max_length=50,blank=True,null=True)
-	OrderId = models.CharField(max_length=50,blank=True,null=True)
-	OrderLineId = models.CharField(max_length=50,blank=True,null=True)
-	OrderTaskId = models.CharField(max_length=50,blank=True,null=True)
-	OrderType = models.CharField(max_length=50,blank=True,null=True)
-	CustOwner = models.CharField(max_length=50,null=True)
-	SiteId = models.CharField(max_length=50,null=True)
-	TaskType = models.CharField(max_length=50)
+	class Meta:
+		exclude_fields = [
+			'id',
+			'Job_id',
+			'timestamp',
+			'message',
+		]
+
+	@classmethod
+	def get_last_result(cls,JobId):
+		last_result = cls.objects.filter(JobId_id=JobId).order_by('-timestamp').first()
+		return last_result
+
+	def __str__(self):
+		return('{}: {}'.format(self.JobId, self.EventType))
+
+	def __repr__(self):
+		return('{}: {}'.format(self.JobId, self.EventType))
+
+
+class PutawayTasks(models.Model, ModelHelp):
+	JobTaskId 		   = models.CharField(max_length=50)
+	EventAction 	   = models.CharField(max_length=50,blank=True,null=True)
+	InnerLicensePlate  = models.CharField(max_length=50,blank=True,null=True)
+	OrderId 		   = models.CharField(max_length=50,blank=True,null=True)
+	OrderLineId 	   = models.CharField(max_length=50,blank=True,null=True)
+	OrderTaskId 	   = models.CharField(max_length=50,blank=True,null=True)
+	OrderType 		   = models.CharField(max_length=50,blank=True,null=True)
+	CustOwner 		   = models.CharField(max_length=50,null=True)
+	SiteId 			   = models.CharField(max_length=50,null=True)
+	TaskType 		   = models.CharField(max_length=50)
 	TaskTravelPriority = models.IntegerField(blank=True,null=True)
-	TaskLocation = models.CharField(max_length=50)
-	TaskZone = models.CharField(max_length=50,blank=True,null=True)
-	TaskWorkArea = models.CharField(max_length=50,blank=True,null=True)
-	TaskQty = models.IntegerField()
-	ItemNo = models.CharField(max_length=50)
-	ItemUPC = models.CharField(max_length=50,blank=True,null=True)
-	ItemDesc = models.CharField(max_length=50)
-	ItemStyle = models.CharField(max_length=50,blank=True,null=True)
-	ItemColor = models.CharField(max_length=50,blank=True,null=True)
-	ItemSize = models.CharField(max_length=50,blank=True,null=True)
-	ItemLength = models.DecimalField(max_digits=5, decimal_places=2,blank=True,null=True)
-	ItemWidth = models.DecimalField(max_digits=5, decimal_places=2,blank=True,null=True)
-	ItemHeight = models.DecimalField(max_digits=5, decimal_places=2,blank=True,null=True)
-	ItemWeight = models.DecimalField(max_digits=5, decimal_places=2,blank=True,null=True)
-	ItemImageUrl = models.CharField(max_length=250,blank=True)
-	LotNo = models.CharField(max_length=100,blank=True,null=True)
-	SerialNo = models.CharField(max_length=100,blank=True,null=True)
-	Custom1 = models.CharField(max_length=250,blank=True,null=True)
-	Custom2 = models.CharField(max_length=250,blank=True,null=True)
-	Custom3 = models.CharField(max_length=250,blank=True,null=True)
-	Custom4 = models.CharField(max_length=250,blank=True,null=True)
-	Custom5 = models.CharField(max_length=250,blank=True,null=True)
-	Custom6 = models.CharField(max_length=250,blank=True,null=True)
-	Custom7 = models.CharField(max_length=250,blank=True,null=True)
-	Custom8 = models.CharField(max_length=250,blank=True,null=True)
-	Custom9 = models.CharField(max_length=250,blank=True,null=True)
-	Custom10 = models.CharField(max_length=250,blank=True,null=True)
+	TaskLocation 	   = models.CharField(max_length=50)
+	TaskZone 		   = models.CharField(max_length=50,blank=True,null=True)
+	TaskWorkArea 	   = models.CharField(max_length=50,blank=True,null=True)
+	TaskQty 		   = models.IntegerField()
+	ItemNo 			   = models.CharField(max_length=50)
+	ItemUPC 		   = models.CharField(max_length=50,blank=True,null=True)
+	ItemDesc 		   = models.CharField(max_length=50)
+	ItemStyle	 	   = models.CharField(max_length=50,blank=True,null=True)
+	ItemColor	 	   = models.CharField(max_length=50,blank=True,null=True)
+	ItemSize 	 	   = models.CharField(max_length=50,blank=True,null=True)
+	ItemLength 		   = models.DecimalField(max_digits=5, decimal_places=2,blank=True,null=True)
+	ItemWidth 		   = models.DecimalField(max_digits=5, decimal_places=2,blank=True,null=True)
+	ItemHeight 		   = models.DecimalField(max_digits=5, decimal_places=2,blank=True,null=True)
+	ItemWeight 		   = models.DecimalField(max_digits=5, decimal_places=2,blank=True,null=True)
+	ItemImageUrl 	   = models.CharField(max_length=250,blank=True)
+	LotNo 			   = models.CharField(max_length=100,blank=True,null=True)
+	SerialNo 		   = models.CharField(max_length=100,blank=True,null=True)
+	Custom1 		   = models.CharField(max_length=250,blank=True,null=True)
+	Custom2 		   = models.CharField(max_length=250,blank=True,null=True)
+	Custom3 		   = models.CharField(max_length=250,blank=True,null=True)
+	Custom4 		   = models.CharField(max_length=250,blank=True,null=True)
+	Custom5 		   = models.CharField(max_length=250,blank=True,null=True)
+	Custom6 		   = models.CharField(max_length=250,blank=True,null=True)
+	Custom7 		   = models.CharField(max_length=250,blank=True,null=True)
+	Custom8 		   = models.CharField(max_length=250,blank=True,null=True)
+	Custom9 		   = models.CharField(max_length=250,blank=True,null=True)
+	Custom10 		   = models.CharField(max_length=250,blank=True,null=True)
+	# additional fields
+	JobId 			   = models.ForeignKey(PutawayJobs, on_delete=models.CASCADE, related_name='tasks')
 
-	@classmethod
-	def get_fields(cls):
-		return hlp_get_fields(cls)
+	class Meta:
+		exclude_fields = [
+			'id',
+		]
 
 	def __str__(self):
 		return self.JobTaskId
@@ -238,48 +350,48 @@ class PutawayTasks(models.Model):
 	def __repr__(self):
 		return self.JobTaskId
 
-	def get_data(self):
-		return hlp_get_data(self)
 
-
-class PutawayTaskResults(models.Model):
-	JobId = models.ForeignKey(PutawayJobs, on_delete=models.CASCADE)
-	JobTaskId = models.CharField(max_length=50)
+class PutawayTaskResults(models.Model, ModelHelp):
+	JobTaskId 		  = models.CharField(max_length=50)
 	InnerLicensePlate = models.CharField(max_length=50,blank=True,null=True)
-	OrderId = models.CharField(max_length=50,blank=True,null=True)
-	OrderLineId = models.CharField(max_length=50,blank=True,null=True)
-	OrderTaskId = models.CharField(max_length=50,blank=True,null=True)
-	OrderType = models.CharField(max_length=50,blank=True,null=True)
-	CustOwner = models.CharField(max_length=50,null=True)
-	SiteId = models.CharField(max_length=50,null=True)
-	TaskStatus = models.CharField(max_length=50,blank=True,null=True)
-	TaskType = models.CharField(max_length=50)
-	TaskLocation = models.CharField(max_length=50)
-	TaskQty = models.IntegerField()
-	ExecQty = models.IntegerField(blank=True,null=True)
-	ExecUser = models.CharField(max_length=50,blank=True,null=True)
-	ExecDate = models.CharField(max_length=25,blank=True,null=True)
-	ExecRobot = models.CharField(max_length=50,blank=True,null=True)
-	ItemNo = models.CharField(max_length=50)
-	LotNo = models.CharField(max_length=100,blank=True,null=True)
-	SerialNo = models.CharField(max_length=100,blank=True,null=True)
-	ExceptionCode = models.CharField(max_length=50,blank=True,null=True)
-	ExceptionReason = models.CharField(max_length=50,blank=True,null=True)
-	Custom1 = models.CharField(max_length=250,blank=True,null=True)
-	Custom2 = models.CharField(max_length=250,blank=True,null=True)
-	Custom3 = models.CharField(max_length=250,blank=True,null=True)
-	Custom4 = models.CharField(max_length=250,blank=True,null=True)
-	Custom5 = models.CharField(max_length=250,blank=True,null=True)
-	Custom6 = models.CharField(max_length=250,blank=True,null=True)
-	Custom7 = models.CharField(max_length=250,blank=True,null=True)
-	Custom8 = models.CharField(max_length=250,blank=True,null=True)
-	Custom9 = models.CharField(max_length=250,blank=True,null=True)
-	Custom10 = models.CharField(max_length=250,blank=True,null=True)
-	timestamp = models.DateTimeField(auto_now=True)
+	OrderId 		  = models.CharField(max_length=50,blank=True,null=True)
+	OrderLineId		  = models.CharField(max_length=50,blank=True,null=True)
+	OrderTaskId 	  = models.CharField(max_length=50,blank=True,null=True)
+	OrderType 		  = models.CharField(max_length=50,blank=True,null=True)
+	CustOwner	 	  = models.CharField(max_length=50,null=True)
+	SiteId 			  = models.CharField(max_length=50,null=True)
+	TaskStatus 		  = models.CharField(max_length=50,blank=True,null=True)
+	TaskType 		  = models.CharField(max_length=50)
+	TaskLocation 	  = models.CharField(max_length=50)
+	TaskQty 		  = models.IntegerField()
+	ExecQty 		  = models.IntegerField(blank=True,null=True)
+	ExecUser 		  = models.CharField(max_length=50,blank=True,null=True)
+	ExecDate 		  = models.CharField(max_length=25,blank=True,null=True)
+	ExecRobot 		  = models.CharField(max_length=50,blank=True,null=True)
+	ItemNo 			  = models.CharField(max_length=50)
+	LotNo 			  = models.CharField(max_length=100,blank=True,null=True)
+	SerialNo 		  = models.CharField(max_length=100,blank=True,null=True)
+	ExceptionCode 	  = models.CharField(max_length=50,blank=True,null=True)
+	ExceptionReason   = models.CharField(max_length=50,blank=True,null=True)
+	Custom1 		  = models.CharField(max_length=250,blank=True,null=True)
+	Custom2 		  = models.CharField(max_length=250,blank=True,null=True)
+	Custom3 		  = models.CharField(max_length=250,blank=True,null=True)
+	Custom4 		  = models.CharField(max_length=250,blank=True,null=True)
+	Custom5 		  = models.CharField(max_length=250,blank=True,null=True)
+	Custom6			  = models.CharField(max_length=250,blank=True,null=True)
+	Custom7 		  = models.CharField(max_length=250,blank=True,null=True)
+	Custom8 		  = models.CharField(max_length=250,blank=True,null=True)
+	Custom9 		  = models.CharField(max_length=250,blank=True,null=True)
+	Custom10 		  = models.CharField(max_length=250,blank=True,null=True)
+	# additional fields
+	JobId 			  = models.ForeignKey(PutawayJobResults, on_delete=models.CASCADE, related_name='taskresults')
+	timestamp 		  = models.DateTimeField(auto_now=True)
 
-	@classmethod
-	def get_fields(cls):
-		return hlp_get_fields(cls)
+	class Meta:
+		exclude_fields = [
+			'id',
+			'timestamp',
+		]
 
 	@classmethod
 	def get_last_task(cls,JobId,JobTaskId):
@@ -293,105 +405,74 @@ class PutawayTaskResults(models.Model):
 	def __repr__(self):
 		return ('{}: {}'.format(self.id, self.JobTaskId))
 
-	def get_data(self):
-		return hlp_get_data(self)
 
 
-class OrderJobEvents(models.Model):
-	JobId = models.ForeignKey(OrderJobs, on_delete=models.CASCADE)
-	EventType = models.CharField(max_length=50)
-	JobDate = models.CharField(max_length=25)
-	EventInfo = models.CharField(max_length=250)
-	timestamp = models.DateTimeField(auto_now=True)
+''' Event Models '''
+#---------------------------------------------------------------------#
 
-	@classmethod
-	def get_fields(cls):
-		return hlp_get_fields(cls)
+#class OrderJobEvents(models.Model, ModelHelp):
+#	JobId 	  = models.ForeignKey(OrderJobs, on_delete=models.CASCADE, related_name='events')
+#	EventType = models.CharField(max_length=50)
+#	JobDate   = models.CharField(max_length=25)
+#	EventInfo = models.CharField(max_length=250)
+#	#payload = models.TextField()
+#	# additional fields
+#	timestamp = models.DateTimeField(auto_now=True)
+#
+#	class Meta:
+#		exclude_fields = [
+#			'id',
+#			'timestamp',
+#		]
+#
+#	@classmethod
+#	def get_last_event(cls,JobId):
+#		last_event = cls.objects.filter(JobId=JobId).order_by('-timestamp').first()
+#		return last_event
+#
+#	def __str__(self):
+#		return('{}: {}'.format(self.JobId, self.EventType))
+#
+#	def __repr__(self):
+#		return('{}: {}'.format(self.JobId, self.EventType))
+#	
+#
+#class PutawayJobEvents(models.Model, ModelHelp):
+#	JobId     = models.ForeignKey(PutawayJobs, on_delete=models.CASCADE, related_name='events')
+#	EventType = models.CharField(max_length=50)
+#	JobDate   = models.CharField(max_length=25)
+#	EventInfo = models.CharField(max_length=250)
+#	#payload = models.TextField()
+#	# additional fields
+#	timestamp = models.DateTimeField(auto_now=True)
+#
+#	class Meta:
+#		exclude_fields = [
+#			'id',
+#			'timestamp',
+#		]
+#
+#	@classmethod
+#	def get_last_event(cls,JobId):
+#		last_event = cls.objects.filter(JobId=JobId).order_by('-timestamp').first()
+#		return last_event
+#
+#	def __str__(self):
+#		return('{}: {}'.format(self.JobId, self.EventType))
+#
+#	def __repr__(self):
+#		return('{}: {}'.format(self.JobId, self.EventType))
 
-	@classmethod
-	def get_last_event(cls,JobId):
-		last_event = cls.objects.filter(JobId=JobId).order_by('-timestamp').first()
-		return last_event
 
-	def __str__(self):
-		return('{}: {}'.format(self.JobId, self.EventType))
-
-	def __repr__(self):
-		return('{}: {}'.format(self.JobId, self.EventType))
-
-	def get_data(self):
-		return hlp_get_data(self)
 	
 
-class PutawayJobEvents(models.Model):
-	JobId = models.ForeignKey(PutawayJobs, on_delete=models.CASCADE)
-	EventType = models.CharField(max_length=50)
-	JobDate = models.CharField(max_length=25)
-	EventInfo = models.CharField(max_length=250)
-	timestamp = models.DateTimeField(auto_now=True)
-
-	@classmethod
-	def get_fields(cls):
-		return hlp_get_fields(cls)
-
-	def __str__(self):
-		return('{}: {}'.format(self.JobId, self.EventType))
-
-	def __repr__(self):
-		return('{}: {}'.format(self.JobId, self.EventType))
-
-	def get_data(self):
-		return hlp_get_data(self)
-
-	def get_last_event(JobId):
-		return
 
 
-class OrderSerialNumbers(models.Model):
-	JobId = models.ForeignKey(OrderJobs, on_delete=models.CASCADE)
-	JobTaskId = models.ForeignKey(OrderTaskResults, on_delete=models.CASCADE)
-	SerialNo = models.CharField(max_length=100,null=False)
 
-	@classmethod
-	def get_fields(cls):
-		return hlp_get_fields(cls)
+class OrderSerialNumbers(models.Model, ModelHelp):
+	JobId     = models.ForeignKey(OrderJobs, on_delete=models.CASCADE)
+	JobTaskId = models.ForeignKey(OrderTaskResults, on_delete=models.CASCADE, related_name='serialnumbers')
+	SerialNo  = models.CharField(max_length=100,null=False)
 
 
-class ExternalUsers(models.Model):
-	username_validator = UnicodeUsernameValidator()
-	password = models.CharField( ("password"), max_length=128)
-	username = models.CharField(
-		("username"),
-		max_length=150,
-		help_text= (
-			"Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
-		),
-		validators=[username_validator],
-	)
-	csrf_token = models.CharField(max_length=32,null=False)
-	sessionid = models.CharField(max_length=32,null=False)
-	system = models.CharField(max_length=3,null=False)
-	created_by= models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        null=True
-    )
 
-	@classmethod
-	def get_fields(cls):
-		return hlp_get_fields(cls)
-
-
-class ExternalSystems(models.Model):
-	system = models.CharField(max_length=3,null=False)
-	url    = models.CharField(max_length=255,null=False)
-
-	def __str__(self):
-		return('{}: {}'.format(self.system, self.url))
-
-	def __repr__(self):
-		return('{}: {}'.format(self.system, self.url))
-
-	@classmethod
-	def get_fields(cls):
-		return hlp_get_fields(cls)

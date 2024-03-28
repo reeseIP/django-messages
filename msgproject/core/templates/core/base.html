@@ -29,7 +29,7 @@
         <div class="container">
           <div id='base-div-nav-items-left'>
             <div id='base-div-nav-brand'>
-              <div style="padding-right: 20px; display: flex; align-items: center;">
+              <div style="padding-right: 10px; display: flex; align-items: center;">
                 <img class='nav-item' src="{% static 'images/icons8-mail-48.png' %}" alt='=('>
               </div>
               {% if user.is_authenticated %}
@@ -40,23 +40,26 @@
             <div class="navbar-collapse collapse" id="navbarSupportedContent">
               <ul class="navbar-nav">
                 <li class='nav-item'>
+                  <button class='nav-link'type="button" data-bs-toggle="collapse" data-bs-target="#navbarServices" aria-controls="navbarServices" aria-expanded="true" aria-label="Toggle navigation">
+                    <label>Services</label>
+                  </button>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href='#' id='base-a-active'>Active</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href='#' id='base-a-closed'>Closed</a>
+                </li>
+              </ul>
                   <form class="d-flex nav-item" id='base-form-search'>
                     {% csrf_token %}
                     <div class="input-group">
-                      <input class="form-control form-control-sm" type="search" placeholder="Search" aria-label="Search" id="base-input-navbar-search" name='search'>
                       <button class="input-group-text btn btn-sm btn-info" type="submit">
                         &#128269;
                       </button>
+                      <input class="form-control form-control-sm" type="search" placeholder="Search" aria-label="Search" id="base-input-navbar-search" name='search'>
                     </div>
                   </form>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="/messagelocus/active/">Active</a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="/messagelocus/closed/">Closed</a>
-                </li>
-              </ul>
             </div>
           </div>
           <div id='base-div-nav-items-right'>
@@ -66,39 +69,42 @@
                   &#128100
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="base-button-dropdown-user" id='base-ul-user-dropdown'>
-                  <li><h6 class="dropdown-header">Target System Users</h6></li>
-                  <ul class='list-group' id='base-ul-active-users'>
+                  <div id='base-div-system-users'>
+                    <li class='dropdown-header'><label></label></li>
+                    <li><hr class="dropdown-divider"></li>
                     {% for user in active_users %}
                       <li class="dropdown-item">
                         <a class="nav-link" href="#">
                           <div class='form-check'>
-                            <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault{{ user.system }}{{ user.username }}">
-                            <label class='base-label-system'>{{ user.system }}</label>: 
-                            <label class='base-label-username'>{{ user.username }}</label>
+                            <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault{{ user }}">
+                              <!--<label class='base-label-system'>{{ user.system }}</label>:--> 
+                            <label class='base-label-username'>{{ user }}</label>
                           </div>
                         </a>
                         <div class='base-user-delete'>
-                         <form class='base-user-delete'>
+                          <form class='base-user-delete'>
                             {% csrf_token %}
-                            <input hidden readonly class='base-input-username' name='username' value='{{ user.username }}'>
-                            <input hidden readonly class='base-input-system' name='system' value='{{ user.system }}'>
-                            <button class='btn btn-sm btn-outline-danger btn-delete-user' type='submit'>
-                              &#128465;
+                            <input hidden readonly class='base-input-username' name='username' value='{{ user }}'>
+                              <!--<input hidden readonly class='base-input-system' name='system' value='{{ user.system }}'>-->
+                            <button class='btn-delete-user' type='submit'>
+                                &#x2715;
                             </button>
                           </form>
                         </div>
                       </li>
                     {% endfor %}
-                  </ul>
-                  <li class="dropdown-item"><a class='nav-link' href="#" id='base-a-add-new-user'>New User</a></li>
-                  <li><hr class="dropdown-divider"></li>
+                    <li class="dropdown-item">
+                      <a class='nav-link' href="#" id='base-a-add-new-user'>New User</a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                  </div>
+
                   <li class="dropdown-item">
-                    <a class="nav-link" id='base-toggle-theme'>Toggle Theme</a>
+                    <a class="nav-link" href='#' id='base-toggle-theme'>Toggle Theme</a>
                   </li>
                   <li><hr class="dropdown-divider"></li>
-                  <li class='dropdown-header'><label>Current User: {{ user }}</label></li>
                   <li class="dropdown-item">
-                    <a class="nav-link" href="/messagelocus/logout/" id='base-a-user-logout'>Logout</a>
+                    <a class="nav-link" href="/logout/" id='base-a-user-logout'>Logout</a>
                   </li>
                 </ul>
               </div>
@@ -111,6 +117,47 @@
 
       <!-- Site Content -->
       <!-------------------------------------------------------------------->
+      <div class=site-wrapper>
+       <div id='base-div-sidebar'>
+          <div class="navbar-collapse collapse" id="navbarServices">
+            <div class='list-header'>
+              <label>Services</label>
+            </div>
+            <ul class="navbar-nav">
+              {% for service in services %}
+                <li class="nav-item">
+                  <button class="nav-link dropdown-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#navbar{{ service.app }}" aria-controls="navbar{{ service.app }}" aria-expanded="true" aria-label="Toggle navigation">
+                    <label>{{ service.service }}</label>
+                  </button>
+                </li>
+                
+                <div class="navbar-collapse collapse" id="navbar{{ service.app }}">
+                  <li class='nav-item list-header-sub1'>
+                    <button class="nav-link dropdown-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#navbar{{ service.app }}TargetSystems" aria-controls="navbar{{ service.app }}TargetSystems" aria-expanded="true" aria-label="Toggle navigation">
+                      <label>Target Systems</label>
+                    </button>
+                  </li>
+                </div>
+                      
+                <div class="navbar-collapse collapse" id="navbar{{ service.app }}TargetSystems">
+                  <li class='nav-item list-item-sub1'>
+                    <ul class="navbar-nav">
+                      {% for system in service.systems %}
+                        <li class="nav-item">
+                          <a href='/{{ service.app }}/{{ system.system }}/active/'>{{ system.system }}: {{ system.name }}</a>
+                        </li>
+                      {% endfor %}
+                    </ul>
+                  </li>
+                </div>
+                    
+                 
+              
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      
       <div class="site-content">
         <div class="container">
           <!-- Server Messages -->
@@ -133,12 +180,12 @@
                   <h4 class="modal-title">Target System Credentials</h4>
                 </div>
                 <div class="modal-body">
-                  <select id="base-select-target-system" class="form-select">
+                  <!--<select id="base-select-target-system" class="form-select">
                     <option value="" selected disabled hidden id='base-option-system-initial'>System</option>
                     {% for system in systems %}
                        <option class="dropdown-item">{{ system }}</option>
                     {% endfor %}
-                  </select>
+                  </select>-->
                   <div id='base-div-user-credentials'>
                     <div class='system-auth'>
                       <label for="name">Username:</label>
@@ -164,12 +211,14 @@
           {% block content %}{% endblock %}
         </div>
       </div>
+    </div>
 
       <!-- JavaScript -->
       {% block footer_js %}
         <script type="text/javascript" src="{% static 'js/jquery-3.7.1.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/main.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/messagelocus.js' %}"></script>
       {% endblock %}
 
     </body>

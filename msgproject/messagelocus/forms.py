@@ -1,7 +1,5 @@
 # forms.py
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.models import User
 from .models import OrderTaskResults, PutawayTaskResults
 
 class OrderTasksForm(forms.ModelForm):
@@ -12,10 +10,7 @@ class OrderTasksForm(forms.ModelForm):
 		
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
-		#self.fields["JobId"].disabled = True
-		#self.fields["JobTaskId"].disabled = True
-		# Or to set READONLY
-		#self.fields["JobId"].widget.attrs["readonly"] = True
+		# set fields to READONLY
 		self.fields["JobTaskId"].widget.attrs["readonly"] = True
 		self.fields["TaskType"].widget.attrs["readonly"] = True
 
@@ -27,17 +22,5 @@ class PutawayTasksForm(forms.ModelForm):
 		
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
-		#self.fields["JobId"].disabled = True
-		#self.fields["JobTaskId"].disabled = True
-		# Or to set READONLY
-		#self.fields["JobId"].widget.attrs["readonly"] = True
 		self.fields["JobTaskId"].widget.attrs["readonly"] = True
 		self.fields["TaskType"].widget.attrs["readonly"] = True
-
-
-class RegisterForm(UserCreationForm):
-	email = forms.EmailField()
-	
-	class Meta:
-		model = User
-		fields = ["username", "email", "password1", "password2"]

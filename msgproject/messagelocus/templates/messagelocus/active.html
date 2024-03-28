@@ -1,19 +1,19 @@
 <!-- active.html -->
-{% extends 'messagelocus/base.html' %}
+{% extends 'core/base.html' %}
 {% block content %}
 
 	<!-- OrderJob Table -->
-    <!-------------------------------------------------------------------->
-    <h4 class='active-header'>
-    	<label id='active-label-order-header'>Order Jobs</label>
-    </h4>
-    <div class='active-div-table-wrapper'>
+  <!-------------------------------------------------------------------->
+  	    <h4 class='active-header'>
+	    	<label>Order Jobs</label>
+	    </h4>
+  <div class='active-div-table-wrapper'>
     <div class='table-responsive' id='active-div-table-orderjobs'>
     	<table class='table table-hover table-striped'>
     		<thead>
     			<tr>
     				{% for field in orderjob_fields %}
-    					<th scope="col"><label>{{ field }}</label></th>
+    					<th scope="col"><label class='label-table-data'>{{ field }}</label></th>
     				{% endfor %}
     			</tr>
     		</thead>
@@ -21,17 +21,13 @@
     		{% for order in orderjob_list %}
     			<tr>
     			{% for key, value in order.items %}
-    				{% if key == 'id' or key == 'active' %}
-    					<td name='{{ key }}' style='display: none;'>
-    						<label>{{ value }}</label>
-    					</td>
-    				{% elif key == 'JobId' %}
+    				{% if key == 'JobId' %}
     					<td name='{{ key }}'>
-    						<button class='btn btn-sm btn-outline-primary button-table-data button-get-job'>{{ value }}</button>
+    						<button class='btn btn-sm btn-outline-primary button-get-job'>{{ value }}</button>
     					</td>
     				{% else %}
     					<td name='{{ key }}'>
-    						<label class='table-data'>{{ value }}</label>
+    						<label class='label-table-data'>{{ value }}</label>
     					</td>
     				{% endif %}
     			{% endfor %}
@@ -47,43 +43,39 @@
 	
 	<!-- PutawayJob Table -->
     <!-------------------------------------------------------------------->
-    <h4 class='active-header' id='active-h4-putawayjobs'>
-    	<label id='active-label-putaway-header'>Putaway Jobs</label>
-    	<button class='btn btn-sm btn-outline-secondary' type='button' id='active-button-putaway-request'>Request</button>
-    </h4>
+      <h4 class='active-header' id='active-h4-putawayjobs'>
+	    	<label>Putaway Jobs</label>
+	    	<button class='btn btn-sm btn-outline-secondary' type='button' id='active-button-putaway-request'>Request</button>
+    	</h4>
     <div class='active-div-table-wrapper'>
-    <div class='table-responsive' id='active-div-table-putawayjobs'>
-    	<table class='table table-hover table-striped'>
-    		<thead>
-    			<tr>
-    				{% for field in putawayjob_fields %}
-    					<th scope="col"><label>{{ field }}</label></th>
-    				{% endfor %}
-    			</tr>
-    		</thead>
-    		<tbody>
-    			{% for putaway in putawayjob_list %}
+    	<div class='table-responsive' id='active-div-table-putawayjobs'>
+    		<table class='table table-hover table-striped'>
+    			<thead>
     				<tr>
-    					{% for key, value in putaway.items %}
-    						{% if key == 'id' or key == 'active' %}
-    							<td name='{{ key }}' style='display: none;'>
-    								<label>{{ value }}</label>
-    							</td>
-    						{% elif key == 'JobId' %}
-    							<td name='{{ key }}'>
-    								<button class='btn btn-sm btn-outline-primary button-table-data button-get-job'>{{ value }}</button>
-    							</td>
-    						{% else %}
-    							<td name='{{ key }}'>
-    								<label class='table-data'>{{ value }}</label>
-    							</td>
-    						{% endif %}
+    					{% for field in putawayjob_fields %}
+    						<th scope="col"><label class='label-table-data'>{{ field }}</label></th>
     					{% endfor %}
     				</tr>
-    			{% endfor %}
-    		</tbody>
-    	</table>
-    </div>
+    			</thead>
+    			<tbody>
+    				{% for putaway in putawayjob_list %}
+    					<tr>
+    						{% for key, value in putaway.items %}
+    							{% if key == 'JobId' %}
+    								<td name='{{ key }}'>
+    									<button class='btn btn-sm btn-outline-primary button-get-job'>{{ value }}</button>
+    								</td>
+    							{% else %}
+    								<td name='{{ key }}'>
+    									<label class='label-table-data'>{{ value }}</label>
+    								</td>
+    							{% endif %}
+    						{% endfor %}
+    					</tr>
+    				{% endfor %}
+    			</tbody>
+    		</table>
+    	</div>
     </div>
 
 

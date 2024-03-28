@@ -1,12 +1,13 @@
 <!-- closed.html -->
-{% extends 'messagelocus/base.html' %}
+{% extends 'core/base.html' %}
 {% block content %}
 
   <!-- OrderJob Table -->
   <!-------------------------------------------------------------------->
   {% if orderjob_list %}
-    <h4 class='closed-header'>Order Jobs</h4>
+          <h4 class='closed-header'>Order Jobs</h4>
     <div class='closed-div-table-wrapper'>
+
         <div class='table-responsive' id='closed-div-table-orderjobs'>
           <table class='table table-hover table-striped'>
             <thead>
@@ -20,13 +21,9 @@
             {% for order in orderjob_list %}
               <tr>
               {% for key, value in order.items %}
-                {% if key == 'id' or key == 'active' %}
-                  <td name='{{ key }}' style='display: none;'>
-                    <label>{{ value }}</label>
-                  </td>
-                {% elif key == 'JobId' %}
+                {% if key == 'JobId' %}
                   <td name='{{ key }}'>
-                    <button class='btn btn-sm btn-outline-primary button-table-data button-get-job'>{{ value }}</button>
+                    <button class='btn btn-sm btn-outline-primary button-get-job'>{{ value }}</button>
                   </td>
                 {% else %}
                   <td name='{{ key }}'>
@@ -52,6 +49,7 @@
       <h4 class='closed-header'>Putaway Jobs</h4>
     </div>
     <div class='closed-div-table-wrapper'>
+
     <div class='table-responsive' id='closed-div-table-putawayjobs'>
       <table class='table table-hover table-striped'>
         <thead>
@@ -65,13 +63,9 @@
           {% for putaway in putawayjob_list %}
             <tr>
               {% for key, value in putaway.items %}
-                {% if key == 'id' or key == 'active' %}
-                  <td name='{{ key }}' style='display: none;'>
-                    <label>{{ value }}</label>
-                  </td>
-                {% elif key == 'JobId' %}
+                {% if key == 'JobId' %}
                   <td name='{{ key }}'>
-                    <button class='btn btn-sm btn-outline-primary button-table-data button-get-job'>{{ value }}</button>
+                    <button class='btn btn-sm btn-outline-primary button-get-job'>{{ value }}</button>
                   </td>
                 {% else %}
                   <td name='{{ key }}'>

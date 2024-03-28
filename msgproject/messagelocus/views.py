@@ -1,87 +1,94 @@
 # views.py
-from django.db import IntegrityError
 from django.contrib import messages
-from django.shortcuts import get_object_or_404, render, redirect
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
-from django.forms import formset_factory
-from django.views.decorators.csrf import csrf_exempt
-from .forms import OrderTasksForm, PutawayTasksForm, RegisterForm
-from .models import ( OrderJobs, OrderTasks, OrderTaskResults, OrderSerialNumbers, OrderJobEvents,
-					PutawayJobs, PutawayTasks, PutawayTaskResults, PutawayJobEvents,
-					ExternalUsers, ExternalSystems )
-
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate
 from django.contrib.auth.decorators import login_required
-from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError
+from django.forms import formset_factory
+from django.http import HttpResponse,JsonResponse
+from django.shortcuts import render, redirect
+from django.views.decorators.csrf import csrf_exempt
 
-import json
-import requests
-import io
+from .forms import OrderTasksForm, PutawayTasksForm
+from .models import ( ExternalUsers, ExternalSystems, 
+					OrderJobs, OrderJobResults, OrderTasks, OrderTaskResults, OrderSerialNumbers,
+					PutawayJobs, PutawayJobResults, PutawayTasks, PutawayTaskResults, )
+
 import base64
 import datetime
+import io
+import json
+import requests
 
 
 ### helper methods
+#def format_message(message_type)
 def send_request(request,job_data,job_type,event_type="",event_info="",tasks="",serial_number=""):
 	date = datetime.datetime.now().strftime(format='%Y-%m-%dT%H:%M:%S')
 	if job_type == 'OrderJob':
 		event_model = OrderJobEvents
 		job_type = "OrderJobResult"
-		job_message = {job_type: {"EventType":event_type,
-											"EventInfo":event_info,
-											"JobId":job_data["JobId"],
-											"JobStatus":"Completed",
-											"JobDate":date,
-											"JobStation":'',
-											"RequestId":job_data["RequestId"],
-											"ToteId":job_data["ToteId"],
-											"JobRobot":job_data['JobRobot'],
-											"JobMethod":'',
-											"JobTasks": tasks
-											}}
+		job_message = {job_type: {"EventType" :event_type,
+								  "EventInfo" :event_info,
+								  "JobId"	  :job_data["JobId"],
+								  "JobStatus" :"Completed",
+								  "JobDate"	  :date,
+								  "JobStation":'',
+								  "RequestId" :job_data["RequestId"],
+								  "ToteId"	  :job_data["ToteId"],
+								  "JobRobot"  :job_data['JobRobot'],
+								  "JobMethod" :'',
+								  "JobTasks"  : tasks
+						}}
 	elif job_type == 'PutawayJob':
 		event_model = PutawayJobEvents
 		job_type = "PutawayJobResult"
-		job_message = {job_type: {"EventType":event_type,
-											"EventInfo":event_info,
-											"LicensePlate":job_data['LicensePlate'],
-											"RequestId":job_data['RequestId'],
-											"JobId":job_data['JobId'],
-											"JobDate":date,
-											"JobStatus":'Completed',
-											"JobStation":'',
-											"JobRobot":job_data['JobRobot'],
-											"JobTasks": tasks
-											}}	
+		job_message = {job_type: {"EventType"	:event_type,
+								  "EventInfo"	:event_info,
+								  "LicensePlate":job_data['LicensePlate'],
+								  "RequestId"	:job_data['RequestId'],
+								  "JobId"		:job_data['JobId'],
+								  "JobDate"		:date,
+								  "JobStatus"	:'Completed',
+								  "JobStation"	:'',
+								  "JobRobot"	:job_data['JobRobot'],
+								  "JobTasks"	: tasks
+						}}	
 	elif job_type == 'PutawayRequest':
 		event_model = None
 		job_type = "PutawayJobRequest"
 		job_message = {job_type: {"LicensePlate":job_data['LicensePlate'],
-											"RequestDate":date,
-											"RequestRobot":job_data['RequestRobot'],
-											"RequestUser": request.user.username
+								  "RequestDate"	:date,
+								  "RequestRobot":job_data['RequestRobot'],
+								  "RequestUser"	: request.user.username
 											}}
 	elif job_type == 'SerialValidation':
 		event_model = OrderJobEvents
-		job_message = {"EventType": event_type,
-						"JobId": job_data["JobId"],
-						"OrderId": tasks['OrderId'],
-						"OrderLineId": tasks['OrderLineId'],
-						"JobTaskId": tasks['JobTaskId'],
-						"ItemNo": tasks['ItemNo'],
-						"Quantity": '1',
-						"Serial": serial_number}
+		job_message = {"EventType"	: event_type,
+					   "JobId"		: job_data["JobId"],
+					   "OrderId"	: tasks['OrderId'],
+					   "OrderLineId": tasks['OrderLineId'],
+					   "JobTaskId"	: tasks['JobTaskId'],
+					   "ItemNo"		: tasks['ItemNo'],
+					   "Quantity"	: '1',
+					   "Serial"		: serial_number}
 
 	try:
-		req_username = request.COOKIES['username']
-		req_system = request.COOKIES['system']
+		pass
+		#req_username = request.COOKIES['username']
+		#req_system = request.COOKIES['system']
 	except KeyError:
 		messages.error(request, 'A valid target user needs to be set before sending a request.')
 		return
 
-	tar_user = ExternalUsers.objects.filter(username=req_username,system=req_system).first()
-	tar_sys = ExternalSystems.objects.filter(system=req_system).first()
+
+	
+	for item in request.META.items():
+		print(item)
+	return
+
+	tar_user = ExternalUsers.objects.filter(created_by=request.user,system=req_system).first()
+	tar_sys = ExternalSystems.objects.filter(system=system).first()
 
 	if job_type == 'SerialValidation':
 		index = tar_sys.url.find('?')
@@ -132,19 +139,19 @@ def send_request(request,job_data,job_type,event_type="",event_info="",tasks="",
 	return response
 
 
-def get_job(JobId):
+def get_job(JobId, system):
 	try:
-		job = OrderJobs.objects.filter(JobId=JobId)[0]
+		job = OrderJobs.objects.filter(JobId=JobId, system_id=system)[0]
 		job_type = 'OrderJob'
 	except IndexError:
 		try:
-			job = PutawayJobs.objects.filter(JobId=JobId)[0]
+			job = PutawayJobs.objects.filter(JobId=JobId, system_id=system)[0]
 			job_type = 'PutawayJob'
 		except IndexError:
 			job = None
 	
 	if job:
-		job_data = job.get_data()
+		job_data = job.get_data(excluded_fields=True)
 		return {'job_query': job,
 				'job_data':job_data, 
 				'job_type':job_type}
@@ -153,65 +160,89 @@ def get_job(JobId):
 
 
 
+
 ### view methods
 def index(request):
-	return redirect('/messagelocus/login/')
+	return render(request, 'messagelocus/index.html')
 
-def register_user(request):
+@login_required
+def get_target_user(request, system):
 	if request.method == 'GET':
-		form = RegisterForm()
+		user = ExternalUsers.objects.filter(created_by=request.user,system=system,sessionid=request.COOKIES['sessionid'],active=True).first()
+		if user:
+			user = user.username
+		return JsonResponse({'user': user})
 
-		return render(request, 'messagelocus/register.html', {'form': form})
-	elif request.method == 'POST':
-		form = RegisterForm(request.POST)
-		if form.is_valid():
-		    form.save()
-		    username = request.POST["username"]
-		    password = request.POST["password1"]
-		    user = authenticate(request, username=username, password=password)
-		    if user is not None:
-		    	login(request, user)
-		    	return redirect('/messagelocus/active/')
+@login_required
+def set_target_user(request, system):
+	if request.method == 'POST':
+		req_user = request.POST["username"] 
+		#req_syst = request.POST["system"]
+
+		user = ExternalUsers.objects.filter(created_by=request.user,username=req_user,system_id=system).first()
+		active_user = ExternalUsers.objects.filter(created_by=request.user,system_id=system,active=True).first()
+		if user:
+			if active_user:
+				active_user.active = False
+				active_user.save()
+			user.active = True
+			user.save()
+			#messages.info(request, 'User Already Valid')
+			return JsonResponse({'status_code': 200})
 		else:
-			messages.error(request,form.errors)
-			return render(request, 'messagelocus/register.html', {'form': form})
-
-def login_user(request):
-	if request.method == 'GET':
-		if request.user.is_authenticated:
-			return redirect('/messagelocus/active/')
-		return render(request, 'messagelocus/login.html')
-	elif request.method == 'POST':
-	    username = request.POST["username"]
-	    password = request.POST["password"]
-	    user = authenticate(request, username=username, password=password)
-	    if user is not None:
-	    	login(request, user)
-	    	return redirect('/messagelocus/')
-	    else:
-	    	messages.error(request, 'Invalid Credentials')
-	    	return render(request, 'messagelocus/login.html')
+			tar_sys = ExternalSystems.objects.filter(system=system).first()
+			# validate user is valid in external system
+			response = requests.get(tar_sys.url,
+										auth=(request.POST["username"],request.POST["password"]))
+			if response:
+				if response.status_code == 200:
+					user = ExternalUsers()
+					user.username = request.POST["username"] 
+					user.password = request.POST["password"]
+					user.csrf_token = request.POST["csrfmiddlewaretoken"]
+					user.sessionid = request.POST["sessionid"]
+					user.system_id = system
+					user.created_by = request.user
+					user.active = True
+					try:
+						user.save()
+						if active_user:
+							active_user.active = False
+							active_user.save()
+						messages.success(request, 'Temporary User {} Created'.format(user.username))
+						return JsonResponse({'status_code': 200})
+					except IntegrityError:
+						pass
+				
+			messages.error(request, 'Invalid User')
+			return JsonResponse({'status_code': 500})
+	elif request.method == 'GET':
+		return HttpResponse()
 
 @login_required
-def logout_user(request):
-	tar_sys_users = ExternalUsers.objects.filter(created_by=request.user).delete()
-	logout(request)
-	response = redirect('/messagelocus/login/')
-	response.delete_cookie('username')
-	response.delete_cookie('system')
-	return response
+def delete_target_user(request, system):
+	user = ExternalUsers.objects.filter(username=request.POST['username'],
+												system_id=system,
+												created_by=request.user)
+	if user.delete()[1]:
+		messages.success(request,'User successfully deleted.')
+	else:
+		messages.error(request,'Unable to delete user.')
+
+	return JsonResponse({'status_code': 200})
 
 @login_required
-def active(request):
+def active(request, system):
 	''' landing page - list of jobs'''
-	orders = OrderJobs.objects.filter(active=True).order_by('-JobId').all()
-	putaways = PutawayJobs.objects.filter(active=True).order_by('-JobId').all()
+	system = ExternalSystems.objects.filter(system=system).first()
+	orders = system.orderjobs.filter(active=True)#.order_by('-JobId')
+	putaways = system.putawayjobs.filter(active=True)
 
 	orderjob_list = []
 	putawayjob_list = []
 
 	for order in orders:
-		event = OrderJobEvents.objects.filter(JobId=order).order_by('-JobDate').first()
+		event = order.events.order_by('-JobDate').first()
 		order_data = order.get_data()
 		if event:
 			order_data['Latest Event'] = event.EventInfo
@@ -220,7 +251,7 @@ def active(request):
 		orderjob_list.append(order_data)
 
 	for putaway in putaways:
-		event = PutawayJobEvents.objects.filter(JobId=putaway).order_by('-JobDate').first()
+		event = putaway.events.order_by('-JobDate').first()
 		putaway_data = putaway.get_data()
 		keyorder = ['JobId', 'JobDate', 'JobPriority', 'RequestId', 'LicensePlate', 'JobRobot']
 		[keyorder.append(field) for field in putaway_data if field != 'JobId']
@@ -234,11 +265,6 @@ def active(request):
 	orderjob_fields = OrderJobs.get_fields()
 	putawayjob_fields = PutawayJobs.get_fields()
 
-	# dont pass these to the html doc
-	del orderjob_fields['id']
-	del orderjob_fields['active']
-	del putawayjob_fields['id']
-	del putawayjob_fields['active']
 
 	# change the sort order of putaway fields
 	keyorder = ['JobId', 'JobDate', 'JobPriority', 'RequestId', 'LicensePlate', 'JobRobot']
@@ -265,16 +291,17 @@ def active(request):
 													  })
 
 @login_required
-def closed(request):
+def closed(request, system):
 	''' landing page - list of jobs'''
-	orders = OrderJobs.objects.filter(active=False).order_by('-JobId').all()
-	putaways = PutawayJobs.objects.filter(active=False).order_by('-JobId').all()
+	system = ExternalSystems.objects.filter(system=system).first()
+	orders = system.orderjobs.filter(active=False)#.order_by('-JobId')
+	putaways = system.putawayjobs.filter(active=False)
 
 	orderjob_list = []
 	putawayjob_list = []
 
 	for order in orders:
-		event = OrderJobEvents.objects.filter(JobId=order).order_by('-JobDate').first()
+		event = order.events.order_by('-JobDate').first()
 		order_data = order.get_data()
 		if event:
 			order_data['Latest Event'] = event.EventInfo
@@ -283,7 +310,7 @@ def closed(request):
 		orderjob_list.append(order_data)
 
 	for putaway in putaways:
-		event = PutawayJobEvents.objects.filter(JobId=putaway).order_by('-JobDate').first()
+		event = putaway.events.order_by('-JobDate').first()
 		putaway_data = putaway.get_data()
 		keyorder = ['JobId', 'JobDate', 'JobPriority', 'RequestId', 'LicensePlate', 'JobRobot']
 		[keyorder.append(field) for field in putaway_data if field != 'JobId']
@@ -296,12 +323,6 @@ def closed(request):
 
 	orderjob_fields = OrderJobs.get_fields()
 	putawayjob_fields = PutawayJobs.get_fields()
-
-	# dont pass these to the html doc
-	del orderjob_fields['id']
-	del orderjob_fields['active']
-	del putawayjob_fields['id']
-	del putawayjob_fields['active']
 
 	# change the sort order of putaway fields
 	keyorder = ['JobId', 'JobDate', 'JobPriority', 'RequestId', 'LicensePlate', 'JobRobot']
@@ -328,9 +349,9 @@ def closed(request):
 													  })
 
 @login_required
-def close_job(request):
+def close_job(request, system):
 	''' close a job '''
-	job = get_job(request.POST['JobId'])
+	job = get_job(request.POST['JobId'],system)
 	if job:
 		job_query = job['job_query']
 		job_query.active = False
@@ -345,9 +366,13 @@ def close_job(request):
 
 
 @csrf_exempt
-def inbound(request):
+def inbound(request, system):
 	''' inbound messages '''
 	if request.method == 'POST':
+		# validate the requested system
+		system_query = ExternalSystems.objects.filter(system__iexact=system).first()
+		if not system_query:
+			return HttpResponse('system exists not')
 		auth_header = request.META['HTTP_AUTHORIZATION']
 		try:
 			encoded_credentials = auth_header.split(' ')[1] # Removes "Basic " to isolate credentials
@@ -364,18 +389,20 @@ def inbound(request):
 				# outermost structure (Message Type)
 				if k1 == 'OrderJob':
 					job_model = OrderJobs
+					job_result_model = OrderJobResults
 					task_model = OrderTasks
 					task_result_model = OrderTaskResults
-					event_model = OrderJobEvents
+					#event_model = OrderJobEvents
 				elif k1 == 'PutawayJob':
 					job_model = PutawayJobs
+					job_result_model = PutawayJobResults
 					task_model = PutawayTasks
 					task_result_model = PutawayTaskResults
-					event_model = PutawayJobEvents
+					#event_model = PutawayJobEvents
 				else:
 					return HttpResponse('Error - Incorrect Message Type')
 
-				job = get_job(JobId=v1['JobId'])
+				job = get_job(JobId=v1['JobId'],system=system)
 				
 				if v1['EventType'] == 'NEW':
 					if job:
@@ -396,7 +423,24 @@ def inbound(request):
 							except KeyError: # field was not supplied
 								value = None
 							setattr(new_job,field.name,value)
+
+						new_job.system_id = system_query.id
 						new_job.active = True
+
+						# new job result
+						fields = job_result_model._meta.get_fields()
+						new_result_job = job_result_model()
+
+						for field in fields:
+							try:
+								value = v1[field.name]
+							except KeyError: # field was not supplied
+								value = None
+							setattr(new_result_job,field.name,value)
+							
+						new_result_job.Job_id = new_job
+						new_result_job.EventType = None
+
 						#new_job.save()
 
 						# new tasks
@@ -448,9 +492,12 @@ def inbound(request):
 
 						try:
 							new_job.save()
+							new_result_job.save()
 							[task.save() for task in job_tasks_buff]
 						except ValidationError as e:
 							new_job.delete()
+							new_result_job.delete()
+							[task.delete() for task in job_tasks_buff]
 							return HttpResponse(e)
 
 				# event entry
@@ -472,19 +519,19 @@ def inbound(request):
 
 
 @login_required
-def jobview(request, JobId):
+def jobview(request, system, JobId):
 	''' overview for job details'''
-	job = get_job(JobId=JobId)
+	job = get_job(JobId=JobId, system=system)
 	job_data = job['job_data']
 	job_type = job['job_type']
 
 	if job_type == 'OrderJob':
 		task_model = OrderTaskResults
-		event_model = OrderJobEvents
+		#event_model = OrderJobEvents
 		TaskDataFormSet = formset_factory(OrderTasksForm, extra=0)
 	elif job_type == 'PutawayJob':
 		task_model = PutawayTaskResults
-		event_model =PutawayJobEvents
+		#event_model =PutawayJobEvents
 		TaskDataFormSet = formset_factory(PutawayTasksForm, extra=0)
 
 	tasks = task_model.objects.filter(JobId_id=job_data['id']).order_by('JobTaskId').all()
@@ -507,9 +554,9 @@ def jobview(request, JobId):
 	formset = TaskDataFormSet(initial=task_data)
 	
 	task_header = task_model.get_fields()
-	# keep hidden on page
-	del task_header['id'] 
-	del task_header['timestamp']
+
+	# remove the excluded fields
+	job_data = job['job_query'].get_data()
 
 	try:
 		theme = request.COOKIES['theme']
@@ -526,7 +573,7 @@ def jobview(request, JobId):
 														 })
 
 @login_required
-def putawayjobrequest(request):
+def putawayjobrequest(request, system):
 	''' request a putawayjob from SAP system '''
 	if request.method == 'POST':
 		job_data = {'LicensePlate':request.POST['licenseplate'],
@@ -539,27 +586,27 @@ def putawayjobrequest(request):
 
 
 @login_required
-def sendaccept(request, JobId):
+def sendaccept(request, system, JobId):
 	''' send an ACCEPT message for job '''
-	job = get_job(JobId=JobId)
+	job = get_job(JobId=JobId,system=system)
 	job_data = job['job_data']
 	job_type = job['job_type']
 	send_request(request,job_data,job_type,"ACCEPT")
-	return redirect('/messagelocus/{}'.format(JobId))
+	return redirect('/messagelocus/{}/{}/'.format(system,JobId))
 
 @login_required
-def sendreject(request, JobId):
+def sendreject(request, system, JobId):
 	''' send a REJECT message for job '''
-	job = get_job(JobId=JobId)
+	job = get_job(JobId=JobId,system=system)
 	job_data = job['job_data']
 	job_type = job['job_type']
 	send_request(request,job_data,job_type,"REJECT","Rejected - Manually Posted")
-	return redirect('/messagelocus/{}'.format(JobId))
+	return redirect('/messagelocus/{}/{}/'.format(system,JobId))
 
 @login_required
-def sendinduct(request, JobId):
+def sendinduct(request, system, JobId):
 	''' send a TOTEINDUCT message for job '''
-	job = get_job(JobId=JobId)
+	job = get_job(JobId=JobId,system=system)
 	job_data = job['job_data']
 	job_type = job['job_type']
 	job_query = job['job_query']
@@ -570,12 +617,12 @@ def sendinduct(request, JobId):
 		send_request(request,job_data,job_type,"TOTEINDUCT")
 	elif job_type == 'PutawayJob':
 		send_request(request,job_data,job_type,"PUTINDUCT")
-	return redirect('/messagelocus/{}'.format(JobId))
+	return redirect('/messagelocus/{}/{}/'.format(system,JobId))
 
 @login_required
-def sendcomplete(request, JobId):
+def sendcomplete(request, system, JobId):
 	''' send a PICKCOMPLETE/PUTCOMPLETE message for job '''
-	job = get_job(JobId=JobId)
+	job = get_job(JobId=JobId,system=system)
 	job_data = job['job_data']
 	job_type = job['job_type']
 
@@ -598,8 +645,8 @@ def sendcomplete(request, JobId):
 					serial_numbers.append(serial.SerialNo)
 			if serial_numbers:
 				last_task_data['SerialNo'] = serial_numbers.copy()
-			del last_task_data['id']
-			del last_task_data['timestamp']
+			#del last_task_data['id']
+			#del last_task_data['timestamp']
 			task_data.append(last_task_data)
 			serial_numbers.clear()
 			del last_task_data
@@ -608,50 +655,50 @@ def sendcomplete(request, JobId):
 		tasks = PutawayTaskResults.objects.filter(JobId_id=job_data['id'])
 		for task in tasks:
 			task_info = task.get_data()
-			del task_info['id']
-			del task_info['timestamp']
+			#del task_info['id']
+			#del task_info['timestamp']
 			task_data.append(task_info)
 		send_request(request,job_data,job_type,"PUTCOMPLETE",'',tasks=task_data)						
-	return redirect('/messagelocus/{}'.format(JobId))
+	return redirect('/messagelocus/{}/{}/'.format(system,JobId))
 
 @login_required
-def sendcancelcomplete(request, JobId):
+def sendcancelcomplete(request, system, JobId):
 	''' send a CANCELCOMPLETE message for job '''
-	job = get_job(JobId=JobId)
+	job = get_job(JobId=JobId,system=system)
 	job_data = job['job_data']
 	job_type = job['job_type']
 	send_request(request,job_data,job_type,"CANCELCOMPLETE")
-	return redirect('/messagelocus/{}'.format(JobId))
+	return redirect('/messagelocus/{}/{}/'.format(system,JobId))
 
 @login_required
-def sendcancelreject(request, JobId):
+def sendcancelreject(request, system, JobId):
 	''' send a CANCELREJECT message for job '''
-	job = get_job(JobId=JobId)
+	job = get_job(JobId=JobId,system=system)
 	job_data = job['job_data']
 	job_type = job['job_type']
 	send_request(request,job_data,job_type,"CANCELREJECT","Rejected - Manually Posted")
-	return redirect('/messagelocus/{}'.format(JobId))
+	return redirect('/messagelocus/{}/{}/'.format(system,JobId))
 
 @login_required
-def sendupdatecomplete(request, JobId):
+def sendupdatecomplete(request, system, JobId):
 	''' send an UPDATECOMPLETE message for job '''
-	job = get_job(JobId=JobId)
+	job = get_job(JobId=JobId,system=system)
 	job_data = job['job_data']
 	job_type = job['job_type']
 	send_request(request,job_data,job_type,"UPDATECOMPLETE")
-	return redirect('/messagelocus/{}'.format(JobId))
+	return redirect('/messagelocus/{}/{}/'.format(system,JobId))
 
 @login_required
-def sendupdatereject(request, JobId):
+def sendupdatereject(request, system, JobId):
 	''' send an UPDATEREJECT message for job '''
-	job = get_job(JobId=JobId)
+	job = get_job(JobId=JobId,system=system)
 	job_data = job['job_data']
 	job_type = job['job_type']
 	send_request(request,job_data,job_type,"UPDATEREJECT","Rejected - Manually Posted")
-	return redirect('/messagelocus/{}'.format(JobId))
+	return redirect('/messagelocus/{}/{}/'.format(system,JobId))
 
 @login_required
-def sendtask(request, JobId):
+def sendtask(request, system, JobId):
 	''' send a PICK/PUT message for job '''
 	form_data = list(request.POST.items())
 	task_data = {}
@@ -671,7 +718,7 @@ def sendtask(request, JobId):
 		if serial_numbers:
 			task_data['SerialNo'] = serial_numbers
 
-		job = get_job(JobId=JobId)
+		job = get_job(JobId=JobId,system=system)
 		job_data = job['job_data']
 		job_type = job['job_type']
 
@@ -699,55 +746,22 @@ def sendtask(request, JobId):
 	except IndexError:
 		messages.error(request, 'Failed to read task data.')
 
-	return redirect('/messagelocus/{}'.format(JobId))
+	return redirect('/messagelocus/{}/{}/'.format(system,JobId))
 
 
 @login_required
-def sendprint(request,JobId):
-	job = get_job(JobId=JobId)
+def sendprint(request, system, JobId):
+	job = get_job(JobId=JobId,system=system)
 	job_data = job['job_data']
 	job_type = job['job_type']
 	send_request(request,job_data,job_type,"PRINT","LOCL")
-	return redirect('/messagelocus/{}'.format(JobId))
+	return redirect('/messagelocus/{}/{}/'.format(system,JobId))
 
 
 @login_required
-def set_target_user(request):
-	if request.method == 'POST':
-		req_user = request.POST["username"] 
-		req_syst = request.POST["system"]
-
-		user = ExternalUsers.objects.filter(username=req_user,system=req_syst).first()
-		if user:
-			messages.info(request, 'User Already Valid')
-			return JsonResponse({'status_code': 200})
-		else:
-			tar_sys = ExternalSystems.objects.filter(system=req_syst).first()
-			# validate user is valid in external system
-			response = requests.get(tar_sys.url,
-										auth=(request.POST["username"],request.POST["password"]))
-			if response:
-				if response.status_code == 200:
-					user = ExternalUsers()
-					user.username = request.POST["username"] 
-					user.password = request.POST["password"]
-					user.csrf_token = request.POST["csrfmiddlewaretoken"]
-					user.sessionid = request.POST["sessionid"]
-					user.system = request.POST["system"]
-					user.created_by = request.user
-					try:
-						user.save()
-						messages.success(request, 'Temporary User {} Created'.format(user.username))
-						return JsonResponse({'status_code': 200})
-					except IntegrityError:
-						pass
-				
-			messages.error(request, 'Invalid User')
-			return JsonResponse({'status_code': 500})
-
-@login_required
-def get_capture_field_data(request):
-	JobId = request.POST['JobId']
+def get_capture_field_data(request, JobId, system):
+	job = get_job(JobId=JobId, system=system)
+	JobId = job['job_query'].id
 	JobTaskId = request.POST['JobTaskId']
 	serial_numbers = []
 
@@ -769,9 +783,9 @@ def get_capture_field_data(request):
 
 
 @login_required
-def validate_serial_number(request):
+def validate_serial_number(request, system):
 	if request.method == 'POST':
-		job_data = OrderJobs.objects.filter(id=request.POST['JobId']).first().get_data()
+		job_data = OrderJobs.objects.filter(id=request.POST['JobId'],system_id=system).first().get_data()
 		task_data = OrderTaskResults.get_last_task(JobId=request.POST['JobId'],JobTaskId=request.POST['JobTaskId']).get_data()
 		response = send_request(request,job_data=job_data,job_type='SerialValidation',event_type='SERIAL',event_info=None,tasks=task_data,serial_number=request.POST['SerialNumber'])
 		response_data = json.loads(response.text)
@@ -780,23 +794,12 @@ def validate_serial_number(request):
 
 
 @login_required
-def check_job_exists(request):
-	orderjob = OrderJobs.objects.filter(JobId=request.POST['search'])
-	putawayjob = PutawayJobs.objects.filter(JobId=request.POST['search'])
+def check_job_exists(request, system):
+	orderjob = OrderJobs.objects.filter(JobId=request.POST['search'],system_id=system)
+	putawayjob = PutawayJobs.objects.filter(JobId=request.POST['search'],system_id=system)
 
 	if not orderjob and not putawayjob:
 		return JsonResponse({'status_code': 500})
 	else:
 		return JsonResponse({'status_code': 200})
 
-@login_required
-def delete_target_user(request):
-	entry = ExternalUsers.objects.filter(username=request.POST['username'],
-												system=request.POST['system'],
-												created_by=request.user)
-	if entry.delete()[1]:
-		messages.success(request,'User successfully deleted.')
-	else:
-		messages.error(request,'Unable to delete user.')
-
-	return JsonResponse({'status_code': 200})

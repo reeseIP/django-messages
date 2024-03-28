@@ -26,13 +26,15 @@ SECRET_KEY = 'django-insecure-h&fgb&lbi7o&9s7=k(88m%-t$0bp-kfx@cgi3h-1#cz%4uu#j3
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+
 ALLOWED_HOSTS = [
-    
+    'localhost'
 ]
 
 # Application definition
 
 INSTALLED_APPS = [
+    'core.apps.CoreConfig',
     'messagelocus.apps.MessagelocusConfig',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -41,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 ]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -131,7 +134,7 @@ STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGIN_URL = '/messagelocus/login'
+LOGIN_URL = '/login/'
 
 SESSION_COOKIE_HTTPONLY = False
 SESSION_COOKIE_AGE = 86400

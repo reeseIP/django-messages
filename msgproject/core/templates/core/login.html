@@ -1,8 +1,8 @@
 <!-- login.html -->
-{% extends 'messagelocus/base.html' %}
+{% extends 'core/base.html' %}
 {% block content %}
 	<div class="login-wrapper">
-		<form action="/messagelocus/login/" method="post">
+		<form action="/login/" method="post">
 			{% csrf_token %}
 			<div class='system-auth'>
 				<label for="name">Username:</label>
@@ -16,6 +16,6 @@
 				<button class='btn btn-primary' type='submit'>Log in</button>
 			</div>
 		</form>
-		<a href='/messagelocus/register'>New User</a>
+		<a href='/register'>New User</a>
 	</div>
 {% endblock %}

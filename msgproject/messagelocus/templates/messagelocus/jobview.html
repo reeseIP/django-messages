@@ -1,5 +1,5 @@
 <!-- jobview.html -->
-{% extends 'messagelocus/base.html' %}
+{% extends 'core/base.html' %}
 {% block content %}
 	<h3>{{ JobId }}</h3>
 	<br>
@@ -10,19 +10,11 @@
 		<h5 class='jobview-header'>Job Information</h5>
 		<table class='table table-striped' id='jobview-table-job-info'>
 			{% for key, value in job_data.items %}
-				{% if key == 'id' or key == 'active' %}
-					<tr style='display: none;'>
-				    <td id='jobview-jobinfo-{{ key }}'>
-				    	<label class='key'>{{ key }}: </label><label class='value'>{{ value }}</label>
-				    </td>
-					</tr>
-				{% else %}
-					<tr>
-				    <td id='jobview-jobinfo-{{ key }}'>
-				    	<label class='key'>{{ key }}: </label><label class='value'>{{ value }}</label>
-				    </td>
-					</tr>
-			  {% endif %}
+				<tr>
+				  <td id='jobview-jobinfo-{{ key }}'>
+				  	<label class='key'>{{ key }}: </label><label class='value'>{{ value }}</label>
+				  </td>
+				</tr>
 			{% endfor %}
 		</table>
 	</div>
@@ -77,7 +69,7 @@
 						{% for field in form %}
 							<td>
 								{% if field.name == 'JobTaskId' %}
-									<button class='btn btn-sm btn-outline-primary button-table-data button-get-task'>{{ field.value }}</button>
+									<button class='btn btn-sm btn-outline-primary button-get-task'>{{ field.value }}</button>
 								{% else %}
 									<label class='table-data'>{{ field.value }}</label></a>
 								{% endif %}
@@ -118,7 +110,7 @@
 
 	<!-- Close Job Button -->
 	{% if job_data.active %}
-		<button class='btn btn-sm btn-outline-danger' id='jobview-btn-close-job'>
+		<button class='btn btn-sm btn-outline-danger btn-close-job'>
 	    	Close Job
 		</button>
 	{% endif %}	
