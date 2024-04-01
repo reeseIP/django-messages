@@ -12,11 +12,11 @@ $('.button-get-job').on('click', function(e) {
 $('.btn-close-job').on('click', function(e) { 
 	e.preventDefault();
 	var url = parseURL(window.location.href)
-	var jobid = $('#jobview-jobinfo-JobId').find('label.value').html();
+	//var jobid = $('#jobview-jobinfo-JobId').find('label.value').html();
 	$.ajax({ 
-		url: url.url+'close_job/',
+		url: window.location.href+'close_job/',
 		type: 'post',
-		data: {'csrfmiddlewaretoken': getCookie('csrftoken'),'JobId': jobid},
+		data: {'csrfmiddlewaretoken': getCookie('csrftoken')},
 		success: function(response) { 
 			if (response.status_code == 200) {
 				window.location.href = url.url+'active/';
@@ -44,6 +44,7 @@ $('#jobview-select-dropdown-event').on('change', function(){
 		else if (name == 'Cancel Reject') { action = 'cancelreject' }
 		else if (name == 'Update Complete') { action = 'updatecomplete' }
 		else if (name == 'Update Reject') { action = 'updatereject' }
+		else if (name == 'Print') { action = 'print' }
 		$('#div-induct-robot').hide();
 	}
 	$('#form-send-event').attr('action',action+'/');
@@ -169,7 +170,6 @@ $('form.taskData').on('click', 'button.sn-edit', function(e){
 // Serial Number: validate button click
 $('form').on('click', 'button.sn-validate', function(e){
     e.preventDefault();
-    var jobid = $('#jobview-jobinfo-id').find('label.value').html();
     var jobtaskid = $(this).closest('div.taskData').attr('id');
     var serialnumber = $(this).prev().val();
     var target = $(this).prev();
@@ -182,9 +182,9 @@ $('form').on('click', 'button.sn-validate', function(e){
     	return
     }
     $.ajax({
-        url: url.url+'validate_serial_number/',
+        url: window.location.href+'validate_serial_number/',
         type: 'post',
-        data: {'csrfmiddlewaretoken': getCookie('csrftoken'),'JobId': jobid, 'JobTaskId': jobtaskid, 'SerialNumber':serialnumber},
+        data: {'csrfmiddlewaretoken': getCookie('csrftoken'), 'JobTaskId': jobtaskid, 'SerialNumber':serialnumber},
         success: function(response) {
         	if (response.status_code == 200) { 
     			if (response.data.ISERROR == 'false' || response.data.isError == 'false') {

@@ -25,6 +25,10 @@ html, body {
   overflow: hidden;
 }
 
+table {
+  font-size: 14px;
+ }
+
 
 /* ----------- class styles ----------- */
 
@@ -110,6 +114,34 @@ div.site-wrapper {
   
 }
 
+.active-header {
+  display: inline-flex;
+  justify-content: space-between;
+}
+
+.dropdown-header {
+  padding-top: 0px !important;
+  padding-bottom: 0px !important;
+}
+
+.table-responsive-330 {
+  max-height: 330px;
+}
+
+.table-responsive table {
+  margin-bottom: 0px;
+}
+
+.table-responsive label {
+  min-width: max-content;
+  padding-right: 20px;
+  display: flex;
+ }
+
+ .active-div-table-wrapper, .closed-div-table-wrapper {
+  height: 330px;
+}
+
 /* ----------- id styles ----------- */
 
 #navbarServices {
@@ -191,38 +223,6 @@ div.site-wrapper {
   padding-right: 8px;
 }
 
-.nav-link label:hover, .dropdown-item:hover, .form-check-input:hover {
-  cursor: pointer;
-}
-
-.dropdown-header {
-  padding-top: 0px !important;
-  padding-bottom: 0px !important;
-}
-
-
-
-#active-div-table-orderjobs label,
-#active-div-table-putawayjobs label,
-#closed-div-table-orderjobs label,
-#closed-div-table-putawayjobs label,
-#jobview-table-job-tasks label, 
-#jobview-table-job-events label { 
-  min-width: max-content;
-  padding-right: 20px;
-  display: flex;
- }
-
-#active-div-table-orderjobs, 
-#active-div-table-putawayjobs,
-#closed-div-table-orderjobs, 
-#closed-div-table-putawayjobs,
-#jobview-div-table-job-tasks,
-#jobview-div-table-job-events,
-#jobview-table-job-info { 
-  font-size: 14px;
- }
-
 #jobview-table-job-tasks td { 
   padding-top: 4px;
   padding-bottom: 4px;
@@ -247,22 +247,6 @@ div.site-wrapper {
   max-height: 200px;
 }
 
-#active-div-table-orderjobs, 
-#active-div-table-putawayjobs,
-#closed-div-table-orderjobs, 
-#closed-div-table-putawayjobs {
-  max-height: 330px;
-}
-
-.table-responsive table {
-  margin-bottom: 0px;
-}
-
-.active-div-table-wrapper, .closed-div-table-wrapper {
-  height: 330px;
-}
-
-
 #jobview-div-job-info label.key {
   min-width: 145px;
   font-weight: 600;
@@ -279,11 +263,6 @@ div.site-wrapper {
 
 #jobview-select-dropdown-event {
   max-width: 500px;
-}
-
-.active-header {
-  display: inline-flex;
-  justify-content: space-between;
 }
 
 #active-button-putaway-request {
@@ -306,6 +285,7 @@ div.site-wrapper {
 #base-div-system-users a {
   padding-right: 0px;
   padding-left: 0px;
+  width: 100%;
 }
 
 #base-div-user-controls {
@@ -327,11 +307,6 @@ div.site-wrapper {
   flex-wrap: wrap;
 }
 
-/*#active-label-putaway-header, #active-label-order-header {
-  padding-right: 10px;
-  padding-bottom: 5px;
-}*/
-
 #base-div-user-credentials {
   padding-top: 10px;
 }
@@ -343,7 +318,6 @@ div.site-wrapper {
 
 #base-div-system-users .base-user-delete { 
   display: flex;
-  width: 100%;
   justify-content: flex-end;
 }
 
@@ -387,8 +361,9 @@ div.site-wrapper {
 
 /* ----------- selector styles ----------- */
 
-
-
+.nav-link label:hover, .dropdown-item:hover, .form-check-input:hover {
+  cursor: pointer;
+}
 
 
 /* ----------- other styles ----------- */

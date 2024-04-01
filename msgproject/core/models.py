@@ -20,7 +20,7 @@ class ModelHelp():
 				if valid:
 					attr = getattr(self,field.name)
 					if attr == None:
-						attr = ''
+						attr = ""
 					data[field.name] = attr
 		return(data)
 
@@ -39,7 +39,7 @@ class ModelHelp():
 					if exfield in field.name:
 						valid = False
 				if valid:
-					data[field.name] = ''
+					data[field.name] = ""
 		return(data)
 
 

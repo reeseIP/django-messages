@@ -1,9 +1,8 @@
 # models.py
+from core.models import ModelHelp
 from django.conf import settings
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
-from core.models import ModelHelp
-
 
 # adding excluded fields to the django Model Meta class.  These fields will not be displayed in the app
 # or considered for the message from the respective model
@@ -46,16 +45,18 @@ class ExternalUsers(models.Model, ModelHelp):
 	active     = models.BooleanField(default=False)
 
 	def __str__(self):
-		return('{}: {}'.format(self.username, self.system))
+		return('{}: {}'.format(self.system_id, self.username))
 
 	def __repr__(self):
-		return('{}: {}'.format(self.username, self.system))
+		return('{}: {}'.format(self.system_id, self.username))
 
 
 
 ''' Order Message Type Models '''
 #---------------------------------------------------------------------#
 class OrderJobs(models.Model, ModelHelp):
+	#EventType  		 = models.CharField(max_length=50,blank=True,null=True,default='NEW')
+	#EventInfo  		 = models.CharField(max_length=250,blank=True,null=True)
 	JobId 			 = models.CharField(max_length=50)
 	JobDate 		 = models.CharField(max_length=25)
 	JobPriority 	 = models.CharField(max_length=10,blank=True,null=True)
@@ -72,19 +73,21 @@ class OrderJobs(models.Model, ModelHelp):
 	class Meta:
 		exclude_fields = [
 			'id', # if no primary key is specified, this field is added as primary key
+			'EventType',
+			'EventInfo',
 			'system',
 			'active'
 		]
 
 	def __str__(self):
-		return self.JobId
+		return ('{}: {}'.format(self.system_id, self.JobId))
 
 	def __repr__(self):
-		return self.JobId
+		return ('{}: {}'.format(self.system_id, self.JobId))
 
 
 class OrderJobResults(models.Model, ModelHelp):
-	EventType  = models.CharField(max_length=50,blank=True,null=True)
+	EventType  = models.CharField(max_length=50)
 	EventInfo  = models.CharField(max_length=250,blank=True,null=True)
 	JobId 	   = models.CharField(max_length=50)
 	JobStatus  = models.CharField(max_length=50, default='Completed')
@@ -96,21 +99,23 @@ class OrderJobResults(models.Model, ModelHelp):
 	JobMethod  = models.CharField(max_length=50,blank=True,null=True)
 	# additional fields
 	Job 	   = models.ForeignKey(OrderJobs, on_delete=models.CASCADE, related_name='jobresults')
-	timestamp  = models.DateTimeField(auto_now=True)
-	message	   = models.CharField(max_length=250,blank=True,null=True) 
+	#timestamp  = models.DateTimeField(auto_now=True)
 
 	class Meta:
 		exclude_fields = [
 			'id',
 			'Job_id',
-			'timestamp',
-			'message',
+			#'timestamp',
 		]
 
-	@classmethod
-	def get_last_result(cls,JobId):
-		last_result = cls.objects.filter(JobId_id=JobId).order_by('-timestamp').first()
-		return last_result
+	def save(self, *args, **kwargs):
+		self.JobStatus = 'Completed'
+		super().save(*args, **kwargs)
+
+	#@classmethod
+	#def get_last_result(cls,JobId):
+	#	last_result = cls.objects.filter(JobId_id=JobId).order_by('-timestamp').first()
+	#	return last_result
 
 	def __str__(self):
 		return('{}: {}'.format(self.JobId, self.EventType))
@@ -138,7 +143,7 @@ class OrderTasks(models.Model, ModelHelp):
 	TaskQty 		   = models.IntegerField()
 	ItemNo 			   = models.CharField(max_length=50)
 	ItemUPC 		   = models.CharField(max_length=50,blank=True,null=True)
-	ItemDesc 		   = models.CharField(max_length=50)
+	ItemDesc 		   = models.CharField(max_length=50,blank=True,null=True)
 	ItemStyle 		   = models.CharField(max_length=50,blank=True,null=True)
 	ItemColor 		   = models.CharField(max_length=50,blank=True,null=True)
 	ItemSize 		   = models.CharField(max_length=50,blank=True,null=True)
@@ -163,18 +168,19 @@ class OrderTasks(models.Model, ModelHelp):
 	CaptureSerialNo    = models.BooleanField(default=False)
 	CaptureSerialNoQty = models.IntegerField(default=0)
 	# additional fields
-	JobId 			   = models.ForeignKey(OrderJobs, on_delete=models.CASCADE, related_name='tasks')
+	Job 			   = models.ForeignKey(OrderJobs, on_delete=models.CASCADE, related_name='tasks')
 
 	class Meta:
 		exclude_fields = [
 			'id',
+			'Job_id'
 		]
 
 	def __str__(self):
-		return self.JobTaskId
+		return ('{}: {}'.format(self.Job_id, self.JobTaskId))
 
 	def __repr__(self):
-		return self.JobTaskId
+		return ('{}: {}'.format(self.Job_id, self.JobTaskId))
 
 
 class OrderTaskResults(models.Model, ModelHelp):
@@ -188,10 +194,10 @@ class OrderTaskResults(models.Model, ModelHelp):
 	TaskType 		= models.CharField(max_length=50,blank=True,null=True)
 	TaskLocation 	= models.CharField(max_length=50,blank=True,null=True)
 	TaskQty 		= models.IntegerField()
-	ExecQty 		= models.IntegerField(blank=True,null=True)
-	ExecUser 		= models.CharField(max_length=50,blank=True,null=True)
-	ExecDate 		= models.CharField(max_length=25,blank=True,null=True)
-	ExecRobot 		= models.CharField(max_length=50,blank=True,null=True)
+	ExecQty 		= models.IntegerField()
+	ExecUser 		= models.CharField(max_length=50)
+	ExecDate 		= models.CharField(max_length=25)
+	ExecRobot 		= models.CharField(max_length=50)
 	ItemNo 			= models.CharField(max_length=50)
 	ItemUPC 		= models.CharField(max_length=50,blank=True,null=True)
 	ExceptionCode   = models.CharField(max_length=50,blank=True,null=True)
@@ -209,27 +215,28 @@ class OrderTaskResults(models.Model, ModelHelp):
 	LotNo 			= models.CharField(max_length=250,blank=True,null=True)
 	SerialNo 		= models.CharField(max_length=250,blank=True,null=True)
 	# additional fields
-	JobId 			= models.ForeignKey(OrderJobResults, on_delete=models.CASCADE, related_name='taskresults')
-	timestamp 		= models.DateTimeField(auto_now=True)
+	Job 			= models.ForeignKey(OrderJobs, on_delete=models.CASCADE, related_name='taskresults')
+	#timestamp 		= models.DateTimeField(auto_now=True)
 
 
 	class Meta:
 		exclude_fields = [
 			'id',
-			'timestamp',
+			'Job_id',
+			#'timestamp',
 		]
 
-	@classmethod
-	def get_last_task(cls,JobId,JobTaskId):
-		''' get the data for the last task sent '''
-		task = cls.objects.filter(JobId_id=JobId,JobTaskId=JobTaskId).order_by('-timestamp').first()
-		return task
+	#@classmethod
+	#def get_last_task(cls,JobId,JobTaskId):
+	#	''' get the data for the last task sent '''
+	#	task = cls.objects.filter(JobId_id=JobId,JobTaskId=JobTaskId).order_by('-timestamp').first()
+	#	return task
 
 	def __str__(self):
-		return ('{}: {}'.format(self.id, self.JobTaskId))
+		return ('{}: {}'.format(self.Job_id, self.JobTaskId))
 
 	def __repr__(self):
-		return ('{}: {}'.format(self.id, self.JobTaskId))
+		return ('{}: {}'.format(self.Job_id, self.JobTaskId))
 
 
 
@@ -237,6 +244,8 @@ class OrderTaskResults(models.Model, ModelHelp):
 #---------------------------------------------------------------------#
 
 class PutawayJobs(models.Model, ModelHelp):
+	#EventType    = models.CharField(max_length=50,blank=True,null=True)
+	#EventInfo    = models.CharField(max_length=250,blank=True,null=True)
 	LicensePlate = models.CharField(max_length=50)
 	RequestId 	 = models.CharField(max_length=50)
 	JobId 		 = models.CharField(max_length=50)
@@ -250,19 +259,21 @@ class PutawayJobs(models.Model, ModelHelp):
 	class Meta:
 		exclude_fields = [
 			'id',
+			'EventType',
+			'EventInfo',
 			'system',
 			'active'
 		]
 
 	def __str__(self):
-		return self.JobId
+		return ('{}: {}'.format(self.system_id, self.JobId))
 
 	def __repr__(self):
-		return self.JobId
+		return ('{}: {}'.format(self.system_id, self.JobId))
 
 
 class PutawayJobResults(models.Model, ModelHelp):
-	EventType 	 = models.CharField(max_length=50,blank=True,null=True)
+	EventType 	 = models.CharField(max_length=50)
 	EventInfo 	 = models.CharField(max_length=250,blank=True,null=True)
 	LicensePlate = models.CharField(max_length=50)
 	RequestId 	 = models.CharField(max_length=50)
@@ -273,22 +284,24 @@ class PutawayJobResults(models.Model, ModelHelp):
 	JobRobot 	 = models.CharField(max_length=50,blank=True,null=True)
 	# additional fields
 	Job 		 = models.ForeignKey(PutawayJobs, on_delete=models.CASCADE, related_name='jobresults')
-	timestamp 	 = models.DateTimeField(auto_now=True)
-	message	     = models.CharField(max_length=250,blank=True,null=True) 
+	#timestamp 	 = models.DateTimeField(auto_now=True)
 
 
 	class Meta:
 		exclude_fields = [
 			'id',
 			'Job_id',
-			'timestamp',
-			'message',
+			#'timestamp',
 		]
 
-	@classmethod
-	def get_last_result(cls,JobId):
-		last_result = cls.objects.filter(JobId_id=JobId).order_by('-timestamp').first()
-		return last_result
+	def save(self, *args, **kwargs):
+		self.JobStatus = 'Completed'
+		super().save(*args, **kwargs)
+
+	#@classmethod
+	#def get_last_result(cls,JobId):
+	#	last_result = cls.objects.filter(JobId_id=JobId).order_by('-timestamp').first()
+	#	return last_result
 
 	def __str__(self):
 		return('{}: {}'.format(self.JobId, self.EventType))
@@ -315,7 +328,7 @@ class PutawayTasks(models.Model, ModelHelp):
 	TaskQty 		   = models.IntegerField()
 	ItemNo 			   = models.CharField(max_length=50)
 	ItemUPC 		   = models.CharField(max_length=50,blank=True,null=True)
-	ItemDesc 		   = models.CharField(max_length=50)
+	ItemDesc 		   = models.CharField(max_length=50,blank=True,null=True)
 	ItemStyle	 	   = models.CharField(max_length=50,blank=True,null=True)
 	ItemColor	 	   = models.CharField(max_length=50,blank=True,null=True)
 	ItemSize 	 	   = models.CharField(max_length=50,blank=True,null=True)
@@ -337,18 +350,19 @@ class PutawayTasks(models.Model, ModelHelp):
 	Custom9 		   = models.CharField(max_length=250,blank=True,null=True)
 	Custom10 		   = models.CharField(max_length=250,blank=True,null=True)
 	# additional fields
-	JobId 			   = models.ForeignKey(PutawayJobs, on_delete=models.CASCADE, related_name='tasks')
+	Job 			   = models.ForeignKey(PutawayJobs, on_delete=models.CASCADE, related_name='tasks')
 
 	class Meta:
 		exclude_fields = [
 			'id',
+			'Job_id',
 		]
 
 	def __str__(self):
-		return self.JobTaskId
+		return ('{}: {}'.format(self.Job_id, self.JobTaskId))
 
 	def __repr__(self):
-		return self.JobTaskId
+		return ('{}: {}'.format(self.Job_id, self.JobTaskId))
 
 
 class PutawayTaskResults(models.Model, ModelHelp):
@@ -364,10 +378,10 @@ class PutawayTaskResults(models.Model, ModelHelp):
 	TaskType 		  = models.CharField(max_length=50)
 	TaskLocation 	  = models.CharField(max_length=50)
 	TaskQty 		  = models.IntegerField()
-	ExecQty 		  = models.IntegerField(blank=True,null=True)
-	ExecUser 		  = models.CharField(max_length=50,blank=True,null=True)
-	ExecDate 		  = models.CharField(max_length=25,blank=True,null=True)
-	ExecRobot 		  = models.CharField(max_length=50,blank=True,null=True)
+	ExecQty 		  = models.IntegerField()
+	ExecUser 		  = models.CharField(max_length=50)
+	ExecDate 		  = models.CharField(max_length=25)
+	ExecRobot 		  = models.CharField(max_length=50)
 	ItemNo 			  = models.CharField(max_length=50)
 	LotNo 			  = models.CharField(max_length=100,blank=True,null=True)
 	SerialNo 		  = models.CharField(max_length=100,blank=True,null=True)
@@ -384,95 +398,127 @@ class PutawayTaskResults(models.Model, ModelHelp):
 	Custom9 		  = models.CharField(max_length=250,blank=True,null=True)
 	Custom10 		  = models.CharField(max_length=250,blank=True,null=True)
 	# additional fields
-	JobId 			  = models.ForeignKey(PutawayJobResults, on_delete=models.CASCADE, related_name='taskresults')
-	timestamp 		  = models.DateTimeField(auto_now=True)
+	Job 			  = models.ForeignKey(PutawayJobs, on_delete=models.CASCADE, related_name='taskresults')
+	#timestamp 		  = models.DateTimeField(auto_now=True)
 
 	class Meta:
 		exclude_fields = [
 			'id',
-			'timestamp',
+			'Job_id',
+			#'timestamp',
 		]
 
-	@classmethod
-	def get_last_task(cls,JobId,JobTaskId):
-		''' get the data for the last task sent '''
-		task = cls.objects.filter(JobId_id=JobId,JobTaskId=JobTaskId).order_by('-timestamp').first()
-		return task
+	#@classmethod
+	#def get_last_task(cls,JobId,JobTaskId):
+	#	''' get the data for the last task sent '''
+	#	task = cls.objects.filter(JobId_id=JobId,JobTaskId=JobTaskId).order_by('-timestamp').first()
+	#	return task
 
 	def __str__(self):
-		return ('{}: {}'.format(self.id, self.JobTaskId))
+		return ('{}: {}'.format(self.Job_id, self.JobTaskId))
 
 	def __repr__(self):
-		return ('{}: {}'.format(self.id, self.JobTaskId))
+		return ('{}: {}'.format(self.Job_id, self.JobTaskId))
 
 
 
 ''' Event Models '''
 #---------------------------------------------------------------------#
 
-#class OrderJobEvents(models.Model, ModelHelp):
-#	JobId 	  = models.ForeignKey(OrderJobs, on_delete=models.CASCADE, related_name='events')
-#	EventType = models.CharField(max_length=50)
-#	JobDate   = models.CharField(max_length=25)
-#	EventInfo = models.CharField(max_length=250)
-#	#payload = models.TextField()
-#	# additional fields
-#	timestamp = models.DateTimeField(auto_now=True)
-#
-#	class Meta:
-#		exclude_fields = [
-#			'id',
-#			'timestamp',
-#		]
-#
-#	@classmethod
-#	def get_last_event(cls,JobId):
-#		last_event = cls.objects.filter(JobId=JobId).order_by('-timestamp').first()
-#		return last_event
-#
-#	def __str__(self):
-#		return('{}: {}'.format(self.JobId, self.EventType))
-#
-#	def __repr__(self):
-#		return('{}: {}'.format(self.JobId, self.EventType))
-#	
-#
-#class PutawayJobEvents(models.Model, ModelHelp):
-#	JobId     = models.ForeignKey(PutawayJobs, on_delete=models.CASCADE, related_name='events')
-#	EventType = models.CharField(max_length=50)
-#	JobDate   = models.CharField(max_length=25)
-#	EventInfo = models.CharField(max_length=250)
-#	#payload = models.TextField()
-#	# additional fields
-#	timestamp = models.DateTimeField(auto_now=True)
-#
-#	class Meta:
-#		exclude_fields = [
-#			'id',
-#			'timestamp',
-#		]
-#
-#	@classmethod
-#	def get_last_event(cls,JobId):
-#		last_event = cls.objects.filter(JobId=JobId).order_by('-timestamp').first()
-#		return last_event
-#
-#	def __str__(self):
-#		return('{}: {}'.format(self.JobId, self.EventType))
-#
-#	def __repr__(self):
-#		return('{}: {}'.format(self.JobId, self.EventType))
+class OrderJobEvents(models.Model, ModelHelp):
+	Job 	  = models.ForeignKey(OrderJobs, on_delete=models.CASCADE, related_name='events')
+	EventType = models.CharField(max_length=50)
+	JobDate   = models.CharField(max_length=25)
+	EventInfo = models.CharField(max_length=250)
+	payload   = models.TextField()
+	#timestamp = models.DateTimeField(auto_now=True)
+
+	class Meta:
+		exclude_fields = [
+			'id',
+			'Job_id'
+			#'timestamp',
+			'payload',
+		]
+
+	@classmethod
+	def get_last_event(cls,JobId):
+		last_event = cls.objects.filter(JobId=JobId).order_by('-JobDate').first()
+		return last_event
+
+	def __str__(self):
+		return('{}: {}'.format(self.Job_id, self.EventType))
+
+	def __repr__(self):
+		return('{}: {}'.format(self.Job_id, self.EventType))
+	
+
+class PutawayJobEvents(models.Model, ModelHelp):
+	Job       = models.ForeignKey(PutawayJobs, on_delete=models.CASCADE, related_name='events')
+	EventType = models.CharField(max_length=50)
+	JobDate   = models.CharField(max_length=25)
+	EventInfo = models.CharField(max_length=250)
+	payload   = models.TextField()
+	#timestamp = models.DateTimeField(auto_now=True)
+
+	class Meta:
+		exclude_fields = [
+			'id',
+			'Job_id'
+			#'timestamp',
+			'payload',
+		]
+
+	@classmethod
+	def get_last_event(cls,JobId):
+		last_event = cls.objects.filter(JobId=JobId).order_by('-JobDate').first()
+		return last_event
+
+	def __str__(self):
+		return('{}: {}'.format(self.Job_id, self.EventType))
+
+	def __repr__(self):
+		return('{}: {}'.format(self.Job_id, self.EventType))
 
 
 	
-
-
-
-
 class OrderSerialNumbers(models.Model, ModelHelp):
-	JobId     = models.ForeignKey(OrderJobs, on_delete=models.CASCADE)
-	JobTaskId = models.ForeignKey(OrderTaskResults, on_delete=models.CASCADE, related_name='serialnumbers')
-	SerialNo  = models.CharField(max_length=100,null=False)
+	JobId 	    = models.CharField(max_length=50)
+	OrderId     = models.CharField(max_length=50,blank=True,null=True)
+	OrderLineId = models.CharField(max_length=50,blank=True,null=True)
+	JobTaskId   = models.CharField(max_length=50)
+	ItemNo 	    = models.CharField(max_length=50)
+	Quantity    = models.IntegerField(default=1)
+	Serial      = models.CharField(max_length=128)
+	# additional fields
+	Job         = models.ForeignKey(OrderJobs, on_delete=models.CASCADE)
+	JobTask     = models.ForeignKey(OrderTaskResults, on_delete=models.CASCADE, related_name='serialnumbers')
+	
+	class Meta:
+		exclude_fields = [
+			'id',
+			'Job_id',
+			'JobTask_id',
+		]
+
+	def __str__(self):
+		return('{}: {}: {}'.format(self.JobId, self.JobTaskId, self.Serial))
+
+	def __repr__(self):
+		return('{}: {}: {}'.format(self.JobId, self.JobTaskId, self.Serial))
+
+	def save(self, *args, **kwargs):
+		self.Quantity = 1
+		super().save(*args, **kwargs)
 
 
+class PutawayJobRequests(models.Model, ModelHelp):
+	LicensePlate = models.CharField(max_length=50)
+	RequestDate  = models.CharField(max_length=25)
+	RequestRobot = models.CharField(max_length=50,blank=True,null=True)
+	RequestUser  = models.CharField(max_length=50,blank=True,null=True)
 
+	class Meta:
+		exclude_fields = [
+			'id',
+		]
