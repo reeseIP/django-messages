@@ -28,7 +28,8 @@ DEBUG = True
 
 
 ALLOWED_HOSTS = [
-    'localhost'
+    'localhost',
+
 ]
 
 # Application definition

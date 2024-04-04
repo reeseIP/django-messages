@@ -105,15 +105,6 @@ $(document).ready( function() {
 		$('#base-div-system-users').show();
 		$('#base-div-system-users .dropdown-header').text(url.system+' Users');
 		$('#modalSystem .modal-title').text(url.system+' Authorization');
-		$.ajax({ 
-			url: url.url+'get_target_user/',
-			type: 'get',
-			success: function(response) {
-				console.log(response)
-				$("#flexRadioDefault"+response.user).attr('checked','');
-			}
-		});
-
 	}
 });
 
@@ -163,7 +154,6 @@ $('#base-a-closed').on('click', function(e) {
 
 // User Control:  toggle theme link click
 $('#base-toggle-theme').on('click', function(e) { 
-	console.log($('#base-html-document').attr('data-bs-theme'))
 	if ($('#base-html-document').attr('data-bs-theme') == 'light') { 
 		$('#base-html-document').attr('data-bs-theme', 'dark');
 		setCookie("theme", "dark",1);
@@ -174,47 +164,100 @@ $('#base-toggle-theme').on('click', function(e) {
 	}
 });
 
-// User Control: new or set user click
-$('#base-div-user-controls').on('click', 'a.nav-link', function(e) { 
-	var url = parseURL(window.location.href)
-	var closest_ul = $(this).closest('div').get(0);
-	var active_users = $('#base-div-system-users').get(0);
+$('#base-div-sidebar').on('click', 'button.menu-root', function(e) {
+	$('#base-div-sidebar .navbar-collapse').removeClass('show');
+	$('#base-div-sidebar .navbar-collapse').addClass('collapse');
+});
 
-	if ($(this).html() == $('#base-a-add-new-user').html()) {
-		e.preventDefault();
-		$("#modalSystem").modal("toggle");
-	}
-	else if (closest_ul == active_users) {
-		e.preventDefault()
-		var username = $(this).find('.base-label-username').html();
-		$.ajax({
-			url: url.url+'set_target_user/', 
+// User Control: new or set user click
+$('#base-div-sidebar').on('click', 'a.nav-link', function(e) { 
+	var radio_input = $(this).find('input.form-check-input');
+	var users = $(this).closest('div.collapse')
+	var service = $(this).parent().find('.base-input-service').val();
+	var system = $(this).parent().find('.base-input-system').val();
+	var username = $(this).parent().find('.base-input-username').val();
+	var radio_sys_user = $(`#rbg-system-users-${username}`)
+	e.preventDefault();
+	//if ($(this).html() == $('#base-a-add-new-user').html()) {
+	//	$("#modalSystem").modal("toggle");
+	//}
+	$.ajax({
+			url: `/${service}/${system}/set_target_user/${username}/`, 
 			type:'post',
 			data: { csrfmiddlewaretoken:getCookie('csrftoken'), 
 					sessionid:getCookie('sessionid'), 
-					username:username, 
 				   }, 
 			success: function(response) {
 				if (response.status_code == 200) {
-					window.location.reload();
+					//users.find('*').prop('checked', false);
+					radio_input.prop("checked","checked");
+					radio_sys_user.prop("checked","checked");
 				}
 			}
 	 	 });
+});
+
+// User Control: new or set user click
+$('#base-div-user-controls').on('click', 'a.nav-link', function(e) { 
+	var radio_input = $(this).find('input.form-check-input');
+	var users = $(this).closest('div')
+	var service = $(this).parent().find('.base-input-service').val();
+	var system = $(this).parent().find('.base-input-system').val();
+	var username = $(this).parent().find('.base-input-username').val();
+	var radio_sys_user = $(`#rbg-${service}-${system}-${username}`)
+	e.preventDefault();
+	if ($(this).html() == $('#base-a-add-new-user').html()) {
+		$("#modalSystem").modal("toggle");
 	}
+	$.ajax({
+			url: `/${service}/${system}/set_target_user/${username}/`, 
+			type:'post',
+			data: { csrfmiddlewaretoken:getCookie('csrftoken'), 
+					sessionid:getCookie('sessionid'), 
+				   }, 
+			success: function(response) {
+				if (response.status_code == 200) {
+					//users.find('*').prop('checked', false);
+					radio_input.prop("checked","checked");
+					radio_sys_user.prop("checked","checked");
+				}
+			}
+	 	 });
 });
 
 // User Control:  delete target user button click
 $('#base-div-user-controls').on('click', 'button.btn-delete-user', function(e) { 
 	e.preventDefault();
-	var url = parseURL(window.location.href)
-	var username = $(this).parent().find('.base-input-username').val();
+	//var url = parseURL(window.location.href)
+	var closest_li = $(this).closest('li');
+	var service = $(this).parent().find('.base-input-service').val();
 	var system = $(this).parent().find('.base-input-system').val();
+	var username = $(this).parent().find('.base-input-username').val();
+	
 	$.ajax({ 
-		url: url.url+'delete_target_user/',
+		url: `/${service}/${system}/delete_target_user/${username}/`,
 		type: 'post',
-		data: $(this).closest('form').serialize(),
+		data: {csrfmiddlewaretoken:getCookie('csrftoken')},
 		success: function(response) {
-			window.location.reload();
+			closest_li.remove();
+		}
+	});
+});
+
+$('#base-div-sidebar').on('click', 'button.btn-delete-user', function(e) { 
+	e.preventDefault();
+	//var url = parseURL(window.location.href)
+	var closest_li = $(this).closest('li');
+	var service = $(this).parent().find('.base-input-service').val();
+	var system = $(this).parent().find('.base-input-system').val();
+	var username = $(this).parent().find('.base-input-username').val();
+	
+	$.ajax({ 
+		url: `/${service}/${system}/delete_target_user/${username}/`,
+		type: 'post',
+		data: {csrfmiddlewaretoken:getCookie('csrftoken')},
+		success: function(response) {
+			closest_li.remove();
 		}
 	});
 });
@@ -232,7 +275,8 @@ $('#modalSystem button.submit').on('click', function(e) {
 	e.preventDefault()
 	var url = parseURL(window.location.href)
 	var modalObject = $(this).closest('.modal');
-	var system = $('#base-select-target-system').val();
+	var username = $('#tarSysUser').val();
+	//var system = $('#base-select-target-system').val();
 	if ($('#tarSysUser').val() == '' || $('#tarSysPass').val() == ''){
 		$(modalObject).find('.invalid-feedback').show();
 		$(modalObject).find('.invalid-feedback').css('display','flex')
@@ -240,12 +284,10 @@ $('#modalSystem button.submit').on('click', function(e) {
 		return
 	}
 	$.ajax({
-		url: url.url+'set_target_user/', 
+		url: `/${url.service}/${url.system}/set_target_user/${username}/`,
 		type:'post',
 		data: { csrfmiddlewaretoken:getCookie('csrftoken'), 
-				sessionid:getCookie('sessionid'), 
-				system: url.system, 
-				username:$("#tarSysUser").val(), 
+				sessionid:getCookie('sessionid'),  
 				password:$("#tarSysPass").val()
 			   }, 
 		success: function(response) {

@@ -483,6 +483,7 @@ class PutawayJobEvents(models.Model, ModelHelp):
 
 	
 class OrderSerialNumbers(models.Model, ModelHelp):
+	EventType   = models.CharField(max_length=50,default='SERIAL',editable=False)
 	JobId 	    = models.CharField(max_length=50)
 	OrderId     = models.CharField(max_length=50,blank=True,null=True)
 	OrderLineId = models.CharField(max_length=50,blank=True,null=True)

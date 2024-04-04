@@ -12,7 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .forms import OrderTasksForm, PutawayTasksForm
 from .models import ( ExternalUsers, ExternalSystems, 
 					OrderJobs, OrderJobResults, OrderTasks, OrderTaskResults, OrderSerialNumbers, OrderJobEvents,
-					PutawayJobs, PutawayJobResults, PutawayTasks, PutawayTaskResults, PutawayJobEvents )
+					PutawayJobs, PutawayJobResults, PutawayTasks, PutawayTaskResults, PutawayJobEvents, PutawayJobRequests )
 
 import base64
 import datetime
@@ -60,7 +60,7 @@ def move_data(source, target, new_object=True):
 	return target
 
 
-def send_request(request, system, message_type, job, tasks=[], serial_val=False):
+def send_request(request, system, message_type, job, tasks=[]):
 	''' send request to external system '''
 	job_message = job.get_data()
 
@@ -81,45 +81,49 @@ def send_request(request, system, message_type, job, tasks=[], serial_val=False)
 	elif message_type == 'SerialValidation':
 		event_model = OrderJobEvents
 
-	#ext_user = ExternalUsers.objects.filter(created_by=request.user,system=system).first()
-	#ext_sys = ExternalSystems.objects.filter(system=system).first()
-#
-	#if serial_val:
-	#	index = ext_sys.url.find('?')
-	#	ext_sys.url = ext_sys.url[:index] + '/validateSerial' + ext_sys.url[index:]
-#
-	#if ext_user and ext_sys:
-	#	#client = requests.session()
-	#	response = requests.post(ext_sys.url,
-	#							 json=job_message,
-	#							 auth=(ext_user.username,ext_user.password))
-	#else:
-	#	messages.error(request, 'A valid target user needs to be set before sending a request.')
-	#	response = None
+	ext_user = ExternalUsers.objects.filter(created_by=request.user,system=system,active=True).first()
+	ext_sys = ExternalSystems.objects.filter(system=system).first()
 
-	response = None
+	if message_type == 'SerialValidation':
+		index = ext_sys.url.find('?')
+		ext_sys.url = ext_sys.url[:index] + '/validateSerial' + ext_sys.url[index:]
+
+	if ext_user and ext_sys:
+		#client = requests.session()
+		response = requests.post(ext_sys.url,
+								 json=job_message,
+								 auth=(ext_user.username,ext_user.password))
+	else:
+		messages.error(request, 'A valid target user needs to be set before sending a request.')
+		response = None
 
 	if event_model:
 		event = move_data(job.get_data(),event_model)
 		event.Job_id = job.Job_id
 		event.payload = str(job_message)
 		event.JobDate = date
+	else:
+		event = None
 
 	if response:
 		if response.status_code == 200:
-			if serial_val: 
+			if message_type == 'SerialValidation': 
+				#event.EventType = 'SERIAL'
 				event_info = 'Validating Serial Number {} for Task {}.'.format(job.Serial, job.JobTaskId)
+			elif message_type == 'PutawayJobRequest': 
+				event_info = '{} {} {} sent!'.format(message_type, job.LicensePlate, job.RequestRobot)
 			else:
-				messages.success(request, '{} {} sent!'.format(job_type, event_type))
+				
 		
 				if job.EventType == 'PICK' or job.EventType == 'PUT':
 					try:
-						task = tasks[0]['JobTaskId']
+						task = tasks[0].JobTaskId
 					except IndexError:
 						task = ''
 					event_info = '{} {} Job: {} Task: {} Sent.'.format(message_type, job.EventType, job.JobId, task)
 				else:
-					event_info = '{} {} Job: {} Sent.'.format(message_type, job.EventType, job.JobId)				
+					event_info = '{} {} Job: {} Sent.'.format(message_type, job.EventType, job.JobId)	
+			messages.success(request, event_info)		
 		else:
 			event_info = 'Failed to send request. HTTP status code: {}'.format(response.status_code)
 			messages.error(request, event_info)
@@ -129,11 +133,13 @@ def send_request(request, system, message_type, job, tasks=[], serial_val=False)
 		messages.error(request, event_info)
 
 	if event:
+		#event.EventType = event_type
 		event.EventInfo = event_info
 		event.save()
 
-	job.save()
-	[task.save() for task in tasks]
+	if message_type != 'SerialValidation':
+		job.save()
+		[task.save() for task in tasks]
 
 	return response
 
@@ -345,60 +351,64 @@ def putawayjobrequest(request, system):
 		put_request.LicensePlate = request.POST['licenseplate']
 		put_request.RequestRobot = request.POST['requestrobot']
 		
-		response = send_request(request, system, 'PutawayJobRequest', put_request)
-		if response.status_code == 200:
-			messages.success(request,'Putaway Job Requested')
+		send_request(request, system, 'PutawayJobRequest', put_request)
+		#if response.status_code == 200:
+		#	messages.success(request,'Putaway Job Requested')
 		return JsonResponse({'status_code':response.status_code})
 
 
 @login_required
 def sendaccept(request, system, JobId):
 	''' send an ACCEPT message for job '''
-	send_request_basic(request, system, JobId, 'ACCEPT')
+	if request.method == 'POST':
+		send_request_basic(request, system, JobId, 'ACCEPT')
 	return redirect('/messagelocus/{}/{}/'.format(system, JobId))
 
 
 @login_required
 def sendreject(request, system, JobId):
 	''' send a REJECT message for job '''
-	send_request_basic(request, system, JobId, 'REJECT', 'Rejected - Manually Rejected')
+	if request.method == 'POST':
+		send_request_basic(request, system, JobId, 'REJECT', 'Rejected - Manually Rejected')
 	return redirect('/messagelocus/{}/{}/'.format(system, JobId))
 
 
 @login_required
 def sendinduct(request, system, JobId):
 	''' send a TOTEINDUCT message for job '''
-	job = get_job(system, JobId)
-	job['job_query'].JobRobot = request.POST['robot']
-	job['job_query'].save()
+	if request.method == 'POST':
+		job = get_job(system, JobId)
+		job['job_query'].JobRobot = request.POST['robot']
+		job['job_query'].save()
 
-	if job['job_type'] == 'OrderJob':
-		send_request_basic(request, system, JobId, 'TOTEINDUCT')
-	elif job['job_type'] == 'PutawayJob':
-		send_request_basic(request, system, JobId, 'PUTINDUCT')
+		if job['job_type'] == 'OrderJob':
+			send_request_basic(request, system, JobId, 'TOTEINDUCT')
+		elif job['job_type'] == 'PutawayJob':
+			send_request_basic(request, system, JobId, 'PUTINDUCT')
 	return redirect('/messagelocus/{}/{}/'.format(system, JobId))
 
 
 @login_required
 def sendcomplete(request, system, JobId):
 	''' send a PICKCOMPLETE/PUTCOMPLETE message for job '''
-	job = get_job(system, JobId)
+	if request.method == 'POST':
+		job = get_job(system, JobId)
 
-	tasks = [task for task in job['job_query'].taskresults.all()]
-	if job['job_type'] == 'OrderJob':
-		event_type = 'PICKCOMPLETE'
-		for task in tasks:
-			task.SerialNo = [serial.Serial for serial in task.serialnumbers.all()]
+		tasks = [task for task in job['job_query'].taskresults.all()]
+		if job['job_type'] == 'OrderJob':
+			event_type = 'PICKCOMPLETE'
+			for task in tasks:
+				task.SerialNo = [serial.Serial for serial in task.serialnumbers.all()]
 
-	elif job['job_type'] == 'PutawayJob':
-		event_type = 'PUTCOMPLETE'
+		elif job['job_type'] == 'PutawayJob':
+			event_type = 'PUTCOMPLETE'
 
-	job_result = move_data(job['job_data'], job['job_result_model'])
-	job_result.EventType = event_type
-	job_result.Job_id = job['job_query'].id
-	job_result.JobDate = date	
+		job_result = move_data(job['job_data'], job['job_result_model'])
+		job_result.EventType = event_type
+		job_result.Job_id = job['job_query'].id
+		job_result.JobDate = date	
 
-	send_request(request, system, job['result_type'], job_result, tasks)
+		send_request(request, system, job['result_type'], job_result, tasks)
 
 	return redirect('/messagelocus/{}/{}/'.format(system,JobId))
 
@@ -406,97 +416,102 @@ def sendcomplete(request, system, JobId):
 @login_required
 def sendcancelcomplete(request, system, JobId):
 	''' send a CANCELCOMPLETE message for job '''
-	send_request_basic(request, system, JobId, 'CANCELCOMPLETE')
+	if request.method == 'POST':
+		send_request_basic(request, system, JobId, 'CANCELCOMPLETE')
 	return redirect('/messagelocus/{}/{}/'.format(system, JobId))
 
 
 @login_required
 def sendcancelreject(request, system, JobId):
 	''' send a CANCELREJECT message for job '''
-	send_request_basic(request, system, JobId, 'CANCELREJECT', 'Rejected - Manually Rejected')
+	if request.method == 'POST':
+		send_request_basic(request, system, JobId, 'CANCELREJECT', 'Rejected - Manually Rejected')
 	return redirect('/messagelocus/{}/{}/'.format(system, JobId))
 
 
 @login_required
 def sendupdatecomplete(request, system, JobId):
 	''' send an UPDATECOMPLETE message for job '''
-	send_request_basic(request, system, JobId, 'UPDATECOMPLETE')
+	if request.method == 'POST':
+		send_request_basic(request, system, JobId, 'UPDATECOMPLETE')
 	return redirect('/messagelocus/{}/{}/'.format(system, JobId))
 
 
 @login_required
 def sendupdatereject(request, system, JobId):
 	''' send an UPDATEREJECT message for job '''
-	send_request_basic(request, system, JobId, 'UPDATEREJECT', 'Rejected - Manually Rejected')
+	if request.method == 'POST':
+		send_request_basic(request, system, JobId, 'UPDATEREJECT', 'Rejected - Manually Rejected')
 	return redirect('/messagelocus/{}/{}/'.format(system, JobId))
 
 
 @login_required
-def sendtask(request, system, JobId):
+def sendtask(request, system, JobId, JobTaskId):
 	''' send a PICK/PUT message for job '''
-	task_data = {}
-	serial_buffer = []
-	serial_numbers = []
-	form_data = list(request.POST.items())
+	if request.method == 'POST':
+		task_data = {}
+		serial_buffer = []
+		serial_numbers = []
+		form_data = list(request.POST.items())
 
-	job = get_job(system, JobId)
-	job_query = job['job_query']
+		job = get_job(system, JobId)
+		job_query = job['job_query']
 
-	if job['job_type'] == 'OrderJob':
-		event_type = 'PICK'
+		if job['job_type'] == 'OrderJob':
+			event_type = 'PICK'
 
-	elif job['job_type'] == 'PutawayJob':
-		event_type = 'PUT'
-
-	try:
-		for item in form_data[1:]:
-			if item[0][0:2] == 'SN':
-				serial_numbers.append(item[1])
-			else:
-				# data in for is formatted form-X-fieldname, parse off form-X-
-				index = len(item[0])
-				index_of_dash = item[0].rfind('-', 0, index)
-				task_data[item[0][index_of_dash+1:]] = item[1]
+		elif job['job_type'] == 'PutawayJob':
+			event_type = 'PUT'
 
 		try:
-			job_result = move_data(job['job_data'], job['job_result_model'])
-			job_result.EventType = event_type
-			job_result.Job_id = job_query.id
-			job_result.JobDate = date
-			job_result.save()
+			for item in form_data[1:]:
+				if item[0][0:2] == 'SN':
+					serial_numbers.append(item[1])
+				else:
+					# data in for is formatted form-X-fieldname, parse off form-X-
+					index = len(item[0])
+					index_of_dash = item[0].rfind('-', 0, index)
+					task_data[item[0][index_of_dash+1:]] = item[1]
 
-			# update task
-			task = job_query.taskresults.filter(JobTaskId=task_data['JobTaskId']).first()
-			if task:
-				task_result = move_data(task_data, task, new_object=False)
-			else: 
-				task_result = move_data(task_data, job['task_result_model'])
+			try:
+				job_result = move_data(job['job_data'], job['job_result_model'])
+				job_result.EventType = event_type
+				job_result.Job_id = job_query.id
+				job_result.JobDate = date
+				job_result.save()
 
-			task_result.Job_id = job_query.id
-			task_result.ExecDate = date
-			if serial_numbers:
-				task_result.SerialNo = serial_numbers
-			task_result.save()
+				# update task
+				task = job_query.taskresults.filter(JobTaskId=JobTaskId).first()
+				if task:
+					task_result = move_data(task_data, task, new_object=False)
+				else: 
+					task_result = move_data(task_data, job['task_result_model'])
+
+				task_result.Job_id = job_query.id
+				task_result.ExecDate = date
+				if serial_numbers:
+					task_result.SerialNo = serial_numbers
+				task_result.save()
+				
+				for serial in serial_numbers:
+					new_serial = move_data(task_result.get_data(), OrderSerialNumbers)
+					new_serial.JobId = job_query.JobId
+					new_serial.Job_id = job_query.id
+					new_serial.JobTask_id = task_result.id
+					new_serial.Serial = serial
+					serial_buffer.append(new_serial)
+
+				[serial.save() for serial in serial_buffer]
+
+				send_request(request, system, job['result_type'], job_result, [task_result])
+
+			except (ValidationError, ValueError):
+				if job_result.id:
+					job_result.delete()
+				messages.error(request, 'Failed to send task.')
 			
-			for serial in serial_numbers:
-				new_serial = move_data(task_result.get_data(), OrderSerialNumbers)
-				new_serial.JobId = job_query.JobId
-				new_serial.Job_id = job_query.id
-				new_serial.JobTask_id = task_result.id
-				new_serial.Serial = serial
-				serial_buffer.append(new_serial)
-
-			[serial.save() for serial in serial_buffer]
-
-			send_request(request, system, job['result_type'], job_result, [task_result])
-
-		except (ValidationError, ValueError):
-			if job_result.id:
-				job_result.delete()
-			messages.error(request, 'Failed to send task.')
-		
-	except IndexError:
-		messages.error(request, 'Failed to read task data.')
+		except IndexError:
+			messages.error(request, 'Failed to read task data.')
 
 	return redirect('/messagelocus/{}/{}/'.format(system,JobId))
 
@@ -504,14 +519,15 @@ def sendtask(request, system, JobId):
 @login_required
 def sendprint(request, system, JobId):
 	''' send print request '''
-	send_request_basic(request, system, JobId, 'PRINT', 'LOCL')
+	if request.method == 'POST':
+		send_request_basic(request, system, JobId, 'PRINT', 'LOCL')
 	return redirect('/messagelocus/{}/{}/'.format(system, JobId))
 
 
 @login_required
-def get_target_user(request, system):
+def get_active_users(request, system):
 	''' get active external user '''
-	if request.method == 'GET':
+	if request.method == 'POST':
 		user = ExternalUsers.objects.filter(created_by=request.user,system=system,sessionid=request.COOKIES['sessionid'],active=True).first()
 		if user:
 			user = user.username
@@ -519,10 +535,10 @@ def get_target_user(request, system):
 
 
 @login_required
-def set_target_user(request, system):
+def set_target_user(request, system, username):
 	''' set a user for an external system '''
 	if request.method == 'POST':
-		ext_user = request.POST["username"] 
+		ext_user = username
 
 		user = ExternalUsers.objects.filter(created_by=request.user,username=ext_user,system_id=system).first()
 		active_user = ExternalUsers.objects.filter(created_by=request.user,system_id=system,active=True).first()
@@ -537,11 +553,11 @@ def set_target_user(request, system):
 			tar_sys = ExternalSystems.objects.filter(system=system).first()
 			# validate user credentials in external system
 			response = requests.get(tar_sys.url,
-										auth=(request.POST["username"],request.POST["password"]))
+										auth=(username,request.POST["password"]))
 			if response:
 				if response.status_code == 200:
 					user = ExternalUsers()
-					user.username = request.POST["username"] 
+					user.username = username 
 					user.password = request.POST["password"]
 					user.csrf_token = request.POST["csrfmiddlewaretoken"]
 					user.sessionid = request.POST["sessionid"]
@@ -563,59 +579,60 @@ def set_target_user(request, system):
 
 
 @login_required
-def delete_target_user(request, system):
+def delete_target_user(request, system, username):
 	''' delete an external user '''
-	user = ExternalUsers.objects.filter(username=request.POST['username'],
-												system_id=system,
-												created_by=request.user)
-	if user.delete()[1]:
-		messages.success(request,'User successfully deleted.')
-	else:
-		messages.error(request,'Unable to delete user.')
+	if request.method == 'POST':
+		user = ExternalUsers.objects.filter(username=username,
+													system_id=system,
+													created_by=request.user)
+		if user.delete()[1]:
+			status_code = 200
+		else:
+			status_code = 500
 
-	return JsonResponse({'status_code': 200})
+		return JsonResponse({'status_code': status_code})
 
 
 @login_required
-def get_capture_field_data(request, JobId, system):
+def get_capture_field_data(request, system, JobId, JobTaskId):
 	''' get the amount of required serial numbers for input '''
-	job = get_job(system, JobId)
-	JobTaskId = request.POST['JobTaskId']
-	serial_numbers = []
+	if request.method == 'POST':
+		job = get_job(system, JobId)
+		#JobTaskId = request.POST['JobTaskId']
+		serial_numbers = []
 
-	if job['job_type'] == 'OrderJob':
-		task_obj = job['job_query'].tasks.filter(JobTaskId=JobTaskId).first()
-		var_ser_qty = task_obj.CaptureSerialNoQty
+		if job['job_type'] == 'OrderJob':
+			task_obj = job['job_query'].tasks.filter(JobTaskId=JobTaskId).first()
+			var_ser_qty = task_obj.CaptureSerialNoQty
 
-			#task_obj = OrderTaskResults.get_last_task(JobId=JobId,JobTaskId=JobTaskId)
-			#serial_obj = OrderSerialNumbers.objects.filter(JobTaskId_id=task_obj.id)
-			#if serial_obj:
-			#	for obj in serial_obj:
-			#		serial_numbers.append(obj.SerialNo)
-	else:
-		var_ser_qty = 0
+				#task_obj = OrderTaskResults.get_last_task(JobId=JobId,JobTaskId=JobTaskId)
+				#serial_obj = OrderSerialNumbers.objects.filter(JobTaskId_id=task_obj.id)
+				#if serial_obj:
+				#	for obj in serial_obj:
+				#		serial_numbers.append(obj.SerialNo)
+		else:
+			var_ser_qty = 0
 
-	return JsonResponse({'SerialQty': var_ser_qty,
-						 'SerialNumbers': serial_numbers})
+		return JsonResponse({'SerialQty': var_ser_qty,
+							 'SerialNumbers': serial_numbers})
 
 
 @login_required
-def validate_serial_number(request, JobId, system):
+def validate_serial_number(request, system, JobId, JobTaskId):
 	''' validate a serial number against an external system '''
 	if request.method == 'POST':
 
 		job = OrderJobs.objects.filter(JobId=JobId,system_id=system).first()
-		task_data = job.tasks.filter(JobTaskId=request.POST['JobTaskId']).first().get_data()
+		task_data = job.tasks.filter(JobTaskId=JobTaskId).first().get_data()
 
 		serial_val = move_data(task_data, OrderSerialNumbers)
 		serial_val.JobId = JobId
 		serial_val.Quantity = 1
 		serial_val.Serial = request.POST['SerialNumber']
+		serial_val.Job_id = job.id
 
-		response = send_request(request, system, 'SerialValidation', serial_val, serial_val=True)
+		response = send_request(request, system, 'SerialValidation', serial_val)
 		#response_data = json.loads(response.text)
-		return JsonResponse({'status_code': 200,
-							 		'data': {'ISERROR':'false'}})
 		
 		return JsonResponse({'status_code': response.status_code,
 							 		'data': json.loads(response.text)})
@@ -624,30 +641,32 @@ def validate_serial_number(request, JobId, system):
 @login_required
 def close_job(request, system, JobId):
 	''' close job '''
-	job = get_job(system, JobId)
+	if request.method == 'POST':
+		job = get_job(system, JobId)
 
-	if job:
-		job['job_query'].active = False
-		job['job_query'].save()
-		messages.success(request, 'Job {} Closed'.format(job['job_query'].JobId))
-		response = {'status_code': 200}
-	else:
-		messages.error(request, 'Error occured when closing job')
-		response = {'status_code': 500}
+		if job:
+			job['job_query'].active = False
+			job['job_query'].save()
+			messages.success(request, 'Job {} Closed'.format(job['job_query'].JobId))
+			response = {'status_code': 200}
+		else:
+			messages.error(request, 'Error occured when closing job')
+			response = {'status_code': 500}
 
-	return JsonResponse(response)
+		return JsonResponse(response)
 
 
 @login_required
 def check_job_exists(request, system):
 	''' check if job exists in given system '''
-	orderjob = OrderJobs.objects.filter(JobId=request.POST['search'],system_id=system)
-	putawayjob = PutawayJobs.objects.filter(JobId=request.POST['search'],system_id=system)
+	if request.method == 'POST':
+		orderjob = OrderJobs.objects.filter(JobId=request.POST['search'],system_id=system)
+		putawayjob = PutawayJobs.objects.filter(JobId=request.POST['search'],system_id=system)
 
-	if not orderjob and not putawayjob:
-		return JsonResponse({'status_code': 500})
-	else:
-		return JsonResponse({'status_code': 200})
+		if not orderjob and not putawayjob:
+			return JsonResponse({'status_code': 500})
+		else:
+			return JsonResponse({'status_code': 200})
 
 
 ''' API destination methods '''

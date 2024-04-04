@@ -6,7 +6,7 @@ import json
 file_directory = 'C:\\Users\\areese\\Documents\\SAP\\SAP GUI'
 files = os.listdir(file_directory)
 
-URL = 'http://127.0.0.1:8000/messagelocus/inbound/'
+URL = 'http://127.0.0.1:8000/messagelocus/EW1/inbound/'
 client = requests.session()
 client.auth = ('areese','areese1234')
 

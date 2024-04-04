@@ -79,9 +79,9 @@ $('.button-get-task').on('click', function() {
 	//var url = parseURL(window.location.href)
 	target.css('display','block');
 	$.ajax({ 
-		url: window.location.href+"get_capture_field_data/",
+		url: window.location.href+task+"/get_capture_field_data/",
 		type: 'post',
-		data: {'csrfmiddlewaretoken':getCookie('csrftoken'), 'JobId': jobid, 'JobTaskId': task},
+		data: {'csrfmiddlewaretoken':getCookie('csrftoken'), 'JobId': jobid},
 		success: function(response) {
 			var serQty = response.SerialQty
 			var serQtyEnt = response.SerialNumbers.length
@@ -141,6 +141,7 @@ $('form.taskData').on('click', 'button.task-send', function(e) {
     $.each($('#'+jobtaskid).find('.task-sn-capture-data').children(), function(key,value) { 
     	$(this).find('input').attr('disabled', false)
     });
+    $(this).closest('form').attr('action',jobtaskid+'/');
     $(this).closest('form').submit();
     $('#'+jobtaskid).find('.task-sn-capture').empty();
     $('#'+jobtaskid).modal('toggle');
@@ -182,9 +183,9 @@ $('form').on('click', 'button.sn-validate', function(e){
     	return
     }
     $.ajax({
-        url: window.location.href+'validate_serial_number/',
+        url: window.location.href+jobtaskid+'/validate_serial_number/',
         type: 'post',
-        data: {'csrfmiddlewaretoken': getCookie('csrftoken'), 'JobTaskId': jobtaskid, 'SerialNumber':serialnumber},
+        data: {'csrfmiddlewaretoken': getCookie('csrftoken'), 'SerialNumber':serialnumber},
         success: function(response) {
         	if (response.status_code == 200) { 
     			if (response.data.ISERROR == 'false' || response.data.isError == 'false') {
