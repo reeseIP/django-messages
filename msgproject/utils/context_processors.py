@@ -22,7 +22,7 @@ def system_context(request):
 	else: 
 		services = []
 
-	return{'services': services}
+	return {'services': services}
 
 def user_context(request):
 	if request.user.is_authenticated:
@@ -38,7 +38,9 @@ def user_context(request):
 			system = None
 	else:
 		users = []
+		service = None
+		system = None
 
-	return{'system_users': {'service': service,
-							 'system': system,
-							 'users': [{'username':user.username,'active':user.active} for user in users]}}
+	return {'system_users': {'service': service,
+							  'system': system,
+							   'users': [{'username':user.username,'active':user.active} for user in users]}}

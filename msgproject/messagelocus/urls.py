@@ -15,6 +15,10 @@ urlpatterns = [
 		views.get_active_users, name='get_active_users'),
 	path("<system>/inbound/", 
 		views.inbound, name='inbound'),
+
+	path("<system>/inbound_xml/", 
+		views.inbound_xml, name='inbound_xml'),
+	
 	path("<system>/putawayjobrequest/", 
 		views.putawayjobrequest, name='putawayjobrequest'),
 	path("<system>/check_job_exists/<JobId>/", 
@@ -51,4 +55,5 @@ urlpatterns = [
 		views.get_capture_field_data, name='get_capture_field_data'),
 	path("<system>/<JobId>/<JobTaskId>/validate_serial_number/", 
 		views.validate_serial_number, name='validate_serial_number'),
+
 ]

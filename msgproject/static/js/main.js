@@ -209,20 +209,22 @@ $('#base-div-user-controls').on('click', 'a.nav-link', function(e) {
 	if ($(this).html() == $('#base-a-add-new-user').html()) {
 		$("#modalSystem").modal("toggle");
 	}
-	$.ajax({
-			url: `/${service}/${system}/set_target_user/${username}/`, 
-			type:'post',
-			data: { csrfmiddlewaretoken:getCookie('csrftoken'), 
-					sessionid:getCookie('sessionid'), 
-				   }, 
-			success: function(response) {
-				if (response.status_code == 200) {
-					//users.find('*').prop('checked', false);
-					radio_input.prop("checked","checked");
-					radio_sys_user.prop("checked","checked");
+	else {
+		$.ajax({
+				url: `/${service}/${system}/set_target_user/${username}/`, 
+				type:'post',
+				data: { csrfmiddlewaretoken:getCookie('csrftoken'), 
+						sessionid:getCookie('sessionid'), 
+					   }, 
+				success: function(response) {
+					if (response.status_code == 200) {
+						//users.find('*').prop('checked', false);
+						radio_input.prop("checked","checked");
+						radio_sys_user.prop("checked","checked");
+					}
 				}
-			}
-	 	 });
+		 	 });
+	}
 });
 
 // User Control:  delete target user button click

@@ -112,9 +112,8 @@ def send_request(request, system, message_type, job, tasks=[]):
 				event_info = 'Validating Serial Number {} for Task {}.'.format(job.Serial, job.JobTaskId)
 			elif message_type == 'PutawayJobRequest': 
 				event_info = '{} {} {} sent!'.format(message_type, job.LicensePlate, job.RequestRobot)
+				messages.success(request, event_info)
 			else:
-				
-		
 				if job.EventType == 'PICK' or job.EventType == 'PUT':
 					try:
 						task = tasks[0].JobTaskId
@@ -123,7 +122,7 @@ def send_request(request, system, message_type, job, tasks=[]):
 					event_info = '{} {} Job: {} Task: {} Sent.'.format(message_type, job.EventType, job.JobId, task)
 				else:
 					event_info = '{} {} Job: {} Sent.'.format(message_type, job.EventType, job.JobId)	
-			messages.success(request, event_info)		
+				messages.success(request, event_info)		
 		else:
 			event_info = 'Failed to send request. HTTP status code: {}'.format(response.status_code)
 			messages.error(request, event_info)
@@ -495,6 +494,7 @@ def sendtask(request, system, JobId, JobTaskId):
 				
 				for serial in serial_numbers:
 					new_serial = move_data(task_result.get_data(), OrderSerialNumbers)
+					new_serial.EventType = 'SERIAL'
 					new_serial.JobId = job_query.JobId
 					new_serial.Job_id = job_query.id
 					new_serial.JobTask_id = task_result.id
@@ -626,6 +626,7 @@ def validate_serial_number(request, system, JobId, JobTaskId):
 		task_data = job.tasks.filter(JobTaskId=JobTaskId).first().get_data()
 
 		serial_val = move_data(task_data, OrderSerialNumbers)
+		serial_val.EventType = 'SERIAL'
 		serial_val.JobId = JobId
 		serial_val.Quantity = 1
 		serial_val.Serial = request.POST['SerialNumber']
@@ -671,6 +672,13 @@ def check_job_exists(request, system):
 
 ''' API destination methods '''
 #---------------------------------------------------------------------#
+
+
+@csrf_exempt
+def inbound_xml(request, system):
+	print(request.body)
+	return HttpResponse('inbound_xml')
+
 @csrf_exempt
 def inbound(request, system):
 	''' inbound messages '''
@@ -754,4 +762,6 @@ def inbound(request, system):
 
 		else:
 			return HttpResponse('Invalid Credentials')
+
+
 
