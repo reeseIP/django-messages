@@ -7,4 +7,6 @@ urlpatterns = [
 	path("logout/", views.logout_user, name='logout_user'),
 	path("register/", views.register_user, name='register_user'),
 	path("search/<search>/", views.search, name='search'),
+	path("set_target_user/<service>/<system>/<username>/", views.set_target_user, name='set_target_user'),
+	path("delete_target_user/<service>/<system>/<username>/", views.set_target_user, name='set_target_user'),
 ]

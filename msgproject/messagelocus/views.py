@@ -8,6 +8,7 @@ from django.forms import formset_factory
 from django.http import HttpResponse,JsonResponse
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
+from django.core.signing import Signer
 
 from .apps import MessagelocusConfig as app
 from .forms import OrderTasksForm, PutawayTasksForm
@@ -22,11 +23,9 @@ import json
 import requests
 
 
-
 ''' global variables '''
 g_date = datetime.datetime.now().strftime(format='%Y-%m-%dT%H:%M:%S')
 g_service = app.name
-
 
 
 ''' helper methods '''
@@ -83,9 +82,11 @@ def send_request(request, system, message_type, job, tasks=[]):
 	elif message_type == 'SerialValidation':
 		event_model = OrderJobEvents
 	
+	signer = Signer()
+
 	ext_sys = ExternalSystems.objects.filter(system=system, service=g_service).first()
-	ext_user = ext_sys.users(created_by=request.user,active=True).first()
-	
+	ext_user = ext_sys.users.filter(created_by=request.user,active=True).first()
+	ext_pass = signer.unsign_object(ext_user.password)
 
 	if message_type == 'SerialValidation':
 		index = ext_sys.url.find('?')
@@ -95,7 +96,7 @@ def send_request(request, system, message_type, job, tasks=[]):
 		#client = requests.session()
 		response = requests.post(ext_sys.url,
 								 json=job_message,
-								 auth=(ext_user.username,ext_user.password))
+								 auth=(ext_user.username,ext_pass['password']))
 	else:
 		messages.error(request, 'A valid target user needs to be set before sending a request.')
 		response = None
@@ -535,66 +536,6 @@ def get_active_users(request, system):
 		if user:
 			user = user.username
 		return JsonResponse({'user': user})
-
-
-@login_required
-def set_target_user(request, system, username):
-	''' set a user for an external system '''
-	if request.method == 'POST':
-		ext_user = username
-		ext_sys = ExternalSystems.objects.filter(system=system, service=g_service).first()
-
-
-		user = ext_sys.users.filter(created_by=request.user,username=ext_user).first()
-		active_user = ext_sys.users.filter(created_by=request.user,active=True).first()
-		if user:
-			if active_user:
-				active_user.active = False
-				active_user.save()
-			user.active = True
-			user.save()
-			return JsonResponse({'status_code': 200})
-		else:
-			#tar_sys = ExternalSystems.objects.filter(system=system, service=g_service).first()
-			# validate user credentials in external system
-			response = requests.get(ext_sys.url,
-										auth=(username,request.POST["password"]))
-			if response:
-				if response.status_code == 200:
-					user = ExternalUsers()
-					user.username = username 
-					user.password = request.POST["password"]
-					user.csrf_token = request.POST["csrfmiddlewaretoken"]
-					user.sessionid = request.POST["sessionid"]
-					user.system_id = ext_sys.id
-					user.created_by = request.user
-					user.active = True
-					try:
-						user.save()
-						if active_user:
-							active_user.active = False
-							active_user.save()
-						messages.success(request, 'Temporary User {} Created'.format(user.username))
-						return JsonResponse({'status_code': 200})
-					except IntegrityError:
-						pass
-				
-			messages.error(request, 'Invalid User')
-			return JsonResponse({'status_code': 500})
-
-
-@login_required
-def delete_target_user(request, system, username):
-	''' delete an external user '''
-	if request.method == 'POST':
-		ext_sys = ExternalSystems.objects.filter(system=system).first()
-		user = ext_sys.users.filter(username=username, created_by=request.user)
-		if user.delete()[1]:
-			status_code = 200
-		else:
-			status_code = 500
-
-		return JsonResponse({'status_code': status_code})
 
 
 @login_required

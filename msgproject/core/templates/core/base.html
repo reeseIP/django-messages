@@ -88,8 +88,8 @@
                         <div class='base-user-delete'>
                           <form class='base-user-delete'>
                             {% csrf_token %}
-                            <input hidden readonly class='base-input-service' name='service' value='{{ system_users.service }}'>
-                            <input hidden readonly class='base-input-system' name='system' value='{{ system_users.system }}'>
+                            <input hidden readonly class='base-input-service' name='service' value='{{ system_users.service.service }}'>
+                            <input hidden readonly class='base-input-system' name='system' value='{{ system_users.system.system }}'>
                             <input hidden readonly class='base-input-username' name='username' value='{{ user.username }}'>
                               <!--<input hidden readonly class='base-input-system' name='system' value='{{ user.system }}'>-->
                             <button class='btn-delete-user' type='submit'>

@@ -237,7 +237,7 @@ $('#base-div-user-controls').on('click', 'button.btn-delete-user', function(e) {
 	var username = $(this).parent().find('.base-input-username').val();
 	
 	$.ajax({ 
-		url: `/${service}/${system}/delete_target_user/${username}/`,
+		url: `/delete_target_user/${service}/${system}/${username}/`,
 		type: 'post',
 		data: {csrfmiddlewaretoken:getCookie('csrftoken')},
 		success: function(response) {
@@ -255,7 +255,7 @@ $('#base-div-sidebar').on('click', 'button.btn-delete-user', function(e) {
 	var username = $(this).parent().find('.base-input-username').val();
 	
 	$.ajax({ 
-		url: `/${service}/${system}/delete_target_user/${username}/`,
+		url: `/delete_target_user/${service}/${system}/${username}/`,
 		type: 'post',
 		data: {csrfmiddlewaretoken:getCookie('csrftoken')},
 		success: function(response) {
@@ -286,7 +286,7 @@ $('#modalSystem button.submit').on('click', function(e) {
 		return
 	}
 	$.ajax({
-		url: `/${url.service}/${url.system}/set_target_user/${username}/`,
+		url: `/set_target_user/${url.service}/${url.system}/${username}/`,
 		type:'post',
 		data: { csrfmiddlewaretoken:getCookie('csrftoken'), 
 				sessionid:getCookie('sessionid'),  
