@@ -182,7 +182,7 @@ $('#base-div-sidebar').on('click', 'a.nav-link', function(e) {
 	//	$("#modalSystem").modal("toggle");
 	//}
 	$.ajax({
-			url: `/${service}/${system}/set_target_user/${username}/`, 
+			url: `/set_target_user/${service}/${system}/${username}/`, 
 			type:'post',
 			data: { csrfmiddlewaretoken:getCookie('csrftoken'), 
 					sessionid:getCookie('sessionid'), 
@@ -211,7 +211,7 @@ $('#base-div-user-controls').on('click', 'a.nav-link', function(e) {
 	}
 	else {
 		$.ajax({
-				url: `/${service}/${system}/set_target_user/${username}/`, 
+				url: `/set_target_user/${service}/${system}/${username}/`, 
 				type:'post',
 				data: { csrfmiddlewaretoken:getCookie('csrftoken'), 
 						sessionid:getCookie('sessionid'), 
@@ -254,7 +254,7 @@ $('#base-div-sidebar').on('click', 'button.btn-delete-user', function(e) {
 	var system = $(this).parent().find('.base-input-system').val();
 	var username = $(this).parent().find('.base-input-username').val();
 	
-	$.ajax({ 
+	$.ajax({
 		url: `/delete_target_user/${service}/${system}/${username}/`,
 		type: 'post',
 		data: {csrfmiddlewaretoken:getCookie('csrftoken')},

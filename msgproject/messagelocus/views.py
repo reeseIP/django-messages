@@ -24,7 +24,7 @@ import requests
 
 
 ''' global variables '''
-g_date = datetime.datetime.now().strftime(format='%Y-%m-%dT%H:%M:%S')
+#g_date = datetime.datetime.now().strftime(format='%Y-%m-%dT%H:%M:%S')
 g_service = app.name
 
 
@@ -38,7 +38,7 @@ def send_request_basic(request, system, JobId, EventType, EventInfo=""):
 	job_result.EventType = EventType
 	job_result.EventInfo = EventInfo
 	job_result.Job_id = job['job_query'].id
-	job_result.JobDate = g_date
+	job_result.JobDate = datetime.datetime.now().strftime(format='%Y-%m-%dT%H:%M:%S')#g_date
 
 	send_request(request, system, job['result_type'], job_result)
 
@@ -105,7 +105,7 @@ def send_request(request, system, message_type, job, tasks=[]):
 		event = move_data(job.get_data(),event_model)
 		event.Job_id = job.Job_id
 		event.payload = str(job_message)
-		event.JobDate = g_date
+		event.JobDate = datetime.datetime.now().strftime(format='%Y-%m-%dT%H:%M:%S')#g_date
 	else:
 		event = None
 
@@ -340,7 +340,8 @@ def jobview(request, system, JobId):
 														 'task_header': job['task_result_model'].get_fields(),
 														 'formset': formset,
 														 'events': job_events,
-														 'theme': theme
+														 'theme': theme,
+														 'active': job['job_query'].active
 														 })
 
 
@@ -409,7 +410,7 @@ def sendcomplete(request, system, JobId):
 		job_result = move_data(job['job_data'], job['job_result_model'])
 		job_result.EventType = event_type
 		job_result.Job_id = job['job_query'].id
-		job_result.JobDate = g_date	
+		job_result.JobDate = datetime.datetime.now().strftime(format='%Y-%m-%dT%H:%M:%S')#g_date	
 
 		send_request(request, system, job['result_type'], job_result, tasks)
 
@@ -480,7 +481,7 @@ def sendtask(request, system, JobId, JobTaskId):
 				job_result = move_data(job['job_data'], job['job_result_model'])
 				job_result.EventType = event_type
 				job_result.Job_id = job_query.id
-				job_result.JobDate = g_date
+				job_result.JobDate = datetime.datetime.now().strftime(format='%Y-%m-%dT%H:%M:%S')#g_date
 				job_result.save()
 
 				# update task
@@ -491,7 +492,7 @@ def sendtask(request, system, JobId, JobTaskId):
 					task_result = move_data(task_data, job['task_result_model'])
 
 				task_result.Job_id = job_query.id
-				task_result.ExecDate = g_date
+				task_result.ExecDate = datetime.datetime.now().strftime(format='%Y-%m-%dT%H:%M:%S')#g_date
 				if serial_numbers:
 					task_result.SerialNo = serial_numbers
 				task_result.save()
@@ -665,7 +666,7 @@ def inbound(request, system):
 						job_result.Job_id = job['job_query'].id
 						job_result.EventType = 'REJECT'
 						job_result.EventInfo = "Rejected - Job Already Exists"
-						job_result.JobDate = g_date
+						job_result.JobDate = datetime.datetime.now().strftime(format='%Y-%m-%dT%H:%M:%S')#g_date
 						return HttpResponse(send_request(request, system, job['result_type'], job_result))
 					else:
 						try:

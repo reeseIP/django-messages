@@ -22,14 +22,93 @@ create super user and database migrations
 		- python manage.py createsuperuser
 		- python manage.py migrate
 
-settings.py
+generate a new secret key
+	- python manage.py shell
+		- from django.core.management.utils import get_random_secret_key
+		- print(get_random_secret_key())
+
+.env file
 	- DEBUG = False
-	- ALLOWED_HOSTS = [ 'site domain here' ]
+	- SECRET_KEY = newly generated key
 
 start the server
 	- python manage.py runserver
 
-create target system entries with admin console
-	- http://domain.name:8000/admin/messagelocus/externalsystems/
+create services with admin console
+	- http://domain.name:8000/admin/core/externalservices/
+	- appname : description
+
+create target systems with admin console
+	- http://domain.name:8000/admin/core/externalsystems/
 
 
+*** instructions for deployment on windows iis ***
+install git
+$ git config --global user.name "User"
+$ git config --global user.email "user@user.com"
+
+create folder for app on root
+
+create the virtual environment
+	- python -m venv env
+
+clone repository into folder
+	- https://github.com/reeseIP/django-messages
+
+activate virtual env
+
+navigate to folder with requirements
+	- pip install -r requirements.txt
+
+python manage.py makemigrations
+python manage.py migrate
+python manage.py collectstatic
+python manage.py createsuperuser
+
+manage settings.py
+	- ALLOWED_HOSTS
+
+generate a new secret key
+	- python manage.py shell
+		- from django.core.management.utils import get_random_secret_key
+		- print(get_random_secret_key())
+
+.env file
+	- DEBUG = False
+	- SECRET_KEY = newly generated key
+
+ensure CGI feature is installed on IIS
+
+WINDOWS IIS Server Manager
+Configure FastCGI settings on IIS server
+	- add application
+		* Full Path: G:\message-app\env\Scripts\python.exe
+		* Arguments: G:\message-app\env\Lib\site-packages\wfastcgi.py
+		* Environment Variables: PYTHONPATH: G:\message-app\msgproject
+					 DJANGO_SETTINGS_MODULE: msgproject.settings
+				 	 WSGI_HANDLER: django.core.wsgi.get_wsgi_application()
+
+Add website:
+	- Physical Path:G:\message-app\msgproject
+	- Handler Mappings: Add module mapping FastCgiModule
+		* G:\message-app\env\Scripts\python.exe|G:\message-app\env\Lib\site-packages\wfastcgi.py
+		* Click the “Request Restrictions” button and uncheck the “Invoke handler only if the request is mapped to the” checkbox
+		* When prompted “Do you want to create a FastCGI application for this executable?” click “No” since we created the application earlier.
+
+Firewall settings
+ -ensure the port we use is open
+
+Set the site bindings
+convert the static folder to application
+	- Physical Path: G:\message-app\msgproject\static
+remove the django handler for static application
+
+start the server
+	- python manage.py runserver
+
+create services with admin console
+	- http://domain.name:8000/admin/core/externalservices/
+	- appname : description
+
+create target systems with admin console
+	- http://domain.name:8000/admin/core/externalsystems/

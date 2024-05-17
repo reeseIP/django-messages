@@ -25,7 +25,7 @@ def user_context(request):
 			service = ExternalServices.objects.filter(service=request.path[1:index]).first()
 			system = service.systems.filter(system=request.path[index+1:index+request.path[index+1:].index('/')+1]).first()
 			users = system.users.filter(created_by=request.user,sessionid=request.COOKIES['sessionid']).all()
-		except (ValueError, LookupError):
+		except (ValueError, LookupError, AttributeError):
 			users = []
 			service = None
 			system = None
