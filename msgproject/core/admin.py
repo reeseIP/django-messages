@@ -1,9 +1,8 @@
 from django.contrib import admin
-#from .models import ExternalServices
-#from .models import ExternalUsers, ExternalSystems, ExternalServices
+from .models import ExternalServices, ExternalSystems, ExternalUsers
 
-#admin.site.register(ExternalUsers)
-#admin.site.register(ExternalSystems)
-#admin.site.register(ExternalServices)
+# register your models here
+admin.site.register(ExternalServices)
+admin.site.register(ExternalSystems)
+admin.site.register(ExternalUsers)
 
-# Register your models here.

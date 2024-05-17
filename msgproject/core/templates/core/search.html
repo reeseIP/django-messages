@@ -1,0 +1,18 @@
+<!-- search.html -->
+{% extends 'core/base.html' %}
+{% block content %}
+
+    <ul>
+        {% for system in search_results %}
+            <li>
+                {{ system.system }}
+            </li>
+            {% for system_result in system.results %}
+                <li>
+                    {{ system_result.jobid }}
+                </li>
+            {% endfor %}
+        {% endfor %}
+    </ul>
+
+{% endblock %}

@@ -9,10 +9,11 @@ from django.http import HttpResponse,JsonResponse
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 
+from .apps import MessagelocusConfig as app
 from .forms import OrderTasksForm, PutawayTasksForm
-from .models import ( ExternalUsers, ExternalSystems, 
-					OrderJobs, OrderJobResults, OrderTasks, OrderTaskResults, OrderSerialNumbers, OrderJobEvents,
-					PutawayJobs, PutawayJobResults, PutawayTasks, PutawayTaskResults, PutawayJobEvents, PutawayJobRequests )
+from core.models import ExternalSystems, ExternalUsers
+from .models import ( OrderJobs, OrderJobResults, OrderTasks, OrderTaskResults, OrderSerialNumbers, OrderJobEvents,
+					  PutawayJobs, PutawayJobResults, PutawayTasks, PutawayTaskResults, PutawayJobEvents, PutawayJobRequests )
 
 import base64
 import datetime
@@ -23,7 +24,8 @@ import requests
 
 
 ''' global variables '''
-date = datetime.datetime.now().strftime(format='%Y-%m-%dT%H:%M:%S')
+g_date = datetime.datetime.now().strftime(format='%Y-%m-%dT%H:%M:%S')
+g_service = app.name
 
 
 
@@ -37,7 +39,7 @@ def send_request_basic(request, system, JobId, EventType, EventInfo=""):
 	job_result.EventType = EventType
 	job_result.EventInfo = EventInfo
 	job_result.Job_id = job['job_query'].id
-	job_result.JobDate = date
+	job_result.JobDate = g_date
 
 	send_request(request, system, job['result_type'], job_result)
 
@@ -80,9 +82,10 @@ def send_request(request, system, message_type, job, tasks=[]):
 
 	elif message_type == 'SerialValidation':
 		event_model = OrderJobEvents
-
-	ext_user = ExternalUsers.objects.filter(created_by=request.user,system=system,active=True).first()
-	ext_sys = ExternalSystems.objects.filter(system=system).first()
+	
+	ext_sys = ExternalSystems.objects.filter(system=system, service=g_service).first()
+	ext_user = ext_sys.users(created_by=request.user,active=True).first()
+	
 
 	if message_type == 'SerialValidation':
 		index = ext_sys.url.find('?')
@@ -101,7 +104,7 @@ def send_request(request, system, message_type, job, tasks=[]):
 		event = move_data(job.get_data(),event_model)
 		event.Job_id = job.Job_id
 		event.payload = str(job_message)
-		event.JobDate = date
+		event.JobDate = g_date
 	else:
 		event = None
 
@@ -146,7 +149,7 @@ def send_request(request, system, message_type, job, tasks=[]):
 def get_job(system, JobId):
 	''' get job and assign default attributes '''
 	try:
-		job = OrderJobs.objects.filter(JobId=JobId, system_id=system)[0]
+		job = OrderJobs.objects.filter(JobId=JobId, system_id__system=system)[0]
 		job_type = 'OrderJob'
 		result_type = 'OrderJobResult'
 		job_model = OrderJobs
@@ -157,7 +160,7 @@ def get_job(system, JobId):
 		
 	except IndexError:
 		try:
-			job = PutawayJobs.objects.filter(JobId=JobId, system_id=system)[0]
+			job = PutawayJobs.objects.filter(JobId=JobId, system_id__system=system)[0]
 			job_type = 'PutawayJob'
 			result_type = 'PutawayJobResult'
 			job_model = PutawayJobs
@@ -194,7 +197,7 @@ def index(request):
 @login_required
 def active(request, system):
 	''' active jobs '''
-	system = ExternalSystems.objects.filter(system=system).first()
+	system = ExternalSystems.objects.filter(system=system, service=g_service).first()
 	orders = system.orderjobs.filter(active=True)#.order_by('-JobId')
 	putaways = system.putawayjobs.filter(active=True)
 
@@ -253,7 +256,7 @@ def active(request, system):
 @login_required
 def closed(request, system):
 	''' closed jobs'''
-	system = ExternalSystems.objects.filter(system=system).first()
+	system = ExternalSystems.objects.filter(system=system, service=g_service).first()
 	orders = system.orderjobs.filter(active=False)#.order_by('-JobId')
 	putaways = system.putawayjobs.filter(active=False)
 
@@ -405,7 +408,7 @@ def sendcomplete(request, system, JobId):
 		job_result = move_data(job['job_data'], job['job_result_model'])
 		job_result.EventType = event_type
 		job_result.Job_id = job['job_query'].id
-		job_result.JobDate = date	
+		job_result.JobDate = g_date	
 
 		send_request(request, system, job['result_type'], job_result, tasks)
 
@@ -476,7 +479,7 @@ def sendtask(request, system, JobId, JobTaskId):
 				job_result = move_data(job['job_data'], job['job_result_model'])
 				job_result.EventType = event_type
 				job_result.Job_id = job_query.id
-				job_result.JobDate = date
+				job_result.JobDate = g_date
 				job_result.save()
 
 				# update task
@@ -487,7 +490,7 @@ def sendtask(request, system, JobId, JobTaskId):
 					task_result = move_data(task_data, job['task_result_model'])
 
 				task_result.Job_id = job_query.id
-				task_result.ExecDate = date
+				task_result.ExecDate = g_date
 				if serial_numbers:
 					task_result.SerialNo = serial_numbers
 				task_result.save()
@@ -539,9 +542,11 @@ def set_target_user(request, system, username):
 	''' set a user for an external system '''
 	if request.method == 'POST':
 		ext_user = username
+		ext_sys = ExternalSystems.objects.filter(system=system, service=g_service).first()
 
-		user = ExternalUsers.objects.filter(created_by=request.user,username=ext_user,system_id=system).first()
-		active_user = ExternalUsers.objects.filter(created_by=request.user,system_id=system,active=True).first()
+
+		user = ext_sys.users.filter(created_by=request.user,username=ext_user).first()
+		active_user = ext_sys.users.filter(created_by=request.user,active=True).first()
 		if user:
 			if active_user:
 				active_user.active = False
@@ -550,9 +555,9 @@ def set_target_user(request, system, username):
 			user.save()
 			return JsonResponse({'status_code': 200})
 		else:
-			tar_sys = ExternalSystems.objects.filter(system=system).first()
+			#tar_sys = ExternalSystems.objects.filter(system=system, service=g_service).first()
 			# validate user credentials in external system
-			response = requests.get(tar_sys.url,
+			response = requests.get(ext_sys.url,
 										auth=(username,request.POST["password"]))
 			if response:
 				if response.status_code == 200:
@@ -561,7 +566,7 @@ def set_target_user(request, system, username):
 					user.password = request.POST["password"]
 					user.csrf_token = request.POST["csrfmiddlewaretoken"]
 					user.sessionid = request.POST["sessionid"]
-					user.system_id = system
+					user.system_id = ext_sys.id
 					user.created_by = request.user
 					user.active = True
 					try:
@@ -582,9 +587,8 @@ def set_target_user(request, system, username):
 def delete_target_user(request, system, username):
 	''' delete an external user '''
 	if request.method == 'POST':
-		user = ExternalUsers.objects.filter(username=username,
-													system_id=system,
-													created_by=request.user)
+		ext_sys = ExternalSystems.objects.filter(system=system).first()
+		user = ext_sys.users.filter(username=username, created_by=request.user)
 		if user.delete()[1]:
 			status_code = 200
 		else:
@@ -622,7 +626,7 @@ def validate_serial_number(request, system, JobId, JobTaskId):
 	''' validate a serial number against an external system '''
 	if request.method == 'POST':
 
-		job = OrderJobs.objects.filter(JobId=JobId,system_id=system).first()
+		job = OrderJobs.objects.filter(JobId=JobId,system_id__system=system).first()
 		task_data = job.tasks.filter(JobTaskId=JobTaskId).first().get_data()
 
 		serial_val = move_data(task_data, OrderSerialNumbers)
@@ -661,8 +665,8 @@ def close_job(request, system, JobId):
 def check_job_exists(request, system):
 	''' check if job exists in given system '''
 	if request.method == 'POST':
-		orderjob = OrderJobs.objects.filter(JobId=request.POST['search'],system_id=system)
-		putawayjob = PutawayJobs.objects.filter(JobId=request.POST['search'],system_id=system)
+		orderjob = OrderJobs.objects.filter(JobId=request.POST['search'],system_id__system=system)
+		putawayjob = PutawayJobs.objects.filter(JobId=request.POST['search'],system_id__system=system)
 
 		if not orderjob and not putawayjob:
 			return JsonResponse({'status_code': 500})
@@ -684,7 +688,7 @@ def inbound(request, system):
 	''' inbound messages '''
 	if request.method == 'POST':
 		# validate the requested system
-		system_query = ExternalSystems.objects.filter(system__iexact=system).first()
+		system_query = ExternalSystems.objects.filter(system__iexact=system, service=g_service).first()
 		if not system_query:
 			return HttpResponse('system exists not')
 		auth_header = request.META['HTTP_AUTHORIZATION']
@@ -720,12 +724,12 @@ def inbound(request, system):
 						job_result.Job_id = job['job_query'].id
 						job_result.EventType = 'REJECT'
 						job_result.EventInfo = "Rejected - Job Already Exists"
-						job_result.JobDate = date
+						job_result.JobDate = g_date
 						return HttpResponse(send_request(request, system, job['result_type'], job_result))
 					else:
 						try:
 							new_job = move_data(v1, job_model)
-							new_job.system_id = system_query.system
+							new_job.system_id = system_query.id
 							new_job.active = True
 							new_job.save()
 

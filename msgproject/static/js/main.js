@@ -115,24 +115,24 @@ $(document).ready( function() {
 // **** redo search and bring up a list of results all matching the searched value regardless of system ******
 $('#base-form-search').on('submit', function(e) { 
 	e.preventDefault();
-	var jobid = $('#base-input-navbar-search').val();
+	var search_value = $('#base-input-navbar-search').val();
 	//var system = getCookie('system');
 	if ($('#base-input-navbar-search').val() == '') {
 		return;
 	}
 	$.ajax({ 
-		url: '/messagelocus/'+system+'/check_job_exists/',
+		url: `/search/${search_value}/`,
 		type: 'post',
 		data: $('#base-form-search').serialize(),
-		success: function(response) { 
-			if (response.status_code == 200) {
-				window.location.href = '/messagelocus/'+system+'/'+jobid+'/';
-			}
-			else {
-				alert('Search produced no results.')
-				return
-			}
-		}
+		//success: function(response) { 
+		//	if (response.status_code == 200) {
+		//		window.location.href = '/messagelocus/'+system+'/'+jobid+'/';
+		//	}
+		//	else {
+		//		alert('Search produced no results.')
+		//		return
+		//	}
+		//}
 	});
 });
 

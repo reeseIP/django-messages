@@ -17,7 +17,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path, re_path, register_converter
 
-from django.apps import apps
+#from django.apps import apps
+from core.models import ExternalServices
 
 urlpatterns = [
     path('', include('core.urls')),
@@ -30,14 +31,7 @@ urlpatterns = [
         * the included URLs are set by app_name
 '''
 
-app_configs = apps.get_app_configs()
-services = []
-for app in app_configs:
-    try:
-        if app.service:
-            services.append(app.name)
-    except (AttributeError, LookupError):
-        pass
+services = [service.service for service in ExternalServices.objects.all()]
 
 for service in services:
     urlpatterns.append(path(service+'/', include(service+'.urls')))

@@ -59,6 +59,10 @@ def logout_user(request):
 	#tar_sys_users = ExternalUsers.objects.filter(created_by=request.user).delete()
 	logout(request)
 	response = redirect('/login/')
-	response.delete_cookie('username')
-	response.delete_cookie('system')
 	return response
+
+
+@login_required
+def search(request, search):
+	if request.method == 'POST':
+		pass

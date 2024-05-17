@@ -1,7 +1,5 @@
 # models.py
-from core.models import ModelHelp
-from django.conf import settings
-from django.contrib.auth.validators import UnicodeUsernameValidator
+from core.models import ExternalSystems, ModelHelp
 from django.db import models
 
 # adding excluded fields to the django Model Meta class.  These fields will not be displayed in the app
@@ -12,44 +10,44 @@ models.options.DEFAULT_NAMES = models.options.DEFAULT_NAMES + ('exclude_fields',
 ''' Default Service Models '''
 #---------------------------------------------------------------------#
 
-class ExternalSystems(models.Model, ModelHelp):
-	system  = models.CharField(max_length=3,null=False,primary_key=True)
-	name 	= models.CharField(max_length=100)
-	url     = models.CharField(max_length=250,null=False)
-
-	def __str__(self):
-		return('{}: {}'.format(self.system, self.url))
-
-	def __repr__(self):
-		return('{}: {}'.format(self.system, self.url))
-
-
-class ExternalUsers(models.Model, ModelHelp):
-	username_validator = UnicodeUsernameValidator()
-	username   = models.CharField(
-					("username"),
-					max_length=150,
-					help_text= (
-						"Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
-					),
-					validators=[username_validator],
-				 )
-	password   = models.CharField( ("password"), max_length=128)
-	sessionid  = models.CharField(max_length=32,null=False)
-	system 	   = models.ForeignKey(ExternalSystems, on_delete=models.CASCADE, related_name='users')
-	created_by = models.ForeignKey(
-			        settings.AUTH_USER_MODEL,
-			        on_delete=models.CASCADE,
-			        null=True
-    			 )
-	active     = models.BooleanField(default=False)
-
-	def __str__(self):
-		return('{}: {}'.format(self.system_id, self.username))
-
-	def __repr__(self):
-		return('{}: {}'.format(self.system_id, self.username))
-
+#class ExternalSystems(models.Model, ModelHelp):
+#	system  = models.CharField(max_length=3,null=False,primary_key=True)
+#	name 	= models.CharField(max_length=100)
+#	url     = models.CharField(max_length=250,null=False)
+#
+#	def __str__(self):
+#		return('{}: {}'.format(self.system, self.url))
+#
+#	def __repr__(self):
+#		return('{}: {}'.format(self.system, self.url))
+#
+#
+#class ExternalUsers(models.Model, ModelHelp):
+#	username_validator = UnicodeUsernameValidator()
+#	username   = models.CharField(
+#					("username"),
+#					max_length=150,
+#					help_text= (
+#						"Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
+#					),
+#					validators=[username_validator],
+#				 )
+#	password   = models.CharField( ("password"), max_length=128)
+#	sessionid  = models.CharField(max_length=32,null=False)
+#	system 	   = models.ForeignKey(ExternalSystems, on_delete=models.CASCADE, related_name='users')
+#	created_by = models.ForeignKey(
+#			        settings.AUTH_USER_MODEL,
+#			        on_delete=models.CASCADE,
+#			        null=True
+#    			 )
+#	active     = models.BooleanField(default=False)
+#
+#	def __str__(self):
+#		return('{}: {}'.format(self.system_id, self.username))
+#
+#	def __repr__(self):
+#		return('{}: {}'.format(self.system_id, self.username))
+#
 
 
 ''' Order Message Type Models '''
