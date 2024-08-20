@@ -13,13 +13,17 @@ import requests
 
 
 # background tasks
-from .tasks import BackgroundTasks
-t = BackgroundTasks()
-t.start()
+#from .tasks import BackgroundTasks
+#t = BackgroundTasks()
+#t.start()
 
 def index(request):
 	if request.user.is_authenticated:
-		return render(request, 'core/index.html')
+		try:
+			theme = request.COOKIES['theme']
+		except KeyError:
+			theme = 'light'
+		return render(request, 'core/index.html', {'theme': theme})
 	else:
 		return redirect('/login')
 
@@ -50,7 +54,6 @@ def login_user(request):
 			return redirect('/')
 		return render(request, 'core/login.html')
 	elif request.method == 'POST':
-		print('repsons')
 		username = request.POST["username"]
 		password = request.POST["password"]
 		user = authenticate(request, username=username, password=password)

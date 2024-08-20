@@ -87,6 +87,8 @@ def send_request(request, system, message_type, job, tasks=[]):
 	ext_user = ext_sys.users.filter(created_by=request.user,active=True).first()
 	ext_pass = signer.unsign_object(ext_user.password)
 
+	print(ext_sys,ext_user,ext_pass)
+
 	if message_type == 'SerialValidation':
 		index = ext_sys.url.find('?')
 		ext_sys.url = ext_sys.url[:index] + '/validateSerial' + ext_sys.url[index:]

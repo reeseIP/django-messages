@@ -8,7 +8,7 @@ def system_context(request):
 		systems = []
 		for service in ExternalServices.objects.all():
 			for system in service.systems.all():
-				systems.append({'system':system, 'users':[{'username':user.username, 'active':user.active} for user in system.users.all()]})
+				systems.append({'system':system, 'users':[{'username':user.username, 'active':user.active} for user in system.users.filter(created_by=request.user,sessionid=request.COOKIES['sessionid']).all()]})
 			service = {'app': service.service, 
 					   'service':service.name, 
 					   'systems':systems}
