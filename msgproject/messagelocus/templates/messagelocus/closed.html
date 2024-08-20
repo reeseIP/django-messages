@@ -4,52 +4,47 @@
 
   <!-- OrderJob Table -->
   <!-------------------------------------------------------------------->
-  {% if orderjob_list %}
-          <h4 class='closed-header'>Order Jobs</h4>
-    <div class='closed-div-table-wrapper'>
-
-        <div class='table-responsive table-responsive-330'>
-          <table class='table table-hover table-striped'>
-            <thead>
-              <tr>
-                {% for field in orderjob_fields %}
-                  <th scope="col"><label>{{ field }}</label></th>
-                {% endfor %}
-              </tr>
-            </thead>
-            <tbody>
-            {% for order in orderjob_list %}
-              <tr>
-              {% for key, value in order.items %}
-                {% if key == 'JobId' %}
-                  <td name='{{ key }}'>
-                    <button class='btn btn-sm btn-outline-primary button-get-job'>{{ value }}</button>
-                  </td>
-                {% else %}
-                  <td name='{{ key }}'>
-                    <label class='table-data'>{{ value }}</label>
-                  </td>
-                {% endif %}
-              {% endfor %}
-              </tr>
+  <h4 class='closed-header'>Order Jobs</h4>
+  <div class='closed-div-table-wrapper'>
+    <div class='table-responsive table-responsive-330'>
+      <table class='table table-hover table-striped'>
+        <thead>
+          <tr>
+            {% for field in orderjob_fields %}
+              <th scope="col"><label>{{ field }}</label></th>
             {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    <br>
-    <br>
-  {% endif %}
+          </tr>
+        </thead>
+        <tbody>
+        {% for order in orderjob_list %}
+          <tr>
+          {% for key, value in order.items %}
+            {% if key == 'JobId' %}
+              <td name='{{ key }}'>
+                <button class='btn btn-sm btn-outline-primary button-get-job'>{{ value }}</button>
+              </td>
+            {% else %}
+              <td name='{{ key }}'>
+                <label class='table-data'>{{ value }}</label>
+              </td>
+            {% endif %}
+          {% endfor %}
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <br>
+  <br>
 
 
   <!-- PutawayJob Table -->
   <!-------------------------------------------------------------------->
-  {% if putawayjob_list %}
-    <div class='putaway-header'>
-      <h4 class='closed-header'>Putaway Jobs</h4>
-    </div>
-    <div class='closed-div-table-wrapper'>
-
+  <div class='putaway-header'>
+    <h4 class='closed-header'>Putaway Jobs</h4>
+  </div>
+  <div class='closed-div-table-wrapper'>
     <div class='table-responsive table-responsive-330'>
       <table class='table table-hover table-striped'>
         <thead>
@@ -79,6 +74,5 @@
       </table>
     </div>
   </div>
-  {% endif %}
 
 {% endblock %}

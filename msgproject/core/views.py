@@ -50,6 +50,7 @@ def login_user(request):
 			return redirect('/')
 		return render(request, 'core/login.html')
 	elif request.method == 'POST':
+		print('repsons')
 		username = request.POST["username"]
 		password = request.POST["password"]
 		user = authenticate(request, username=username, password=password)
@@ -65,8 +66,7 @@ def login_user(request):
 def logout_user(request):
 	#tar_sys_users = ExternalUsers.objects.filter(created_by=request.user).delete()
 	logout(request)
-	response = redirect('/login/')
-	return response
+	return JsonResponse({'status_code': 200})
 
 
 @login_required

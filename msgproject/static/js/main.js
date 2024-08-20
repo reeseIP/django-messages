@@ -176,21 +176,35 @@ $('#base-div-user-controls').on('click', 'a.nav-link', function(e) {
 	if ($(this).html() == $('#base-a-add-new-user').html()) {
 		$("#modalSystem").modal("toggle");
 	}
+	else if ($(this).html() == $('#base-a-user-logout').html()) {
+		$.ajax({
+			url: `/logout/`, 
+			type:'post',
+			data: { 
+				csrfmiddlewaretoken:getCookie('csrftoken'), 
+				sessionid:getCookie('sessionid'), 
+			}, 
+			success: function(response) {
+				window.location.href = '/login/';
+			}
+		 });
+	}
 	else {
 		$.ajax({
-				url: `/set_target_user/${service}/${system}/${username}/`, 
-				type:'post',
-				data: { csrfmiddlewaretoken:getCookie('csrftoken'), 
-						sessionid:getCookie('sessionid'), 
-					   }, 
-				success: function(response) {
-					if (response.status_code == 200) {
-						//users.find('*').prop('checked', false);
-						radio_input.prop("checked","checked");
-						radio_sys_user.prop("checked","checked");
-					}
+			url: `/set_target_user/${service}/${system}/${username}/`, 
+			type:'post',
+			data: { 
+				csrfmiddlewaretoken:getCookie('csrftoken'), 
+				sessionid:getCookie('sessionid'), 
+			}, 
+			success: function(response) {
+				if (response.status_code == 200) {
+					//users.find('*').prop('checked', false);
+					radio_input.prop("checked","checked");
+					radio_sys_user.prop("checked","checked");
 				}
-		 	 });
+			}
+		 });
 	}
 });
 
