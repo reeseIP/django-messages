@@ -164,39 +164,6 @@ $('#base-toggle-theme').on('click', function(e) {
 	}
 });
 
-$('#base-div-sidebar').on('click', 'button.menu-root', function(e) {
-	$('#base-div-sidebar .navbar-collapse').removeClass('show');
-	$('#base-div-sidebar .navbar-collapse').addClass('collapse');
-});
-
-// User Control: new or set user click
-$('#base-div-sidebar').on('click', 'a.nav-link', function(e) { 
-	var radio_input = $(this).find('input.form-check-input');
-	var users = $(this).closest('div.collapse')
-	var service = $(this).parent().find('.base-input-service').val();
-	var system = $(this).parent().find('.base-input-system').val();
-	var username = $(this).parent().find('.base-input-username').val();
-	var radio_sys_user = $(`#rbg-system-users-${username}`)
-	e.preventDefault();
-	//if ($(this).html() == $('#base-a-add-new-user').html()) {
-	//	$("#modalSystem").modal("toggle");
-	//}
-	$.ajax({
-			url: `/set_target_user/${service}/${system}/${username}/`, 
-			type:'post',
-			data: { csrfmiddlewaretoken:getCookie('csrftoken'), 
-					sessionid:getCookie('sessionid'), 
-				   }, 
-			success: function(response) {
-				if (response.status_code == 200) {
-					//users.find('*').prop('checked', false);
-					radio_input.prop("checked","checked");
-					radio_sys_user.prop("checked","checked");
-				}
-			}
-	 	 });
-});
-
 // User Control: new or set user click
 $('#base-div-user-controls').on('click', 'a.nav-link', function(e) { 
 	var radio_input = $(this).find('input.form-check-input');
@@ -235,31 +202,15 @@ $('#base-div-user-controls').on('click', 'button.btn-delete-user', function(e) {
 	var service = $(this).parent().find('.base-input-service').val();
 	var system = $(this).parent().find('.base-input-system').val();
 	var username = $(this).parent().find('.base-input-username').val();
-	
+	var radio_sys_user = $(`#rbg-${service}-${system}-${username}`)
+
 	$.ajax({ 
 		url: `/delete_target_user/${service}/${system}/${username}/`,
 		type: 'post',
 		data: {csrfmiddlewaretoken:getCookie('csrftoken')},
 		success: function(response) {
 			closest_li.remove();
-		}
-	});
-});
-
-$('#base-div-sidebar').on('click', 'button.btn-delete-user', function(e) { 
-	e.preventDefault();
-	//var url = parseURL(window.location.href)
-	var closest_li = $(this).closest('li');
-	var service = $(this).parent().find('.base-input-service').val();
-	var system = $(this).parent().find('.base-input-system').val();
-	var username = $(this).parent().find('.base-input-username').val();
-	
-	$.ajax({
-		url: `/delete_target_user/${service}/${system}/${username}/`,
-		type: 'post',
-		data: {csrfmiddlewaretoken:getCookie('csrftoken')},
-		success: function(response) {
-			closest_li.remove();
+			radio_sys_user.closest('li').remove();
 		}
 	});
 });
@@ -300,5 +251,64 @@ $('#modalSystem button.submit').on('click', function(e) {
 			window.location.reload();
 		}
  	 });
+});
+
+
+/* Sidebar Menu Controls */
+/*-------------------------------------------------------------------*/
+
+$('#base-div-sidebar').on('click', 'button.menu-root', function(e) {
+	$('#base-div-sidebar .navbar-collapse').removeClass('show');
+	$('#base-div-sidebar .navbar-collapse').addClass('collapse');
+	$('#base-div-sidebar .dropdown-toggle').attr('aria-expanded', 'false');
+});
+
+// Sidebar Control:  delete target user button click
+$('#base-div-sidebar').on('click', 'button.btn-delete-user', function(e) { 
+	e.preventDefault();
+	//var url = parseURL(window.location.href)
+	var closest_li = $(this).closest('li');
+	var service = $(this).parent().find('.base-input-service').val();
+	var system = $(this).parent().find('.base-input-system').val();
+	var username = $(this).parent().find('.base-input-username').val();
+	var radio_sys_user = $(`#rbg-system-users-${username}`)
+	
+	$.ajax({
+		url: `/delete_target_user/${service}/${system}/${username}/`,
+		type: 'post',
+		data: {csrfmiddlewaretoken:getCookie('csrftoken')},
+		success: function(response) {
+			closest_li.remove();
+			radio_sys_user.closest('li').remove();
+		}
+	});
+});
+
+// Sidebar Control: new or set user click
+$('#base-div-sidebar').on('click', 'a.nav-link', function(e) { 
+	var radio_input = $(this).find('input.form-check-input');
+	var users = $(this).closest('div.collapse')
+	var service = $(this).parent().find('.base-input-service').val();
+	var system = $(this).parent().find('.base-input-system').val();
+	var username = $(this).parent().find('.base-input-username').val();
+	var radio_sys_user = $(`#rbg-system-users-${username}`)
+	e.preventDefault();
+	//if ($(this).html() == $('#base-a-add-new-user').html()) {
+	//	$("#modalSystem").modal("toggle");
+	//}
+	$.ajax({
+			url: `/set_target_user/${service}/${system}/${username}/`, 
+			type:'post',
+			data: { csrfmiddlewaretoken:getCookie('csrftoken'), 
+					sessionid:getCookie('sessionid'), 
+				   }, 
+			success: function(response) {
+				if (response.status_code == 200) {
+					//users.find('*').prop('checked', false);
+					radio_input.prop("checked","checked");
+					radio_sys_user.prop("checked","checked");
+				}
+			}
+	 	 });
 });
 

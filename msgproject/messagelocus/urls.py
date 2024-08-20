@@ -4,7 +4,7 @@ from . import views
 
 urlpatterns = [
 	path("", 
-			views.index, name='index'),
+		views.index, name='index'),
 	path("<system>/", 
 		views.active, name='active'),
 	path("<system>/active/", 
@@ -51,5 +51,4 @@ urlpatterns = [
 		views.get_capture_field_data, name='get_capture_field_data'),
 	path("<system>/<JobId>/<JobTaskId>/validate_serial_number/", 
 		views.validate_serial_number, name='validate_serial_number'),
-
 ]

@@ -24,7 +24,6 @@ import requests
 
 
 ''' global variables '''
-#g_date = datetime.datetime.now().strftime(format='%Y-%m-%dT%H:%M:%S')
 g_service = app.name
 
 

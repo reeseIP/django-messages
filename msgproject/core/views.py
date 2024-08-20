@@ -28,7 +28,6 @@ def index(request):
 def register_user(request):
 	if request.method == 'GET':
 		form = RegisterForm()
-
 		return render(request, 'core/register.html', {'form': form})
 	elif request.method == 'POST':
 		form = RegisterForm(request.POST)

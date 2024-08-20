@@ -2,7 +2,7 @@ import requests
 import json
 
 
-URL = 'http://localhost:8000/messagelocus/ew1/inbound/'
+URL = 'http://localhost:8000/messagelocus/EWQ/inbound/'
 
 #username = input('Username: ')
 #password = input('Password: ')
