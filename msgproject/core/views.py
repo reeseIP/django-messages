@@ -13,9 +13,9 @@ import requests
 
 
 # background tasks
-#from .tasks import BackgroundTasks
-#t = BackgroundTasks()
-#t.start()
+from .tasks import BackgroundTasks
+t = BackgroundTasks()
+t.start()
 
 def index(request):
 	if request.user.is_authenticated:
